@@ -20,8 +20,8 @@ import ResizableTable from "../../components/table/ResizableTable";
 import CategoryForm from "./components/CategoryForm";
 import { categoryFallbackColumns, categoryModuleSchema } from "./data/module.schema";
 
-function CategoryModulePage({ menuID }) {
-  const resolvedMenuID = menuID || categoryModuleSchema.menuID || null;
+function CategoryModulePage({ menu_id }) {
+  const resolvedMenuID = menu_id || categoryModuleSchema.menu_id || null;
 
   const [fields, setFields] = useState([]);
   const [categoryList, setCategoryList] = useState([]);

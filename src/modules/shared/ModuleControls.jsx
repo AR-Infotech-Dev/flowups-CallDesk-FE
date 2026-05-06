@@ -23,7 +23,8 @@ function ModuleControls({
   resultsLabel = "120 Results",
   createLabel = "Add New",
   filter,
-  children
+  children,
+  showTraditional = true
 }) {
   return (
     <div className="module-controls">
@@ -48,26 +49,18 @@ function ModuleControls({
         </div>
 
         <div className="module-toolbar-right">
-          <ActionButton variant="primary" onClick={onCreate}>
-            <CirclePlus size={16} />
-            {createLabel}
-          </ActionButton>
-          <ActionButton onClick={onRefresh}>
-            {loading ? <Spinner /> : <RefreshCcw size={15} color="var(--primary)" />}
-          </ActionButton>
-          {showDelete &&
-            <ActionButton onClick={onDeleteSelected} disabled={deleteDisabled}>
-              {deleting ? <Spinner /> : <Trash2 size={15} color="var(--primary)" />}
-              {/* {deleteLabel} */}
-            </ActionButton>
+          {showTraditional &&
+            <>
+              <ActionButton variant="primary" onClick={onCreate}> <CirclePlus size={16} /> {createLabel} </ActionButton>
+              <ActionButton onClick={onRefresh}> {loading ? <Spinner /> : <RefreshCcw size={15} color="var(--primary)" />} </ActionButton>
+              {showDelete &&
+                <ActionButton onClick={onDeleteSelected} disabled={deleteDisabled}>
+                  {deleting ? <Spinner /> : <Trash2 size={15} color="var(--primary)" />}
+                  {/* {deleteLabel} */}
+                </ActionButton>
+              }
+            </>
           }
-          {/* <ActionButton>
-            <Upload size={15} />
-            Import/Export
-          </ActionButton>
-          <ActionButton variant="icon">
-            <MoreHorizontal size={18} />
-          </ActionButton> */}
           {children}
         </div>
       </div>

@@ -10,7 +10,7 @@ import DynamicModuleForm from "../../../components/ui/DynamicModuleForm";
 import { companyMasterSchema } from "../data/module.schema";
 
 function getCompanyIdentifier(company = {}) {
-  return company?.infoID;
+  return company?.company_id;
 }
 
 function normalizeCompanyData(company = {}) {
@@ -140,6 +140,7 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave }) {
       isOpen={isOpen}
       onClose={handleClose}
       title={selectedCompany ? "Edit Company" : "Create Company"}
+      panelClassName="!w-[640px] max-w-full"
       closeButton={
         <button className="flyout-close" onClick={handleClose} aria-label="Close panel">
           <X size={18} />

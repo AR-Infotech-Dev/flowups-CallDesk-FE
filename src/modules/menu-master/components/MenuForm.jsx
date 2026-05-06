@@ -9,7 +9,7 @@ import DynamicModuleForm from "../../../components/ui/DynamicModuleForm";
 import { menuMasterSchema } from "../data/module.schema";
 
 function getMenuIdentifier(menu = {}) {
-  return menu?.menuID;
+  return menu?.menu_id;
 }
 
 function normalizeMenuData(selectedMenu = {}) {
@@ -33,20 +33,20 @@ function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
   const [errors, setErrors] = useState({});
 
   const mode = selectedMenu ? "edit" : "create";
-  const menuID = getMenuIdentifier(selectedMenu);
+  const menu_id = getMenuIdentifier(selectedMenu);
 
   // ======================================
   // FETCH MENU DETAILS (EDIT)
   // ======================================
   useEffect(() => {
     const fetchMenuDetails = async () => {
-      if (!isOpen || !menuID) return;
+      if (!isOpen || !menu_id) return;
 
       try {
         setFetchingMenu(true);
 
         const res = await makeRequest(
-          `${menuMasterSchema.api.edit}/${menuID}`,
+          `${menuMasterSchema.api.edit}/${menu_id}`,
           { method: "GET" }
         );
 
@@ -65,7 +65,7 @@ function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
     }
 
     setFormData(menuMasterSchema.form.initialValues);
-  }, [selectedMenu, isOpen, menuID]);
+  }, [selectedMenu, isOpen, menu_id]);
 
   // ======================================
   // HANDLE CHANGE
@@ -104,7 +104,7 @@ function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
       const saveUrl =
         mode === "create"
           ? menuMasterSchema.api.create
-          : `${menuMasterSchema.api.edit}/${menuID}`;
+          : `${menuMasterSchema.api.edit}/${menu_id}`;
 
       const method = mode === "create" ? "PUT" : "POST";
 
@@ -116,9 +116,8 @@ function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
       if (res.success) {
         toast.success(
           res?.message ||
-            `Menu ${
-              mode === "create" ? "created" : "updated"
-            } successfully`
+          `Menu ${mode === "create" ? "created" : "updated"
+          } successfully`
         );
 
         setFormData(menuMasterSchema.form.initialValues);
@@ -151,6 +150,7 @@ function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
       isOpen={isOpen}
       onClose={handleClose}
       title={selectedMenu ? "Edit Menu" : "Create Menu"}
+      panelClassName="!w-[540px] max-w-full"
       closeButton={
         <button className="flyout-close" onClick={onClose}>
           <X size={18} />
@@ -174,12 +174,14 @@ function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
               <Spinner />
             </div>
           ) : (
-            <DynamicModuleForm
-              sections={menuMasterSchema.form.sections}
-              values={formData}
-              onChange={handleChange}
-              errors={errors}
-            />
+            <div className="rounded-xl bg-white px-4 py-3">
+              <DynamicModuleForm
+                sections={menuMasterSchema.form.sections}
+                values={formData}
+                onChange={handleChange}
+                errors={errors}
+              />
+            </div>
           )}
         </div>
       </div>

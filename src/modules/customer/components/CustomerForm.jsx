@@ -32,7 +32,9 @@ function normalizeCustomerData(customer = {}) {
   };
 }
 
-function CustomerForm({ isOpen, onClose, selectedCustomer, onAfterSave }) {
+const EMPTY_INITIAL_VALUES = {};
+
+function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave }) {
   const [loading, setLoading] = useState(false);
   const [fetchingCustomer, setFetchingCustomer] = useState(false);
   const [formData, setFormData] = useState(customerModuleSchema.form.initialValues);
@@ -65,9 +67,12 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, onAfterSave }) {
       return;
     }
 
-    setFormData(customerModuleSchema.form.initialValues);
+    setFormData({
+      ...customerModuleSchema.form.initialValues,
+      ...initialValues,
+    });
     setErrors({});
-  }, [selectedCustomer, isOpen, customerId]);
+  }, [selectedCustomer, isOpen, customerId, initialValues]);
 
   if (!isOpen) {
     return null;
@@ -123,8 +128,8 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, onAfterSave }) {
       if (res.success) {
         toast.success(res?.message || `Customer ${mode === "create" ? "created" : "updated"} successfully`);
         setFormData(customerModuleSchema.form.initialValues);
+        onAfterSave?.(res, payload);
         onClose();
-        onAfterSave?.();
         return;
       }
 
@@ -141,6 +146,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, onAfterSave }) {
       isOpen={isOpen}
       onClose={handleClose}
       title={selectedCustomer ? "Edit Customer" : "Create Customer"}
+      panelClassName="!w-[640px] max-w-full"
       closeButton={
         <button className="flyout-close" onClick={handleClose} aria-label="Close panel">
           <X size={18} />

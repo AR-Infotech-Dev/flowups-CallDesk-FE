@@ -20,8 +20,8 @@ import ResizableTable from "../../components/table/ResizableTable";
 import CompanyMasterForm from "./components/CompanyMasterForm";
 import { companyMasterFallbackColumns, companyMasterSchema } from "./data/module.schema";
 
-function CompanyMasterModulePage({ menuID }) {
-  const resolvedMenuID = menuID || companyMasterSchema.menuID || null;
+function CompanyMasterModulePage({ menu_id }) {
+  const resolvedMenuID = menu_id || companyMasterSchema.menu_id || null;
 
   const [fields, setFields] = useState([]);
   const [companyList, setCompanyList] = useState([]);
@@ -123,7 +123,7 @@ function CompanyMasterModulePage({ menuID }) {
       return;
     }
 
-    setSelectedRowIds(companyList.map((row) => row?.infoID ?? row?.id).filter(Boolean));
+    setSelectedRowIds(companyList.map((row) => row?.company_id ?? row?.id).filter(Boolean));
   };
 
   const handleDeleteSelected = async () => {

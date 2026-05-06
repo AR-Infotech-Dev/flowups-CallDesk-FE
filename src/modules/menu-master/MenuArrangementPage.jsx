@@ -34,7 +34,7 @@
 // // ======================================================
 // function MenuTreeItem({ item, onEdit, onDelete, }) {
 //   const [open, setOpen] = useState(true);
-//   const { attributes, listeners, setNodeRef, transform, transition, } = useSortable({ id: item.menuID, });
+//   const { attributes, listeners, setNodeRef, transform, transition, } = useSortable({ id: item.menu_id, });
 
 //   const style = { transform: CSS.Transform.toString(transform), transition, };
 
@@ -81,7 +81,7 @@
 //       {open && item.subMenu?.length > 0 && (
 //         <ul className="border-t bg-slate-50 px-6 py-2 space-y-2">
 //           {item.subMenu.map((child) => (
-//             <li key={child.menuID} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border" >
+//             <li key={child.menu_id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border" >
 //               <div className="flex items-center gap-2">
 //                 <GripVertical size={16} className="text-slate-400" />
 //                 <span> {child.menuName} </span>
@@ -143,7 +143,7 @@
 //   // DELETE
 //   // ==========================================
 //   const handleDelete = async (item) => {
-//     const res = await makeRequest(`/menus/${item.menuID}`, { method: "DELETE", });
+//     const res = await makeRequest(`/menus/${item.menu_id}`, { method: "DELETE", });
 
 //     if (res.success) {
 //       toast.success("Deleted");
@@ -161,16 +161,16 @@
 //     if (!over || active.id === over.id)
 //       return;
 
-//     const oldIndex = rows.findIndex((item) => item.menuID === active.id);
+//     const oldIndex = rows.findIndex((item) => item.menu_id === active.id);
 
-//     const newIndex = rows.findIndex((item) => item.menuID === over.id);
+//     const newIndex = rows.findIndex((item) => item.menu_id === over.id);
 
 //     const newRows = arrayMove(rows, oldIndex, newIndex);
 
 //     setRows(newRows);
 
 //     const payload = newRows.map((item, index) => ({
-//       menuID: item.menuID,
+//       menu_id: item.menu_id,
 //       parentID: 0,
 //       menuIndex: index + 1,
 //     })
@@ -211,13 +211,13 @@
 //               onDragEnd={handleDragEnd}
 //             >
 //               <SortableContext
-//                 items={rows.map((item) => item.menuID)}
+//                 items={rows.map((item) => item.menu_id)}
 //                 strategy={verticalListSortingStrategy}
 //               >
 //                 <ul>
 //                   {rows.map((item) => (
 //                     <MenuTreeItem
-//                       key={item.menuID}
+//                       key={item.menu_id}
 //                       item={item}
 //                       onEdit={onEdit}
 //                       onDelete={handleDelete}
@@ -279,7 +279,7 @@ const flattenMenus = (rows = []) => {
     (parent.subMenu || []).forEach((child) => {
       result.push({
         ...child,
-        parentID: parent.menuID,
+        parentID: parent.menu_id,
         isChild: true,
       });
     });
@@ -294,7 +294,7 @@ const rebuildMenus = (flat = []) => {
   return parents.map((parent) => ({
     ...parent,
     subMenu: flat.filter(
-      (item) => item.parentID === parent.menuID
+      (item) => item.parentID === parent.menu_id
     ),
   }));
 };
@@ -312,7 +312,7 @@ function SortableRow({ item }) {
     transform,
     transition,
   } = useSortable({
-    id: item.menuID,
+    id: item.menu_id,
   });
 
   const style = {
@@ -402,7 +402,7 @@ function MenuArrangementPage() {
   const savePositions = async (list = []) => {
     const payload = list.map(
       (item, index) => ({
-        menuID: item.menuID,
+        menu_id: item.menu_id,
         parentID: item.parentID || 0,
         menuIndex: index + 1,
       })
@@ -448,13 +448,13 @@ function MenuArrangementPage() {
     const oldIndex =
       flatRows.findIndex(
         (item) =>
-          item.menuID === active.id
+          item.menu_id === active.id
       );
 
     const newIndex =
       flatRows.findIndex(
         (item) =>
-          item.menuID === over.id
+          item.menu_id === over.id
       );
 
     let moved = arrayMove(
@@ -479,7 +479,7 @@ function MenuArrangementPage() {
       activeItem.isChild
     ) {
       activeItem.parentID =
-        targetItem.menuID;
+        targetItem.menu_id;
     }
 
     // ==================================
@@ -514,7 +514,7 @@ function MenuArrangementPage() {
         <SortableContext 
           className={"overflow-auto"}
           items={flatRows.map(
-            (item) => item.menuID
+            (item) => item.menu_id
           )}
           strategy={
             verticalListSortingStrategy
@@ -523,7 +523,7 @@ function MenuArrangementPage() {
           <div className="space-y-2">
             {flatRows.map((item) => (
               <SortableRow
-                key={item.menuID}
+                key={item.menu_id}
                 item={item}
               />
             ))}

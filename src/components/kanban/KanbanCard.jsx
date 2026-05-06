@@ -95,19 +95,17 @@ function getAvatarLabel(row) {
     .join("");
 }
 
-function KanbanCard({ row, columnId }) {
-  const { config, editRow } = useKanbanContext();
+function KanbanCardView({
+  row,
+  columnId,
+  config,
+  style,
+  className = "kanban-card",
+  dragHandleProps = {},
+  onOpen,
+  interactive = true,
+}) {
   const cardId = row._kanbanId;
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: cardId,
-    data: {
-      type: "card",
-      cardId,
-      columnId,
-      row,
-    },
-  });
-
   const titleValue =
     row?.[config.cardTitleField] ||
     row?.title ||
@@ -119,33 +117,34 @@ function KanbanCard({ row, columnId }) {
   const tagFields = cardFields.filter((field) => field?.type === "tag" || field?.type === "badge");
   const detailFields = cardFields.filter((field) => field?.type !== "tag" && field?.type !== "badge");
   const overdue = isOverdue(row, columnId, config);
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-  };
-
-  const handleOpen = () => {
-    editRow?.(row);
-  };
+  const { onKeyDown: onDragKeyDown, ...cardDragProps } = dragHandleProps;
 
   const handleCardKeyDown = (event) => {
+    onDragKeyDown?.(event);
+
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    if (!interactive) {
+      return;
+    }
+
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      handleOpen();
+      onOpen?.();
     }
   };
 
   return (
     <article
-      ref={setNodeRef}
       style={style}
-      className="kanban-card"
-      onClick={handleOpen}
+      className={className}
+      onClick={interactive ? onOpen : undefined}
       onKeyDown={handleCardKeyDown}
-      role="button"
-      tabIndex={0}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      {...cardDragProps}
     >
       <div className="kanban-card-head">
         <button
@@ -153,13 +152,11 @@ function KanbanCard({ row, columnId }) {
           className="kanban-card-grip"
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
-          {...attributes}
-          {...listeners}
         >
           <GripVertical size={14} />
         </button>
         <div className="kanban-card-title-wrap">
-          <h4 className="kanban-card-title" >{titleValue}</h4>
+          <h4 className="kanban-card-title">{titleValue}</h4>
         </div>
         {overdue ? <span className="kanban-card-alert">Overdue</span> : null}
       </div>
@@ -179,19 +176,19 @@ function KanbanCard({ row, columnId }) {
         {detailFields
           .filter((field) => field?.type !== "date" && field?.key !== "start_date" && field?.key !== "due_date")
           .map((field) => {
-          const key = typeof field === "string" ? field : field.key;
-          const value = resolveCardValue(row, field);
+            const key = typeof field === "string" ? field : field.key;
+            const value = resolveCardValue(row, field);
 
-          return (
-            <div key={key} className="kanban-card-row">
-              <span className="kanban-card-label">
-                <FieldIcon type={field?.type} />
-                {field.label || key}
-              </span>
-              <span className="kanban-card-value">{formatFieldValue(field, value)}</span>
-            </div>
-          );
-        })}
+            return (
+              <div key={key} className="kanban-card-row">
+                <span className="kanban-card-label">
+                  <FieldIcon type={field?.type} />
+                  {field.label || key}
+                </span>
+                <span className="kanban-card-value">{formatFieldValue(field, value)}</span>
+              </div>
+            );
+          })}
 
         {tagFields.length ? (
           <div className="kanban-card-footer">
@@ -211,6 +208,62 @@ function KanbanCard({ row, columnId }) {
         ) : null}
       </div>
     </article>
+  );
+}
+
+function KanbanCard({ row, columnId, isActiveDrag = false }) {
+  const { config, editRow } = useKanbanContext();
+  const cardId = row._kanbanId;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: cardId,
+    data: {
+      type: "card",
+      cardId,
+      columnId,
+      row,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.28 : 1,
+    zIndex: isDragging || isActiveDrag ? 999 : "auto",
+    position: isDragging || isActiveDrag ? "relative" : undefined,
+  };
+
+  // Opens the ticket drawer when the card body is clicked.
+  const handleOpen = () => {
+    editRow?.(row);
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+    >
+      <KanbanCardView
+        row={row}
+        columnId={columnId}
+        config={config}
+        style={style}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        onOpen={handleOpen}
+      />
+    </div>
+  );
+}
+
+export function KanbanCardPreview({ row, columnId }) {
+  const { config } = useKanbanContext();
+
+  return (
+    <KanbanCardView
+      row={row}
+      columnId={columnId}
+      config={config}
+      className="kanban-card kanban-card-overlay"
+      interactive={false}
+    />
   );
 }
 

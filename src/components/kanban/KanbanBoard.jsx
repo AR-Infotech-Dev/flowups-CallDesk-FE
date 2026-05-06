@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DndContext, DragOverlay, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "react-toastify";
 
 import Spinner from "../ui/Spinner";
 import { makeRequest } from "../../api/httpClient";
 import KanbanColumn from "./KanbanColumn";
+import { KanbanCardPreview } from "./KanbanCard";
 import { KanbanProvider } from "./KanbanContext";
 import {
   buildKanbanState,
@@ -13,14 +14,26 @@ import {
   reorderKanbanState,
 } from "./kanbanUtils";
 
-function KanbanBoard({ rows = [], editRow, config, loading = false, onAfterUpdate }) {
+function KanbanBoard({
+  rows = [],
+  editRow,
+  config,
+  loading = false,
+  onAfterUpdate,
+  lazyLoad = false,
+  reloadKey = "",
+  onLoadColumnPage,
+}) {
   const [columns, setColumns] = useState([]);
   const [boardState, setBoardState] = useState({});
   const [loadingColumns, setLoadingColumns] = useState(false);
   const [updatingCardId, setUpdatingCardId] = useState(null);
+  const [activeCardId, setActiveCardId] = useState(null);
+  const [columnPaging, setColumnPaging] = useState({});
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
+  // Loads the category records that become Kanban columns.
   useEffect(() => {
     const loadColumns = async () => {
       if (!config?.categoryParentSlug) {
@@ -59,14 +72,105 @@ function KanbanBoard({ rows = [], editRow, config, loading = false, onAfterUpdat
     [columns, rows, config]
   );
 
+  // Normal table pagination sends `rows`; lazy Kanban starts with those rows and then appends column pages.
   useEffect(() => {
     setBoardState(normalizedBoardState);
   }, [normalizedBoardState]);
 
   const columnIds = useMemo(() => columns.map((column) => column.id), [columns]);
+  const activeCard = useMemo(() => {
+    if (!activeCardId) {
+      return null;
+    }
 
+    return Object.values(boardState)
+      .flat()
+      .find((item) => String(item._kanbanId) === String(activeCardId)) || null;
+  }, [activeCardId, boardState]);
+
+  // Fetches a single column page and merges it into that column without duplicating cards.
+  const loadColumnPage = useCallback(
+    async (columnId, page = 1) => {
+      if (!lazyLoad || !onLoadColumnPage || !columnId) {
+        return;
+      }
+
+      setColumnPaging((current) => ({
+        ...current,
+        [columnId]: {
+          ...(current[columnId] || {}),
+          loading: true,
+        },
+      }));
+
+      try {
+        const column = columns.find((item) => String(item.id) === String(columnId));
+        const res = await onLoadColumnPage({ columnId, page, column });
+        const pageRows = Array.isArray(res?.rows) ? res.rows : [];
+        const pageState = buildKanbanState(column ? [column] : columns, pageRows, config || {});
+        const fallbackItems = normalizedBoardState[columnId] || [];
+        const nextItems =
+          page === 1 && !pageRows.length && fallbackItems.length
+            ? fallbackItems
+            : pageState[columnId] || [];
+        const pagination = res?.pagination || {};
+
+        setBoardState((current) => {
+          const previousItems = page === 1 ? [] : current[columnId] || [];
+          const mergedById = new Map();
+
+          [...previousItems, ...nextItems].forEach((item) => {
+            mergedById.set(String(item._kanbanId), item);
+          });
+
+          return {
+            ...current,
+            [columnId]: Array.from(mergedById.values()),
+          };
+        });
+
+        setColumnPaging((current) => ({
+          ...current,
+          [columnId]: {
+            page: pagination.page || page,
+            totalPages: pagination.totalPages || page,
+            total: pagination.total ?? Math.max(nextItems.length, fallbackItems.length),
+            loading: false,
+          },
+        }));
+      } catch (error) {
+        setColumnPaging((current) => ({
+          ...current,
+          [columnId]: {
+            ...(current[columnId] || {}),
+            loading: false,
+          },
+        }));
+        toast.error(error.message || "Unable to load kanban cards");
+      }
+    },
+    [columns, config, lazyLoad, normalizedBoardState, onLoadColumnPage]
+  );
+
+  // In lazy mode every column has independent pagination, so reload all first pages on filter/sort change.
+  useEffect(() => {
+    if (!lazyLoad || !columns.length || !onLoadColumnPage) {
+      return;
+    }
+
+    setBoardState(normalizedBoardState);
+    setColumnPaging(Object.fromEntries(columns.map((column) => [column.id, { page: 0, totalPages: 1, total: 0, loading: false }])));
+    columns.forEach((column) => loadColumnPage(column.id, 1));
+  }, [columns, lazyLoad, loadColumnPage, onLoadColumnPage, reloadKey]);
+
+  const handleDragStart = (event) => {
+    setActiveCardId(String(event.active.id));
+  };
+
+  // Moves the card in UI first, then persists the new status to the backend.
   const handleDragEnd = async (event) => {
     const { active, over } = event;
+    setActiveCardId(null);
 
     if (!over) {
       return;
@@ -102,7 +206,9 @@ function KanbanBoard({ rows = [], editRow, config, loading = false, onAfterUpdat
       activeCardId,
       sourceColumnId,
       targetColumnId,
-      targetIndex
+      targetIndex,
+      config || {},
+      columns.find((column) => String(column.id) === String(targetColumnId))
     );
 
     if (nextBoardState === boardState) {
@@ -115,10 +221,7 @@ function KanbanBoard({ rows = [], editRow, config, loading = false, onAfterUpdat
       return;
     }
 
-    const movedCard =
-      Object.values(boardState)
-        .flat()
-        .find((item) => String(item._kanbanId) === activeCardId) || null;
+    const movedCard = Object.values(boardState).flat().find((item) => String(item._kanbanId) === activeCardId) || null;
 
     if (!movedCard) {
       return;
@@ -126,16 +229,15 @@ function KanbanBoard({ rows = [], editRow, config, loading = false, onAfterUpdat
 
     try {
       setUpdatingCardId(activeCardId);
-
-      const updatePath =
-        typeof config.updateApi === "function"
-          ? config.updateApi(movedCard, targetColumnId)
+      const updatePath = typeof config.updateApi === "function"
+        ? config.updateApi(movedCard, targetColumnId)
+        : config.appendIdToUpdateApi === false
+          ? config.updateApi
           : `${config.updateApi}/${movedCard[config.idField]}`;
 
-      const updateBody =
-        typeof config.buildUpdateBody === "function"
-          ? config.buildUpdateBody(movedCard, targetColumnId)
-          : { [config.statusField]: targetColumnId };
+      const updateBody = typeof config.buildUpdateBody === "function"
+        ? config.buildUpdateBody(movedCard, targetColumnId)
+        : { [config.statusField]: targetColumnId };
 
       const res = await makeRequest(updatePath, {
         method: config.updateMethod || "POST",
@@ -155,6 +257,10 @@ function KanbanBoard({ rows = [], editRow, config, loading = false, onAfterUpdat
     } finally {
       setUpdatingCardId(null);
     }
+  };
+
+  const handleDragCancel = () => {
+    setActiveCardId(null);
   };
 
   if (loading || loadingColumns) {
@@ -178,19 +284,47 @@ function KanbanBoard({ rows = [], editRow, config, loading = false, onAfterUpdat
       ) : null}
 
       <KanbanProvider value={{ config, editRow }}>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
           <div className="kanban-board">
             {columnIds.map((columnId) => {
               const column = columns.find((item) => item.id === columnId);
+              const paging = columnPaging[columnId] || {};
+              const hasMore = lazyLoad && (paging.page || 1) < (paging.totalPages || 1);
+
               return (
                 <KanbanColumn
                   key={columnId}
                   column={column}
                   items={boardState[columnId] || []}
+                  totalCount={paging.total}
+                  loadingMore={Boolean(paging.loading)}
+                  hasMore={hasMore}
+                  activeCardId={activeCardId}
+                  onLoadMore={() => loadColumnPage(columnId, (paging.page || 1) + 1)}
                 />
               );
             })}
           </div>
+          <DragOverlay
+            zIndex={999}
+            dropAnimation={{
+              duration: 180,
+              easing: "cubic-bezier(0.2, 0, 0, 1)",
+            }}
+          >
+            {activeCard ? (
+              <KanbanCardPreview
+                row={activeCard}
+                columnId={activeCard._kanbanColumnId || findColumnIdForCard(boardState, activeCardId)}
+              />
+            ) : null}
+          </DragOverlay>
         </DndContext>
       </KanbanProvider>
     </div>

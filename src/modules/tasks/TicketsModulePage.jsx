@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
-import { useEffect, useMemo, useState } from "react";
-
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../auth/AuthProvider";
 import { makeRequest } from "../../api/httpClient";
 import { useModuleFilters } from "../../store/hooks";
 import { useLocation } from "react-router-dom";
@@ -31,65 +31,33 @@ import {
   ticketsModuleSchema,
 } from "./data/module.schema";
 
-function TicketModulePage({ menuID }) {
+function TicketModulePage({ menu_id }) {
   const location = useLocation();
+  const { authSession } = useAuth();
+  const role_slug = authSession?.user?.role_slug;
+  // console.log(authSession.user.role_slug);
+
+  // const role_slug = authSession.user.role_slug;
   // ==================================================
   // STATES
   // ==================================================
-  const resolvedMenuID =
-    menuID ||
-    ticketsModuleSchema.menuID ||
-    null;
-
-  const [fields, setFields] =
-    useState([]);
-
-  const [ticketList, setTicketList] =
-    useState([]);
-
-  const [
-    selectedTicket,
-    setSelectedTicket,
-  ] = useState(null);
-
-  const [
-    isFlyoutOpen,
-    setIsFlyoutOpen,
-  ] = useState(false);
-
-  const [pagination, setPagination] =
-    useState({});
-
-  const [page, setPage] =
-    useState(1);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [
-    selectedRowIds,
-    setSelectedRowIds,
-  ] = useState([]);
-
-  const [deleting, setDeleting] =
-    useState(false);
-  const [viewMode, setViewMode] =
-    useState("table");
+  const resolvedMenuID = menu_id || ticketsModuleSchema.menu_id || null;
+  const [fields, setFields] = useState([]);
+  const [ticketList, setTicketList] = useState([]);
+  const [selectedTicket, setSelectedTicket,] = useState(null);
+  const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
+  const [pagination, setPagination] = useState({});
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [selectedRowIds, setSelectedRowIds,] = useState([]);
+  const [deleting, setDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState("table");
+  const [viewAll, setViewAll] = useState(false);
 
   // ==================================================
   // FILTERS
   // ==================================================
-  const {
-    filterState,
-    setSearchText,
-    applyFilterPayload,
-    setSort,
-    clearFilters,
-  } = useModuleFilters(
-    "tickets",
-    ticketList
-  );
-
+  const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters, } = useModuleFilters("tickets", ticketList);
   useEffect(() => {
     const ticket = location.state?.openTicket;
     if (ticket?.ticket_id) {
@@ -118,61 +86,87 @@ function TicketModulePage({ menuID }) {
   // ==================================================
   // TABLE COLUMNS
   // ==================================================
-  const resolvedColumns = useMemo(() => buildTableColumnsFromStructure(fields, ticketsFallbackColumns, columnOptions),
-    [fields]
-  );
-
-  const defaultVisibleColumnKeys = useMemo(() => ticketsFallbackColumns.map(
-    (column) => column.key
-  ),
-    []
-  );
+  const resolvedColumns = useMemo(() => buildTableColumnsFromStructure(fields, ticketsFallbackColumns, columnOptions), [fields]);
+  const defaultVisibleColumnKeys = useMemo(() => ticketsFallbackColumns.map((column) => column.key), []);
 
   // ==================================================
   // FILTER FIELDS
   // ==================================================
-  const resolvedFilterFields = useMemo(() =>
-    buildFilterFieldsFromStructure(fields, ticketsModuleSchema.defaultColumns.map((key) => ({
-      label: ticketsFallbackColumns.find((column) => column.key === key)?.label || key,
-      value: key,
-      type: "text",
-    })
-    ),
-      columnOptions
-    ),
-    [fields]
-  );
+  const resolvedFilterFields = useMemo(() => buildFilterFieldsFromStructure(fields, ticketsModuleSchema.defaultColumns.map((key) => ({ label: ticketsFallbackColumns.find((column) => column.key === key)?.label || key, value: key, type: "text", })), columnOptions), [fields]);
 
   // ==================================================
   // GET LIST
   // ==================================================
-  const getTicketList =
-    async () => {
-      setLoading(true);
-      const res = await makeRequest(ticketsModuleSchema.api.list,
-        {
-          method: "POST",
-          body: {
-            status: "active",
-            page,
-            searchText: filterState.searchText,
-            filters: filterState.filters,
-            order: filterState.order,
-            order_by: filterState.order_by,
-          },
-        }
-      );
-
-      setLoading(false);
-
-      if (res.success) {
-        setTicketList(res.data || []);
-        setPagination(res.pagination || {});
-        setSelectedRowIds([]);
-        return;
+  const getTicketList = async () => {
+    setLoading(true);
+    const res = await makeRequest(ticketsModuleSchema.api.list,
+      {
+        method: "POST",
+        body: {
+          status: "active",
+          page,
+          searchText: filterState.searchText,
+          filters: filterState.filters,
+          order: filterState.order,
+          order_by: filterState.order_by,
+          viewAll: viewAll ? 'Y' : 'N' ,
+        },
       }
-      toast.error(res?.message || "Error while fetching tickets");
-    };
+    );
+
+    setLoading(false);
+
+    if (res.success) {
+      setTicketList(res.data || []);
+      setPagination(res.pagination || {});
+      setSelectedRowIds([]);
+      return;
+    }
+    toast.error(res?.message || "Error while fetching tickets");
+  };
+
+  // Kanban fetches every status column independently so each column can lazy-load its own pages.
+  const getKanbanColumnPage = useCallback(
+    async ({ columnId, page: columnPage }) => {
+      const statusFilter = {
+        field: ticketsModuleSchema.kanban.statusField,
+        condition: "equal_to",
+        value: String(columnId),
+        type: "select",
+      };
+
+      const res = await makeRequest(ticketsModuleSchema.api.list, {
+        method: "POST",
+        body: {
+          status: "active",
+          page: columnPage,
+          searchText: filterState.searchText,
+          filters: [
+            ...(filterState.filters || []),
+            statusFilter,
+          ],
+          order: filterState.order,
+          order_by: filterState.order_by,
+          [ticketsModuleSchema.kanban.statusField]: columnId,
+        },
+      });
+
+      if (!res.success) {
+        throw new Error(res?.message || "Error while fetching kanban tickets");
+      }
+
+      return {
+        rows: res.data || [],
+        pagination: res.pagination || {},
+      };
+    },
+    [
+      filterState.searchText,
+      filterState.order,
+      filterState.order_by,
+      JSON.stringify(filterState.filters),
+    ]
+  );
 
   // ==================================================
   // GET DEFINITIONS
@@ -189,6 +183,8 @@ function TicketModulePage({ menuID }) {
   // ROW SELECT
   // ==================================================
   const handleToggleRow = (rowId, checked) => {
+    console.log('rowId : ',rowId);
+
     setSelectedRowIds((current) =>
       checked
         ? [
@@ -263,6 +259,7 @@ function TicketModulePage({ menuID }) {
     JSON.stringify(
       filterState.filters
     ),
+    viewAll
   ]);
 
   useEffect(() => {
@@ -316,18 +313,12 @@ function TicketModulePage({ menuID }) {
               }
             >
               <div className="flex items-center justify-end gap-2">
-                <ActionButton
-                  variant={viewMode === "table" ? "ghostPrimary" : "ghost"}
-                  onClick={() => setViewMode("table")}
-                >
-                  Table
-                </ActionButton>
-                <ActionButton
-                  variant={viewMode === "kanban" ? "ghostPrimary" : "ghost"}
-                  onClick={() => setViewMode("kanban")}
-                >
-                  Kanban
-                </ActionButton>
+                <ActionButton variant={viewMode === "table" ? "ghostPrimary" : "ghost"} onClick={() => setViewMode("table")}>Table</ActionButton>
+                <ActionButton variant={viewMode === "kanban" ? "ghostPrimary" : "ghost"} onClick={() => setViewMode("kanban")}>Kanban</ActionButton>
+                {
+                  (role_slug == "admin" || role_slug == "super_admin") && 
+                  <ActionButton variant={viewAll ? "ghostPrimary" : "ghost"} onClick={() => setViewAll((prev)=> !prev)}>All</ActionButton>
+                }
               </div>
             </ModuleControls>
           </div>
@@ -362,6 +353,14 @@ function TicketModulePage({ menuID }) {
             rows={ticketList}
             config={ticketsModuleSchema.kanban}
             loading={loading}
+            lazyLoad
+            reloadKey={JSON.stringify({
+              searchText: filterState.searchText,
+              filters: filterState.filters,
+              order: filterState.order,
+              order_by: filterState.order_by,
+            })}
+            onLoadColumnPage={getKanbanColumnPage}
             editRow={(ticket) => {
               setSelectedTicket(ticket);
               setIsFlyoutOpen(true);
@@ -371,7 +370,9 @@ function TicketModulePage({ menuID }) {
         )
         }
         footer={
-          <ModulePagination pagination={pagination} onPageChange={setPage} />
+          viewMode === "table" ? (
+            <ModulePagination pagination={pagination} onPageChange={setPage} />
+          ) : null
         }
       />
 

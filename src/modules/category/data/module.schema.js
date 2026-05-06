@@ -63,7 +63,7 @@ const CATEGORY_COLORS = [
 export const categoryModuleSchema = {
   title: "Category",
   description: "Manage parent and child categories, tag colors, and list visibility from one place.",
-  menuID: null,
+  menu_id: null,
   primaryKey: "category_id",
   api: {
     list: "/categories",
@@ -74,7 +74,7 @@ export const categoryModuleSchema = {
     definitionsFallback: "/system/getstructure",
   },
   definitionRequest: {
-    menuIDField: "menuID",
+    menuIDField: "menu_id",
     modelNameField: "model_name",
     modelName: "category",
   },

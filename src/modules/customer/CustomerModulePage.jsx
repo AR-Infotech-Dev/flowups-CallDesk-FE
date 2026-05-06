@@ -20,8 +20,8 @@ import ResizableTable from "../../components/table/ResizableTable";
 import CustomerForm from "./components/CustomerForm";
 import { customerFallbackColumns, customerModuleSchema } from "./data/module.schema";
 
-function CustomerModulePage({ menuID }) {
-  const resolvedMenuID = menuID || customerModuleSchema.menuID || null;
+function CustomerModulePage({ menu_id }) {
+  const resolvedMenuID = menu_id || customerModuleSchema.menu_id || null;
 
   const [fields, setFields] = useState([]);
   const [customerList, setCustomerList] = useState([]);
@@ -112,6 +112,8 @@ function CustomerModulePage({ menuID }) {
   };
 
   const handleToggleRow = (rowId, checked) => {
+    console.log('rowId : ',rowId);
+    
     setSelectedRowIds((current) =>
       checked ? [...new Set([...current, rowId])] : current.filter((item) => item !== rowId)
     );
@@ -123,7 +125,7 @@ function CustomerModulePage({ menuID }) {
       return;
     }
 
-    setSelectedRowIds(customerList.map((row) => row?.customer_id ?? row?.id).filter(Boolean));
+    setSelectedRowIds(customerList.map((row) => row.customer_id).filter(Boolean));
   };
 
   const handleDeleteSelected = async () => {

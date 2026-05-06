@@ -8,7 +8,7 @@ const FIXED_TABLE_COLUMNS = [
 export const customerModuleSchema = {
   title: "Customer",
   description: "Manage customer profile, contacts, company mapping, and billing details from one place.",
-  menuID: null,
+  menu_id: null,
   primaryKey: "customer_id",
   api: {
     list: "/customers",
@@ -19,7 +19,7 @@ export const customerModuleSchema = {
     definitionsFallback: "/system/getstructure",
   },
   definitionRequest: {
-    menuIDField: "menuID",
+    menuIDField: "menu_id",
     modelNameField: "model_name",
     modelName: "customer",
   },
@@ -48,16 +48,16 @@ export const customerModuleSchema = {
     initialValues: {
       customer_id: null,
       name: "",
-      email: "",
+      email: null,
       mobile_no: "",
-      wa_no: "",
-      birth_date: "",
-      address: "",
-      pan_number: "",
-      company_name: "",
-      billing_name: "",
-      billing_address: "",
-      company_id: "",
+      wa_no: null,
+      birth_date: null,
+      address: null,
+      pan_number: null,
+      company_name: null,
+      billing_name: null,
+      billing_address: null,
+      company_id: null,
       mailing_address: "",
       created_by: null,
       created_date: null,
@@ -65,48 +65,25 @@ export const customerModuleSchema = {
     },
     sections: [
       {
-        columns: 2,
+        columns: 1,
         fields: [
           { name: "name", label: "Customer Name", type: "text", required: true, placeholder: "Enter customer name", gridSpan: 6 },
-          { name: "email", label: "Email", type: "email", placeholder: "Enter email address", gridSpan: 6 },
+        ],
+      },
+      {
+        columns: 4,
+        fields: [
+          { name: "contact_person", label: "Contact Person", type: "text", placeholder: "Enter placeholder name", gridSpan: 4 },
+          { name: "mobile_no", label: "Mobile No", type: "text", required: true, placeholder: "Enter mobile number", gridSpan: 4 },
+          { name: "pan_number", label: "PAN Number", type: "text", placeholder: "Enter PAN number", gridSpan: 4 },
         ],
       },
       {
         columns: 3,
         fields: [
-          { name: "mobile_no", label: "Mobile No", type: "text", required: true, placeholder: "Enter mobile number", gridSpan: 4 },
+          { name: "email", label: "Email", type: "email", placeholder: "Enter email address", gridSpan: 4},
           { name: "wa_no", label: "WhatsApp No", type: "text", placeholder: "Enter WhatsApp number", gridSpan: 4 },
-          { name: "birth_date", label: "Birth Date", type: "date", placeholder: "Select birth date", gridSpan: 4 },
-        ],
-      },
-      {
-        columns: 2,
-        fields: [
-          { name: "pan_number", label: "PAN Number", type: "text", placeholder: "Enter PAN number", gridSpan: 6 },
-          {
-            name: "company_id",
-            label: "Mapped Company",
-            type: "smartSelect",
-            id: "company_id",
-            gridSpan: 6,
-            config: {
-              apiUrl: "/system/searchList",
-              tableName: "info_settings",
-              selectFields: "company_name,infoID",
-              searchField: "company_name",
-              labelKey: "company_name",
-              valueKey: "infoID",
-              placeholder: "Select Company",
-              multi: false,
-            },
-          },
-        ],
-      },
-      {
-        columns: 2,
-        fields: [
-          { name: "company_name", label: "Company Name", type: "text", placeholder: "Enter company name", gridSpan: 6 },
-          { name: "billing_name", label: "Billing Name", type: "text", placeholder: "Enter billing name", gridSpan: 6 },
+          { name: "gst_number", label: "GST Number", type: "text", placeholder: "Enter GST number", gridSpan: 4 },
         ],
       },
       {
@@ -115,31 +92,19 @@ export const customerModuleSchema = {
           { name: "address", label: "Address", type: "textarea", rows: 3, placeholder: "Enter primary address", gridSpan: 12 },
         ],
       },
-      {
-        columns: 2,
-        fields: [
-          { name: "billing_address", label: "Billing Address", type: "textarea", rows: 3, placeholder: "Enter billing address", gridSpan: 6 },
-          { name: "mailing_address", label: "Mailing Address", type: "textarea", rows: 3, placeholder: "Enter mailing address", gridSpan: 6 },
-        ],
-      },
     ],
   },
   validationSchema: z.object({
     name: z.string().trim().min(1, "Customer name is required"),
-    email: z.union([z.literal(""), z.string().email("Invalid email address")]).optional(),
+    email: z.union([z.literal(null), z.string().email("Invalid email address")]).optional(),
     mobile_no: z.string().trim().min(10, "Mobile number is required"),
-    wa_th_date: z.string().optional(),
+    wa_no: z.union([z.literal(null), z.string()]).optional(),
     addno: z.string().optional(),
     birress: z.string().optional(),
     pan_number: z.union([
-      z.literal(""),
+      z.literal(null),
       z.string().trim().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, "Invalid PAN number"),
     ]).optional(),
-    company_name: z.string().optional(),
-    billing_name: z.string().optional(),
-    billing_address: z.string().optional(),
-    company_id: z.any().optional(),
-    mailing_address: z.string().optional(),
   }),
 };
 

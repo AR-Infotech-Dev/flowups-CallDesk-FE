@@ -16,8 +16,8 @@ import UserForm from "./components/UserForm";
 import ResizableTable from "../../components/table/ResizableTable";
 import { usersFallbackColumns, usersModuleSchema } from "./data/module.schema";
 
-function UsersModulePage({ menuID }) {
-  const resolvedMenuID = menuID || usersModuleSchema.menuID || null;
+function UsersModulePage({ menu_id }) {
+  const resolvedMenuID = menu_id || usersModuleSchema.menu_id || null;
   const [fields, setFields] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);

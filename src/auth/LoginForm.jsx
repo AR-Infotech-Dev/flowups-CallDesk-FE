@@ -1,16 +1,12 @@
-
-
-
 import '../auth/styles/auth.css';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { makeRequest } from "../api/httpClient";
-import { saveAuthSession } from "./authStorage";
+import { saveAuthSession, savePermissions } from "./authStorage";
 import { useAuth } from "./AuthProvider";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Spinner from '../components/ui/Spinner';
-
 
 function LoginForm() {
   const navigate = useNavigate();
@@ -23,6 +19,44 @@ function LoginForm() {
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const normalizePermissionMap = (payload = {}) => {
+    const source =
+      payload?.permissions ||
+      payload?.data?.permissions ||
+      payload?.data ||
+      payload;
+
+    if (Array.isArray(source)) {
+      return source.reduce((accumulator, item) => {
+        const menuId = item?.menu_id || item?.menuID || item?.menuId || item?.id;
+        if (menuId) accumulator[String(menuId)] = item;
+        return accumulator;
+      }, {});
+    }
+
+    return source && typeof source === "object" ? source : {};
+  };
+
+  const fetchAndStorePermissions = async (userId) => {
+    if (!userId) {
+      savePermissions({});
+      return {};
+    }
+
+    const res = await makeRequest(`/permissions/${userId}`, {
+      method: "GET",
+    });
+
+    if (!res?.success) {
+      savePermissions({});
+      return {};
+    }
+
+    const permissions = normalizePermissionMap(res);
+    savePermissions(permissions);
+    return permissions;
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -58,6 +92,7 @@ function LoginForm() {
       };
 
       saveAuthSession(session);
+      await fetchAndStorePermissions(session.authid);
       login(session);
       toast.success("Login success");
       navigate("/users");

@@ -15,10 +15,10 @@ const SECTION_COLUMN_CLASS = {
 };
 
 const FIELD_SPAN_CLASS = {
-  1: "col-span-12",
-  2: "col-span-12 md:col-span-6",
-  3: "col-span-12 md:col-span-4",
-  4: "col-span-12 md:col-span-3",
+  1: "col-span-12 md:col-span-1",
+  2: "col-span-12 md:col-span-2",
+  3: "col-span-12 md:col-span-3",
+  4: "col-span-12 md:col-span-4",
   5: "col-span-12 md:col-span-5",
   6: "col-span-12 md:col-span-6",
   7: "col-span-12 md:col-span-7",
@@ -29,7 +29,7 @@ const FIELD_SPAN_CLASS = {
   12: "col-span-12",
 };
 
-function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelect, errors = {}, oldValues = {}, mode = '' }) {
+function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelect, addNewHandlers = {}, errors = {}, oldValues = {}, mode = '' }) {
   const getConditionalFlag = (field, key) => {
     const flag = field[key];
     return typeof flag === "function" ? Boolean(flag(values)) : Boolean(flag);
@@ -69,6 +69,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
           value={value}
           onSelect={emitValueChange}
           onObjectSelect={(item) => onObjectSelect?.(field, item)}
+          addNewFunction={addNewHandlers[field.name]}
           config={field.config}
           error={errors[field.name]}
         />;
@@ -94,12 +95,11 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                 <h4 className="">{section.title || ''}</h4>
               </div>
             }
-            <div key={`section-${sectionIndex}`} className={`mb-1 ${SECTION_COLUMN_CLASS[section.columns] || SECTION_COLUMN_CLASS[2]}`}>
+            <div key={`section-${sectionIndex}`} className={`mb-2 ${SECTION_COLUMN_CLASS[section.columns] || SECTION_COLUMN_CLASS[2]}`}>
               {section.fields.map((field) => {
                 const isVisible = field.visibleWhen
                   ? field.visibleWhen(values, oldValues, mode)
                   : true;
-                console.log("isvisible :", isVisible);
 
                 if (!isVisible) return null;
                 const isDisabled = getConditionalFlag(field, "disabled") || getConditionalFlag(field, "disabledWhen");

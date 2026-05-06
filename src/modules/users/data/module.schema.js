@@ -11,7 +11,7 @@ export const usersModuleSchema = {
   // default columns, skip fields, label mappings, and form sections only.
   title: "Users",
   description: "Manage users, roles, company assignment, and approval access from one place.",
-  menuID: 20,
+  menu_id: 20,
   primaryKey: 'adminID',
   api: {
     list: "/users",
@@ -22,7 +22,7 @@ export const usersModuleSchema = {
     definitionsFallback: "/system/getstructure",
   },
   definitionRequest: {
-    menuIDField: "menuID",
+    menuIDField: "menu_id",
     modelNameField: "model_name",
     modelName: "user",
   },
@@ -42,9 +42,9 @@ export const usersModuleSchema = {
     {
       field: "default_company",
       fieldtype: "company",
-      joinedTable: "info_settings",
-      select: "infoID,company_name",
-      primaryKey: "infoID",
+      joinedTable: "company_master",
+      select: "company_id,company_name",
+      primaryKey: "company_id",
       labelKey: "company_name",
       slug: "",
       options: [],
@@ -166,11 +166,11 @@ export const usersModuleSchema = {
             id: "company_id",
             config: {
               apiUrl: "/system/searchList",
-              tableName: "info_settings",
-              selectFields: "company_name,infoID",
+              tableName: "company_master",
+              selectFields: "company_name,company_id",
               searchField: "company_name",
               labelKey: "company_name",
-              valueKey: "infoID",
+              valueKey: "company_id",
               placeholder: "Select Company",
               multi: false
             }
@@ -245,29 +245,43 @@ export const usersModuleSchema = {
       },
     ],
   },
+  // validationSchema: z.object({
+  //   name: z.string().min(1, "Name is required").nullable(),
+  //   userName: z.string().min(3, "Username must be at least 3 characters"),
+  //   email: z.string().email("Invalid email address"),
+  //   dateOfBirth: z.coerce.date()
+  //     .min(new Date("1900-01-01"), { message: "Too old" })
+  //     .max(new Date(), { message: "Birth date cannot be in the future" }),
+  //   roleID: z.any().refine((value) => value !== "" && value !== null && value !== undefined, {
+  //     message: "Role is required",
+  //   }),
+  //   status: z.string()
+  // })
   validationSchema: z.object({
-    name: z.string().min(1, "Name is required"),
-
-    userName: z.string().min(3, "Username must be at least 3 characters"),
-
-    email: z.string().email("Invalid email address"),
-
-    dateOfBirth: z.coerce.date()
-      .min(new Date("1900-01-01"), { message: "Too old" })
-      .max(new Date(), { message: "Birth date cannot be in the future" }),
-
-    // contactNo: z.string()
-    //   .min(10, "Mobile number must be 10 digits")
-    //   .max(10, "Mobile number must be 10 digits"),
-
+    name: z.string().nullable().refine((val) => val !== null && val.trim() !== "", {
+      message: "Name is required",
+    }),
+    userName: z.string().nullable().refine((val) => val !== null && val.trim() !== "", {
+      message: "User Name is required",
+    }),
+    email: z.string().nullable().refine((val) => val !== null && val.trim() !== "", {
+      message: "Email is required",
+    }).refine((val) => /\S+@\S+\.\S+/.test(val), {
+      message: "Invalid email address",
+    }),
+    dateOfBirth: z.coerce.date().nullable()
+      .refine((val) => val !== null, {
+        message: "Date of Birth is required",
+      })
+      .refine((val) => val && val >= new Date("1900-01-01"), {
+        message: "Too old",
+      })
+      .refine((val) => val && val <= new Date(), {
+        message: "Birth date cannot be in the future",
+      }),
     roleID: z.any().refine((value) => value !== "" && value !== null && value !== undefined, {
       message: "Role is required",
     }),
-
-    // password: z.string()
-    //   .min(6, "Password minimum 6 characters")
-    //   .optional(),
-
     status: z.string()
   })
 };

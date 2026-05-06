@@ -40,9 +40,12 @@ function getRowIdentifier(row) {
     row?.adminID ??
     row?.ticketID ??
     row?.ticket_id ??
-    row?.menu_id ??
     row?.roleId ??
-    row?.userId
+    row?.userId ??
+    row?.menu_id ??
+    row?.customer_id ??
+    row?.company_id ??
+    row?.category_id
   );
 }
 
@@ -88,25 +91,6 @@ function getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys = []) {
   }
 
   return columns.map((column) => column.key);
-}
-
-function reorderKeys(keys, keyToMove, direction) {
-  const currentIndex = keys.indexOf(keyToMove);
-
-  if (currentIndex === -1) {
-    return keys;
-  }
-
-  const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-
-  if (targetIndex < 0 || targetIndex >= keys.length) {
-    return keys;
-  }
-
-  const nextKeys = [...keys];
-  const [movedItem] = nextKeys.splice(currentIndex, 1);
-  nextKeys.splice(targetIndex, 0, movedItem);
-  return nextKeys;
 }
 
 // function getColumnCellType(column) {
@@ -177,7 +161,8 @@ function getBadgeClassName(type, colorValue, fallbackClassName) {
 function renderCheckboxCell(row, selectionProps) {
   const rowId = getRowIdentifier(row);
   const { selectedRowIds = [], onToggleRow } = selectionProps;
-
+  console.log('rowId : ',rowId);
+  
   return (
     <input
       type="checkbox"
@@ -495,35 +480,6 @@ function ResizableTable({
     [columnWidths, columns, visibleColumnKeys]
   );
 
-  const hiddenColumns = useMemo(
-    () =>
-      columns.filter(
-        (column) =>
-          !visibleColumnKeys.includes(column.key) &&
-          !column.checkbox &&
-          column.className !== "icon-col"
-      ),
-    [columns, visibleColumnKeys]
-  );
-
-  const removableColumns = useMemo(() => {
-    const items = visibleColumnKeys
-      .map((key) => columns.find((column) => column.key === key))
-      .filter(
-        (column) =>
-          column &&
-          !column.checkbox &&
-          column.className !== "icon-col" &&
-          !column.isAlwaysVisible
-      );
-
-    return items.map((column, index) => ({
-      ...column,
-      isFirst: index === 0,
-      isLast: index === items.length - 1,
-    }));
-  }, [columns, visibleColumnKeys]);
-
   const tableWidth = useMemo(
     () => resolvedColumns.reduce((sum, column) => sum + column.currentWidth, 0),
     [resolvedColumns]
@@ -553,28 +509,14 @@ function ResizableTable({
     }));
   };
 
-  const handleShowColumn = (columnKey) => {
-    setVisibleColumnKeys((current) => [...new Set([...current, columnKey])]);
-  };
-
-  const handleHideColumn = (columnKey) => {
-    setVisibleColumnKeys((current) => current.filter((key) => key !== columnKey));
-  };
-
-  const handleMoveColumn = (columnKey, direction) => {
-    setVisibleColumnKeys((current) => reorderKeys(current, columnKey, direction));
-  };
-
   return (
     <div className="table-card">
       <ColumnArranger
         setIsColumnMenuOpen={setIsColumnMenuOpen}
         isColumnMenuOpen={isColumnMenuOpen}
-        hiddenColumns={hiddenColumns}
-        removableColumns={removableColumns}
-        onShowColumn={handleShowColumn}
-        onHideColumn={handleHideColumn}
-        onMoveColumn={handleMoveColumn}
+        columns={columns}
+        visibleColumnKeys={visibleColumnKeys}
+        onApplyColumnKeys={setVisibleColumnKeys}
       />
 
       <div className="table-scroll-x">

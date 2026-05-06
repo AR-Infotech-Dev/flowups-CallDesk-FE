@@ -46,7 +46,6 @@ export default function NotificationBell() {
             window.focus();
             notify.close();
         };
-
         setTimeout(() => notify.close(), 5000);
     };
 
@@ -55,21 +54,11 @@ export default function NotificationBell() {
     =================================================== */
     const getCount = useCallback(async () => {
         try {
-            const res = await makeRequest(
-                "/notifications/unread-count"
-            );
-
+            const res = await makeRequest("/notifications/unread-count");
             if (!res.success) return;
-
             const total = Number(res.total || 0);
-
             setCount(total);
-
-            localStorage.setItem(
-                "notification_count",
-                total
-            );
-
+            localStorage.setItem("notification_count", total);
         } catch (error) {
             console.log(error);
         }
@@ -81,19 +70,15 @@ export default function NotificationBell() {
     const getNotifications =
         useCallback(async () => {
             try {
-                const res =
-                    await makeRequest(
-                        "/notifications",
-                        {
-                            method: "POST",
-                            body: { page: 1 }
-                        }
-                    );
-
+                const res = await makeRequest("/notifications",
+                    {
+                        method: "POST",
+                        body: { page: 1 }
+                    }
+                );
                 if (res.success) {
                     setList(res.data || []);
                 }
-
             } catch (error) {
                 console.log(error);
             }
@@ -105,25 +90,18 @@ export default function NotificationBell() {
     const readNotification =
         async (notification_id) => {
             try {
-                const res =
-                    await makeRequest(
-                        `/notifications/read/${notification_id}`,
-                        { method: "GET" }
-                    );
-
+                const res = await makeRequest(`/notifications/read/${notification_id}`,
+                    { method: "GET" }
+                );
                 if (!res.success) return;
-
                 setList((prev) =>
-                    prev.map((item) =>
-                        item.notification_id === notification_id
-                            ? { ...item, is_read: "y" }
-                            : item
+                    prev.map((item) => item.notification_id === notification_id
+                        ? { ...item, is_read: "y" }
+                        : item
                     )
                 );
 
-                setCount((prev) =>
-                    prev > 0 ? prev - 1 : 0
-                );
+                setCount((prev) => prev > 0 ? prev - 1 : 0);
 
             } catch (error) {
                 console.log(error);
@@ -170,8 +148,7 @@ export default function NotificationBell() {
                 {
                     ...data,
                     is_read: "n",
-                    created_date:
-                        data.created_date || new Date()
+                    created_date: data.created_date || new Date()
                 },
                 ...prev
             ]);
@@ -203,16 +180,11 @@ export default function NotificationBell() {
     =================================================== */
     useEffect(() => {
         const handleClick = (event) => {
-            if (
-                boxRef.current &&
-                !boxRef.current.contains(event.target)
-            ) {
+            if (boxRef.current && !boxRef.current.contains(event.target)) {
                 setOpen(false);
             }
         };
-
         document.addEventListener("mousedown", handleClick);
-
         return () => {
             document.removeEventListener("mousedown", handleClick);
         };
@@ -224,7 +196,6 @@ export default function NotificationBell() {
     const openBell = async () => {
         const next = !open;
         setOpen(next);
-
         if (next) {
             await getNotifications();
         }
@@ -290,8 +261,8 @@ export default function NotificationBell() {
                                         handleNotificationClick(item)
                                     }
                                     className={`px-4 py-3 border-b cursor-pointer hover:bg-gray-50 ${item.is_read === "n"
-                                            ? "bg-blue-50"
-                                            : ""
+                                        ? "bg-blue-50"
+                                        : ""
                                         }`}
                                 >
                                     <h4 className="text-sm font-semibold">

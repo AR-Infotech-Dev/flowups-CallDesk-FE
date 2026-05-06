@@ -283,6 +283,7 @@ function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
       isOpen={isOpen}
       onClose={handleClose}
       title={selectedUser ? "Edit User" : "Create User"}
+      panelClassName="!w-[640px] max-w-full"
       closeButton={
         <button className="flyout-close" onClick={onClose} aria-label="Close panel">
           <X size={18} />
@@ -299,7 +300,7 @@ function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
         </ActionButton>
       }
     >
-      <div className="flyout-form-shell">
+      <div className="flyout-form-shell px-2 py-1">
         <div className="ws-main-container">
           {fetchingUser ? (
             <div className="p-5 text-center">

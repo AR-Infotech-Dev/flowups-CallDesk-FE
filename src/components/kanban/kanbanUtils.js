@@ -5,6 +5,7 @@ function normalizeMatchValue(value) {
     .replace(/[_\s-]+/g, " ");
 }
 
+// Compares row status with a Kanban column using id, title, slug, or category name.
 function matchesColumn(rowValue, column) {
   const normalizedRowValue = normalizeMatchValue(rowValue);
   if (!normalizedRowValue) {
@@ -24,6 +25,7 @@ function matchesColumn(rowValue, column) {
   return candidates.includes(normalizedRowValue);
 }
 
+// Converts category API response into the small shape used by the board.
 export function normalizeKanbanColumns(rawColumns = [], config = {}) {
   const valueKey = config.categoryValueKey || "category_id";
   const labelKey = config.categoryLabelKey || "categoryName";
@@ -37,6 +39,7 @@ export function normalizeKanbanColumns(rawColumns = [], config = {}) {
   })).filter((item) => item.id);
 }
 
+// Groups incoming rows by Kanban column and attaches UI-only metadata.
 export function buildKanbanState(columns = [], rows = [], config = {}) {
   const statusField = config.statusField;
   const idField = config.idField;
@@ -57,13 +60,23 @@ export function buildKanbanState(columns = [], rows = [], config = {}) {
   }, {});
 }
 
+// Finds the current column for a card id inside the board state.
 export function findColumnIdForCard(boardState = {}, cardId) {
   return Object.keys(boardState).find((columnId) =>
     (boardState[columnId] || []).some((item) => String(item._kanbanId) === String(cardId))
   );
 }
 
-export function reorderKanbanState(boardState, activeCardId, fromColumnId, toColumnId, targetIndex = -1) {
+// Reorders cards locally after drag/drop; backend persistence happens in KanbanBoard.
+export function reorderKanbanState(
+  boardState,
+  activeCardId,
+  fromColumnId,
+  toColumnId,
+  targetIndex = -1,
+  config = {},
+  targetColumn = null
+) {
   const nextState = Object.fromEntries(
     Object.entries(boardState).map(([columnId, items]) => [columnId, [...items]])
   );
@@ -75,8 +88,15 @@ export function reorderKanbanState(boardState, activeCardId, fromColumnId, toCol
     return boardState;
   }
 
-  const [movingItem] = sourceItems.splice(movingIndex, 1);
-  movingItem._kanbanStatus = toColumnId;
+  const [sourceItem] = sourceItems.splice(movingIndex, 1);
+  const movingItem = {
+    ...sourceItem,
+    ...(config.statusField ? { [config.statusField]: toColumnId } : {}),
+    _kanbanStatus: toColumnId,
+    _kanbanColumnId: toColumnId,
+    _kanbanColumnTitle: targetColumn?.title || sourceItem._kanbanColumnTitle,
+    _kanbanColumnColor: targetColumn?.color || sourceItem._kanbanColumnColor,
+  };
 
   const destinationItems = nextState[toColumnId] || [];
   const safeTargetIndex =

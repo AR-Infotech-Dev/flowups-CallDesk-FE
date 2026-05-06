@@ -19,10 +19,10 @@ import MenuForm from "./components/MenuForm";
 import {
   menuMasterFallbackColumns,
   menuMasterSchema,
-} from "./data/module.";
+} from "./data/module.schema";
 
-function MenuModulePage({ menuID }) {
-  const resolvedMenuID = menuID || menuMasterSchema.menuID || null;
+function MenuMasterModulePage({ menu_id }) {
+  const resolvedMenuID = menu_id || menuMasterSchema.menu_id || null;
 
   const [fields, setFields] = useState([]);
   const [menuList, setMenuList] = useState([]);
@@ -221,7 +221,7 @@ function MenuModulePage({ menuID }) {
       menuList
         .map(
           (row) =>
-            row?.menuID ??
+            row?.menu_id ??
             row?.id
         )
         .filter(Boolean)
@@ -393,4 +393,4 @@ function MenuModulePage({ menuID }) {
   );
 }
 
-export default MenuModulePage;
+export default MenuMasterModulePage;

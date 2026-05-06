@@ -16,8 +16,8 @@ const DATE_FORMAT_OPTIONS = [
 export const companyMasterSchema = {
   title: "Company Master",
   description: "Manage company profile, contact emails, address details, and formatting preferences from one place.",
-  menuID: null,
-  primaryKey: "infoID",
+  menu_id: null,
+  primaryKey: "company_id",
   api: {
     list: "/companies",
     delete: "/companies/delete",
@@ -27,7 +27,7 @@ export const companyMasterSchema = {
     definitionsFallback: "/system/getstructure",
   },
   definitionRequest: {
-    menuIDField: "menuID",
+    menuIDField: "menu_id",
     modelNameField: "model_name",
     modelName: "companyMaster",
   },
@@ -53,7 +53,7 @@ export const companyMasterSchema = {
   savedFilters: [],
   form: {
     initialValues: {
-      infoID: null,
+      company_id: null,
       company_name: "",
       from_email: "",
       cc_email: "",
@@ -80,7 +80,7 @@ export const companyMasterSchema = {
         columns: 2,
         fields: [
           { name: "company_name", label: "Company Name", type: "text", required: true, placeholder: "Enter company name", gridSpan: 6 },
-          { name: "from_name", label: "From Name", type: "text", placeholder: "Enter sender name", gridSpan: 6 },
+          { name: "mobile_number", label: "Mobile Number", type: "text", placeholder: "Enter mobile number", gridSpan: 6 },
         ],
       },
       {
@@ -92,6 +92,13 @@ export const companyMasterSchema = {
         ],
       },
       {
+        columns: 3,
+        fields: [
+          { name: "zip", label: "ZIP", type: "text", placeholder: "Enter ZIP code", gridSpan: 4 },
+          { name: "pan", label: "PAN", type: "text", placeholder: "Enter PAN number", gridSpan: 4 },
+        ],
+      },
+      {
         columns: 1,
         fields: [
           { name: "company_address", label: "Company Address", type: "textarea", rows: 3, placeholder: "Enter company address", gridSpan: 12 },
@@ -100,29 +107,25 @@ export const companyMasterSchema = {
       {
         title: 'Application Settings',
         icon: Settings,
-        columns: 3,
+        columns: 4,
         fields: [
-          { name: "from_email", label: "From Email", type: "email", required: true, placeholder: "Enter from email", gridSpan: 4 },
-          { name: "cc_email", label: "CC Email", type: "email", placeholder: "Enter cc email", gridSpan: 4 },
-          { name: "mobile_number", label: "Mobile Number", type: "text", placeholder: "Enter mobile number", gridSpan: 4 },
+          { name: "sender_name", label: "Sender Name", type: "text", placeholder: "Enter sender name", gridSpan: 4 },
+          { name: "sender_email", label: "Sender Email", type: "email", required: true, placeholder: "Enter sender email", gridSpan: 4 },
+          { name: "email_app_password", label: "Email App Password", type: "password", placeholder: "Enter email app password", gridSpan: 4 },
         ],
       },
-
-
       {
         columns: 3,
         fields: [
-          { name: "zip", label: "ZIP", type: "text", placeholder: "Enter ZIP code", gridSpan: 4 },
-          { name: "pan", label: "PAN", type: "text", placeholder: "Enter PAN number", gridSpan: 4 },
           { name: "date_format", label: "Date Format", type: "select", gridSpan: 4, options: DATE_FORMAT_OPTIONS },
         ],
       },
-      {
-        columns: 2,
-        fields: [
-          { name: "email_logo", label: "Email Logo", type: "text", placeholder: "Enter logo URL/path", gridSpan: 6 },
-        ],
-      },
+      // {
+      //   columns: 2,
+      //   fields: [
+      //     { name: "email_logo", label: "Email Logo", type: "text", placeholder: "Enter logo URL/path", gridSpan: 6 },
+      //   ],
+      // },
       {
         columns: 2,
         fields: [
@@ -143,9 +146,10 @@ export const companyMasterSchema = {
   },
   validationSchema: z.object({
     company_name: z.string().trim().min(1, "Company name is required"),
-    from_email: z.string().trim().email("Invalid from email address"),
     cc_email: z.union([z.literal(""), z.string().trim().email("Invalid CC email address")]).optional(),
-    from_name: z.string().optional(),
+    sender_email: z.string().trim().email("Invalid from email address"),
+    sender_name: z.string().optional(),
+    email_app_password: z.string().optional(),
     mobile_number: z.string().optional(),
     company_address: z.string().optional(),
     country: z.string().optional(),
