@@ -42,6 +42,7 @@ export const makeRequest = async (url, options = {}) => {
         },2000)
       }
       return {
+        ...error.response.data,
         success: false,
         message: error.response.data?.message || "Server error",
         status: error.response.status,

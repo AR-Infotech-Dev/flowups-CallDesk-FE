@@ -43,7 +43,6 @@ function LoginForm() {
       });
 
       if (!res.success) {
-        console.log(res, 111);
         toast.error(res.message);
         return;
       }
@@ -57,7 +56,7 @@ function LoginForm() {
       saveAuthSession(session);
       const [permissions, menus] = await Promise.all([
         fetchUserPermissions(session.authid),
-        fetchMenuList(),
+        fetchMenuList('ithech Login madhe'),
       ]);
       savePermissions(permissions);
       saveMenuList(menus);
@@ -104,7 +103,8 @@ function LoginForm() {
 
         <a href="" className="text-blue-500 hover:underline">Forgot Password ?</a>
       </div>
-      <button type="submit" className="w-full bg-brand-primary text-white py-2 rounded-md hover:bg-primary/90 font-medium  text-sm mb-4" onClick={handleLogin}>
+      {/* Form submit already calls handleLogin, so button click should not call it again. */}
+      <button type="submit" className="w-full bg-brand-primary text-white py-2 rounded-md hover:bg-primary/90 font-medium  text-sm mb-4">
         {loading ? <Spinner /> : "Sign In"}
       </button>
     </form>

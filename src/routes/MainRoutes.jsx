@@ -41,7 +41,16 @@ const menuRouteComponents = {
 function DefaultMenuRedirect() {
   const { authSession } = useAuth();
   const fallbackPath = getFirstAllowedPath({ user: authSession?.user });
-  return <Navigate to={fallbackPath || "/login"} replace />;
+
+  if (fallbackPath) {
+    return <Navigate to={fallbackPath} replace />;
+  }
+
+  if (!authSession) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <NoMenuPermission />;
 }
 
 function RouteFallback({ loading }) {
@@ -49,6 +58,19 @@ function RouteFallback({ loading }) {
     return <div className="p-6 text-sm text-slate-500">Loading menu...</div>;
   }
   return <DefaultMenuRedirect />;
+}
+
+function NoMenuPermission() {
+  return (
+    <div className="flex min-h-[420px] items-center justify-center p-6">
+      <div className="max-w-sm rounded-md border border-slate-200 bg-white p-6 text-center">
+        <h2 className="text-base font-semibold text-slate-900">No Menu Permission</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          You are logged in, but no menu view permission is available for this user.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function MainRoutes() {
@@ -65,7 +87,12 @@ function MainRoutes() {
 
       try {
         setLoadingMenus(true);
-        const nextMenus = await fetchMenuList();
+        const stored = getStoredMenuList();
+        if (stored.length) {
+          setMenus(stored);
+          return;
+        }
+        const nextMenus = await fetchMenuList('ithech mainroutes madhe');
         saveMenuList(nextMenus);
         setMenus(nextMenus);
       } finally {

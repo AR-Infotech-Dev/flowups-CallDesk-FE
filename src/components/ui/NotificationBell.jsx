@@ -6,6 +6,13 @@ import { formatRelativeTime } from "../../utils/common";
 import { messageTone } from "../../../assets/sounds";
 import socket from "../../socket";
 
+let unreadCountRequest = null;
+let unreadCountCache = {
+    total: Number(localStorage.getItem("notification_count")) || 0,
+    fetchedAt: 0,
+};
+const UNREAD_COUNT_CACHE_TIME = 60 * 1000;
+
 export default function NotificationBell() {
     const navigate = useNavigate();
     const initialCount = Number(localStorage.getItem("notification_count")) || 0;
@@ -54,13 +61,32 @@ export default function NotificationBell() {
     =================================================== */
     const getCount = useCallback(async () => {
         try {
-            const res = await makeRequest("/notifications/unread-count");
-            if (!res.success) return;
-            const total = Number(res.total || 0);
+            const now = Date.now();
+            if (now - unreadCountCache.fetchedAt < UNREAD_COUNT_CACHE_TIME) {
+                setCount(unreadCountCache.total);
+                return;
+            }
+
+            if (unreadCountRequest) {
+                const total = await unreadCountRequest;
+                setCount(total);
+                return;
+            }
+
+            unreadCountRequest = makeRequest("/notifications/unread-count").then((res) => {
+                if (!res.success) return unreadCountCache.total;
+                const total = Number(res.total || 0);
+                unreadCountCache = { total, fetchedAt: Date.now() };
+                localStorage.setItem("notification_count", total);
+                return total;
+            });
+
+            const total = await unreadCountRequest;
             setCount(total);
-            localStorage.setItem("notification_count", total);
         } catch (error) {
             console.log(error);
+        } finally {
+            unreadCountRequest = null;
         }
     }, []);
 
@@ -157,13 +183,17 @@ export default function NotificationBell() {
         socket.on("new_notification", onNotification);
 
         /* 🔥 reconnect fix */
-        socket.on("connect", () => {
+        const onConnect = () => {
             console.log("Socket Reconnected");
             socket.emit("join_room", userId);
-        });
+        };
+
+        socket.on("connect", onConnect);
 
         return () => {
             socket.off("new_notification", onNotification);
+            socket.off("connect", onConnect);
+            socket.disconnect();
         };
 
     }, []);

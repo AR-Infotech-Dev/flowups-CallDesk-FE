@@ -1,6 +1,9 @@
 import { getStoredMenuList, getStoredPermissions } from "./authStorage";
 import { makeRequest } from "../api/httpClient";
 
+let menuListRequest = null;
+let menuListForbidden = false;
+
 export const toBoolean = (value) => {
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value === 1;
@@ -158,19 +161,35 @@ export const fetchUserPermissions = async (userId) => {
   return res?.success ? normalizePermissionMap(res) : {};
 };
 
-export const fetchMenuList = async () => {
-  let res = await makeRequest("/menus/getMenuList", {
-    method: "GET",
-  });
+export const fetchMenuList = async (msg) => {
+  const storedMenus = getStoredMenuList();
+  if (storedMenus.length) return storedMenus;
+  if (menuListForbidden) return [];
 
-  if (!res?.success) {
-    res = await makeRequest("/menus", {
+  if (menuListRequest) return menuListRequest;
+
+  menuListRequest = (async () => {
+    const res = await makeRequest("/menus", {
       method: "POST",
       body: { getAll: "Y" },
     });
-  }
 
-  return res?.success ? res.data || [] : [];
+    if (res?.success) return res.data || [];
+
+    // If backend says current user cannot view Menu Master,
+    // do not keep calling /menus again and again in the same app session.
+    if (res?.type === "FORBIDDEN" || res?.code === 2007 || res?.status === 403) {
+      menuListForbidden = true;
+    }
+
+    return [];
+  })();
+
+  try {
+    return await menuListRequest;
+  } finally {
+    menuListRequest = null;
+  }
 };
 
 export const canViewMenu = (menu = {}, permissions = getStoredPermissions(), user = {}) => {

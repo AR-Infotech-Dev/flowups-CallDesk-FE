@@ -21,10 +21,9 @@ import {
   Workflow,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
-import { getStoredPermissions, saveMenuList } from "../auth/authStorage";
+import { getStoredMenuList, getStoredPermissions } from "../auth/authStorage";
 import {
   buildAllowedMenuTree,
-  fetchMenuList,
   getMenuId,
   getMenuLabel,
   getMenuLink,
@@ -79,27 +78,30 @@ const buildSidebar = (menus = [], permissions = {}, user = {}) =>
 
 function Sidebar({ onSelectModule }) {
   const { authSession } = useAuth();
-  const [menus, setMenus] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [menus, setMenus] = useState(() => getStoredMenuList());
+  const [loading, setLoading] = useState(() => !getStoredMenuList().length);
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const permissions = useMemo(() => getStoredPermissions(), [authSession]);
   const sidebarGroups = useMemo(
     () => buildSidebar(menus, permissions, authSession?.user),
     [menus, permissions, authSession?.user]
   );
-  const fetchMenus = async () => {
-    try {
-      setLoading(true);
-      const nextMenus = await fetchMenuList();
-      saveMenuList(nextMenus);
-      setMenus(nextMenus);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchMenus();
+    const syncMenus = (event) => {
+      const nextMenus = event?.detail || getStoredMenuList();
+      setMenus(nextMenus);
+      setLoading(false);
+    };
+
+    const storedMenus = getStoredMenuList();
+    if (storedMenus.length) {
+      setMenus(storedMenus);
+      setLoading(false);
+    }
+
+    window.addEventListener("crm:menus-updated", syncMenus);
+    return () => window.removeEventListener("crm:menus-updated", syncMenus);
   }, []);
 
   useEffect(() => {

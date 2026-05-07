@@ -24,6 +24,7 @@ export const getStoredPermissions = () => {
 
 export const saveMenuList = (menus = []) => {
   localStorage.setItem(MENU_KEY, JSON.stringify(menus || []));
+  window.dispatchEvent(new CustomEvent("crm:menus-updated", { detail: menus || [] }));
 };
 
 export const getStoredMenuList = () => {
