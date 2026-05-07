@@ -126,7 +126,7 @@ function normalizeCustomerData(ticket = {}) {
   };
 }
 
-function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave }) {
+function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
   const [loading, setLoading] = useState(false);
   const [fetchingTicket, setFetchingTicket] = useState(false);
   const [formData, setFormData] = useState(ticketsModuleSchema.form.initialValues);
@@ -401,6 +401,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave }) {
                       errors={errors}
                       mode={mode}
                       oldValues={oldformData}
+                      menuId={menu_id}
                     />
                   </div>
                   <div className="col-span-12 flex min-h-60 min-w-0 flex-col overflow-hidden bg-slate-50 lg:col-span-6 xl:col-span-5">
@@ -432,6 +433,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave }) {
         selectedCustomer={null}
         initialValues={newCustomerInitialValues}
         onAfterSave={handleCustomerSaved}
+        menu_id={customerModuleSchema.menu_id}
       />
     </>
   );

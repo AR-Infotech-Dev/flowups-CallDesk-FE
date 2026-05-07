@@ -1,5 +1,44 @@
 import { buildFallbackColumnsFromKeys } from "../../../utils/moduleStructure";
+import {
+  Accessibility,
+  BriefcaseBusiness,
+  Building2,
+  ContactRound,
+  FileText,
+  Folder,
+  Gauge,
+  LayoutGrid,
+  Mail,
+  Map,
+  MenuSquare,
+  NotepadText,
+  ShieldCheck,
+  Sparkles,
+  Ticket,
+  Users,
+  Workflow,
+} from "lucide-react";
 import { z } from "zod";
+
+export const ICONS = {
+  Accessibility,
+  BriefcaseBusiness,
+  Building2,
+  ContactRound,
+  FileText,
+  Folder,
+  Gauge,
+  LayoutGrid,
+  Mail,
+  Map,
+  MenuSquare,
+  NotepadText,
+  ShieldCheck,
+  Sparkles,
+  Ticket,
+  Users,
+  Workflow,
+};
 
 const FIXED_TABLE_COLUMNS = [
   { key: "select", className: "check-col", checkbox: true, width: 42, minWidth: 42, resizable: false },
@@ -135,6 +174,35 @@ export const menuMasterSchema = {
             options: [
               { label: "Active", value: "active" },
               { label: "Inactive", value: "inactive" },
+            ],
+          },
+        ],
+      },
+      {
+        columns: 1,
+        fields: [
+          {
+            name: "icon_name",
+            label: "Menu Icon",
+            type: "iconPicker",
+            gridSpan: 12,
+            options: [
+              "Gauge",
+              "Ticket",
+              "MenuSquare",
+              "ContactRound",
+              "Users",
+              "LayoutGrid",
+              "Map",
+              "Building2",
+              "ShieldCheck",
+              "FileText",
+              "BriefcaseBusiness",
+              "Workflow",
+              "Sparkles",
+              "Mail",
+              "NotepadText",
+              "Accessibility",
             ],
           },
         ],

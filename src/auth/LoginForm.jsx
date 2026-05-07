@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { makeRequest } from "../api/httpClient";
-import { saveAuthSession, savePermissions } from "./authStorage";
+import { saveAuthSession, saveMenuList, savePermissions } from "./authStorage";
+import { fetchMenuList, fetchUserPermissions } from "./permissions";
 import { useAuth } from "./AuthProvider";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Spinner from '../components/ui/Spinner';
@@ -19,44 +20,6 @@ function LoginForm() {
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const normalizePermissionMap = (payload = {}) => {
-    const source =
-      payload?.permissions ||
-      payload?.data?.permissions ||
-      payload?.data ||
-      payload;
-
-    if (Array.isArray(source)) {
-      return source.reduce((accumulator, item) => {
-        const menuId = item?.menu_id || item?.menuID || item?.menuId || item?.id;
-        if (menuId) accumulator[String(menuId)] = item;
-        return accumulator;
-      }, {});
-    }
-
-    return source && typeof source === "object" ? source : {};
-  };
-
-  const fetchAndStorePermissions = async (userId) => {
-    if (!userId) {
-      savePermissions({});
-      return {};
-    }
-
-    const res = await makeRequest(`/permissions/${userId}`, {
-      method: "GET",
-    });
-
-    if (!res?.success) {
-      savePermissions({});
-      return {};
-    }
-
-    const permissions = normalizePermissionMap(res);
-    savePermissions(permissions);
-    return permissions;
-  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -78,9 +41,9 @@ function LoginForm() {
           password: form.password
         }
       });
-      
+
       if (!res.success) {
-        console.log(res,111);
+        console.log(res, 111);
         toast.error(res.message);
         return;
       }
@@ -92,10 +55,15 @@ function LoginForm() {
       };
 
       saveAuthSession(session);
-      await fetchAndStorePermissions(session.authid);
+      const [permissions, menus] = await Promise.all([
+        fetchUserPermissions(session.authid),
+        fetchMenuList(),
+      ]);
+      savePermissions(permissions);
+      saveMenuList(menus);
       login(session);
       toast.success("Login success");
-      navigate("/users");
+      navigate("/dashboard");
     } catch (error) {
       toast.error(error.message);
     } finally {

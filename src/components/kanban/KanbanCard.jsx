@@ -2,6 +2,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, GripVertical, UserRound } from "lucide-react";
 
+import { useAuth } from "../../auth/AuthProvider";
+import { hasFieldVisiblePermission } from "../../auth/permissions";
 import { useKanbanContext } from "./KanbanContext";
 import { isInlineColorValue, resolveCardValue } from "./kanbanUtils";
 
@@ -105,6 +107,9 @@ function KanbanCardView({
   onOpen,
   interactive = true,
 }) {
+  const { authSession } = useAuth();
+  const { menuId } = useKanbanContext();
+  const user = authSession?.user;
   const cardId = row._kanbanId;
   const titleValue =
     row?.[config.cardTitleField] ||
@@ -113,9 +118,14 @@ function KanbanCardView({
     row?.description ||
     row?.[config.titleField] ||
     `#${cardId}`;
-  const cardFields = config.cardFields || [];
+  const cardFields = (config.cardFields || []).filter((field) =>
+    hasFieldVisiblePermission({ menuId, field: typeof field === "string" ? { key: field } : field, user })
+  );
   const tagFields = cardFields.filter((field) => field?.type === "tag" || field?.type === "badge");
   const detailFields = cardFields.filter((field) => field?.type !== "tag" && field?.type !== "badge");
+  const showStartDate = hasFieldVisiblePermission({ menuId, field: { key: "start_date", name: "start_date" }, user });
+  const showDueDate = hasFieldVisiblePermission({ menuId, field: { key: "due_date", name: "due_date" }, user });
+  const showDateRange = showStartDate || showDueDate;
   const overdue = isOverdue(row, columnId, config);
   const { onKeyDown: onDragKeyDown, ...cardDragProps } = dragHandleProps;
 
@@ -162,14 +172,18 @@ function KanbanCardView({
       </div>
 
       <div className="kanban-card-body">
-        {detailFields.some((field) => field?.type === "date" || field?.key === "start_date" || field?.key === "due_date") ||
-        row?.start_date ||
-        row?.due_date ? (
+        {showDateRange && (
+          detailFields.some((field) => field?.type === "date" || field?.key === "start_date" || field?.key === "due_date") ||
+          row?.start_date ||
+          row?.due_date
+        ) ? (
           <div className="kanban-card-date-row">
             <span className="kanban-card-label">
               <CalendarDays size={14} />
             </span>
-            <span className="kanban-card-value kanban-card-date-value">{formatDateRange(row)}</span>
+            <span className="kanban-card-value kanban-card-date-value">
+              {`${showStartDate ? formatFieldValue({ type: "date" }, row?.start_date) : "-"} - ${showDueDate ? formatFieldValue({ type: "date" }, row?.due_date) : "-"}`}
+            </span>
           </div>
         ) : null}
 

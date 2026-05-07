@@ -5,6 +5,8 @@ import TableHeader from "./TableHeader";
 import TableSkeleton from "./TableSkeleton";
 import NoTableData from "./NoTableData";
 import ColumnArranger from "./ColumnArranger";
+import { useAuth } from "../../auth/AuthProvider";
+import { hasFieldVisiblePermission } from "../../auth/permissions";
 
 window.TIMEFORMAT = "Do MMMM YYYY"
 
@@ -160,8 +162,10 @@ function getBadgeClassName(type, colorValue, fallbackClassName) {
 
 function renderCheckboxCell(row, selectionProps) {
   const rowId = getRowIdentifier(row);
-  const { selectedRowIds = [], onToggleRow } = selectionProps;
-  console.log('rowId : ',rowId);
+  const { selectedRowIds = [], onToggleRow, allowSelection = true } = selectionProps;
+
+  // Delete permission controls row selection. If delete is not allowed, checkbox is hidden.
+  if (!allowSelection) return null;
   
   return (
     <input
@@ -411,6 +415,7 @@ function DefaultRow({ row, index, columns, editRow, selectionProps }) {
           className={column.className || ""}
           style={getCellStyle(column)}
           onClick={
+            // If editRow is missing, row click does nothing. Pages pass editRow only when edit permission exists.
             typeof editRow === "function"
               ? () => editRow(row)
               : undefined
@@ -436,7 +441,11 @@ function ResizableTable({
   onToggleRow,
   onToggleAllRows,
   defaultVisibleColumnKeys = [],
+  allowSelection = true,
+  menuId,
 }) {
+  const { authSession } = useAuth();
+  const user = authSession?.user;
   const [columnWidths, setColumnWidths] = useState(() => getStoredWidths(storageKey));
   const [visibleColumnKeys, setVisibleColumnKeys] = useState(() =>
     getStoredVisibleColumnKeys(storageKey) || getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys)
@@ -473,11 +482,13 @@ function ResizableTable({
       visibleColumnKeys
         .map((key) => columns.find((column) => column.key === key))
         .filter(Boolean)
+        .filter((column) => allowSelection || !column.checkbox)
+        .filter((column) => column.checkbox || column.className === "icon-col" || hasFieldVisiblePermission({ menuId, field: column, user }))
         .map((column) => ({
           ...column,
           currentWidth: Math.max(column.minWidth || 40, columnWidths[column.key] || column.width || 800),
         })),
-    [columnWidths, columns, visibleColumnKeys]
+    [allowSelection, columnWidths, columns, menuId, user, visibleColumnKeys]
   );
 
   const tableWidth = useMemo(
@@ -498,8 +509,9 @@ function ResizableTable({
     () => ({
       selectedRowIds,
       onToggleRow,
+      allowSelection,
     }),
-    [onToggleRow, selectedRowIds]
+    [allowSelection, onToggleRow, selectedRowIds]
   );
 
   const handleResize = (key, nextWidth) => {
@@ -528,7 +540,7 @@ function ResizableTable({
             sortConfig={sortConfig}
             onSortChange={onSortChange}
             allRowsSelected={allRowsSelected}
-            onToggleAllRows={onToggleAllRows}
+            onToggleAllRows={allowSelection ? onToggleAllRows : undefined}
           />
 
           <tbody>

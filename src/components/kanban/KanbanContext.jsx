@@ -3,6 +3,7 @@ import { createContext, useContext } from "react";
 const KanbanContext = createContext({
   config: {},
   editRow: undefined,
+  menuId: undefined,
 });
 
 export function KanbanProvider({ value, children }) {
@@ -12,4 +13,3 @@ export function KanbanProvider({ value, children }) {
 export function useKanbanContext() {
   return useContext(KanbanContext);
 }
-

@@ -2,6 +2,7 @@ const TOKEN_KEY = "_bb_key";
 const AUTH_KEY = "_auth_id";
 const USER_KEY = "user";
 const PERMISSIONS_KEY = "permissions";
+const MENU_KEY = "menus";
 
 export const saveAuthSession = ({ token, user ,authid}) => {
   localStorage.setItem(TOKEN_KEY, token);
@@ -21,11 +22,24 @@ export const getStoredPermissions = () => {
   }
 };
 
+export const saveMenuList = (menus = []) => {
+  localStorage.setItem(MENU_KEY, JSON.stringify(menus || []));
+};
+
+export const getStoredMenuList = () => {
+  try {
+    return JSON.parse(localStorage.getItem(MENU_KEY) || "[]");
+  } catch {
+    return [];
+  }
+};
+
 export const clearAuthSession = () => {
   localStorage.removeItem("_bb_key");
   localStorage.removeItem("_auth_id");
   localStorage.removeItem("user");
   localStorage.removeItem(PERMISSIONS_KEY);
+  localStorage.removeItem(MENU_KEY);
 };
 
 export const getCurrentSession = () => {
@@ -45,4 +59,5 @@ export const logoutFromLocalAuth = () => {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(PERMISSIONS_KEY);
+  localStorage.removeItem(MENU_KEY);
 };

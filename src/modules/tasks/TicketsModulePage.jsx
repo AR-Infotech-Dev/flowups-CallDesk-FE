@@ -23,6 +23,7 @@ import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
 import ActionButton from "../../components/ui/ActionButton";
 import KanbanBoard from "../../components/kanban/KanbanBoard";
+import useMenuPermissions from "../../auth/useMenuPermissions";
 
 import TicketForm from "./components/TicketForm";
 
@@ -42,6 +43,7 @@ function TicketModulePage({ menu_id }) {
   // STATES
   // ==================================================
   const resolvedMenuID = menu_id || ticketsModuleSchema.menu_id || null;
+  const permissions = useMenuPermissions(resolvedMenuID);
   const [fields, setFields] = useState([]);
   const [ticketList, setTicketList] = useState([]);
   const [selectedTicket, setSelectedTicket,] = useState(null);
@@ -183,8 +185,6 @@ function TicketModulePage({ menu_id }) {
   // ROW SELECT
   // ==================================================
   const handleToggleRow = (rowId, checked) => {
-    console.log('rowId : ',rowId);
-
     setSelectedRowIds((current) =>
       checked
         ? [
@@ -286,6 +286,8 @@ function TicketModulePage({ menu_id }) {
         controls={
           <div className="flex flex-col gap-3">
             <ModuleControls
+              canCreate={permissions.canAdd}
+              canDelete={permissions.canDelete}
               loading={loading}
               onRefresh={getTicketList}
               onCreate={() => {
@@ -326,6 +328,7 @@ function TicketModulePage({ menu_id }) {
         table={viewMode === "table" ? (
           <ResizableTable
             loading={loading}
+            menuId={resolvedMenuID}
             columns={resolvedColumns}
             rows={ticketList}
             storageKey="tickets-module-column-widths"
@@ -340,10 +343,11 @@ function TicketModulePage({ menu_id }) {
                 order: nextSort.direction.toUpperCase(),
               });
             }}
-            editRow={(ticket) => {
+            editRow={permissions.canEdit ? (ticket) => {
               setSelectedTicket(ticket);
               setIsFlyoutOpen(true);
-            }}
+            } : undefined}
+            allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
@@ -351,6 +355,7 @@ function TicketModulePage({ menu_id }) {
         ) : (
           <KanbanBoard
             rows={ticketList}
+            menuId={resolvedMenuID}
             config={ticketsModuleSchema.kanban}
             loading={loading}
             lazyLoad
@@ -361,10 +366,11 @@ function TicketModulePage({ menu_id }) {
               order_by: filterState.order_by,
             })}
             onLoadColumnPage={getKanbanColumnPage}
-            editRow={(ticket) => {
+            editRow={permissions.canEdit ? (ticket) => {
               setSelectedTicket(ticket);
               setIsFlyoutOpen(true);
-            }}
+            } : undefined}
+            allowUpdate={permissions.canEdit}
             onAfterUpdate={getTicketList}
           />
         )
@@ -383,6 +389,7 @@ function TicketModulePage({ menu_id }) {
         }}
         selectedTicket={selectedTicket}
         onAfterSave={getTicketList}
+        menu_id={resolvedMenuID}
       />
     </>
   );

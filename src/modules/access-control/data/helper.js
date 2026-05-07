@@ -1,4 +1,5 @@
 import { accessModules, accessPermissionColumns } from "./accessControlData";
+import { getSchemaFieldsForMenu } from "./moduleSchemaRegistry";
 
 export const getUserId = (user = {}) => {
     return user?.adminID || user?.id || user?._id || user?.user_id;
@@ -52,20 +53,19 @@ export const normalizeMenuModule = (menu = {}, isChild = false, parent = null) =
     const menuId = getMenuId(menu);
     const name = getMenuName(menu);
     const moduleKey = slugify(menu?.module_name);
-    const fallbackFieldKey = slugify(menu?.table_name) || "fields";
 
     return {
         id: String(menuId || moduleKey || name),
         menu_id: menuId,
         parent_id: parent ? getMenuId(parent) : menu?.parentID || menu?.parent_id || 0,
+        menu_link: menu?.menuLink || menu?.menu_link || menu?.path || "",
+        module_name: menu?.module_name || menu?.moduleName || "",
+        table_name: menu?.table_name || menu?.tableName || "",
         name: isChild && parent ? `${getMenuName(parent)} / ${name}` : name,
         icon: accessModules.find((module) => module.id === moduleKey)?.icon || accessModules[0].icon,
         supports: { view: true, add: true, edit: true, delete: true },
         permissions: { view: false, add: false, edit: false, delete: false },
-        fields: [
-            { key: `${fallbackFieldKey}_view`, label: "Visible Fields", enabled: false },
-            { key: `${fallbackFieldKey}_edit`, label: "Editable Fields", enabled: false },
-        ],
+        fields: getSchemaFieldsForMenu(menu),
     };
 }
 

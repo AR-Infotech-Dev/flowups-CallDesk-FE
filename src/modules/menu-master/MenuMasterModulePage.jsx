@@ -2,20 +2,20 @@ import { toast } from "react-toastify";
 import { useEffect, useMemo, useState } from "react";
 import { makeRequest } from "../../api/httpClient";
 import { useModuleFilters } from "../../store/hooks";
-import { defaultSortConfig, getNextSortConfig } from "../../utils/sorting";
 import {
   buildFilterFieldsFromStructure,
-  buildTableColumnsFromStructure,
   getDefinitions,
 } from "../../utils/moduleStructure";
 
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
-import ModulePagination from "../shared/ModulePagination";
 import DynamicFilter from "../../components/DynamicFilter";
-import ResizableTable from "../../components/table/ResizableTable";
+import ActionButton from "../../components/ui/ActionButton";
+import Spinner from "../../components/ui/Spinner";
+import useMenuPermissions from "../../auth/useMenuPermissions";
 
 import MenuForm from "./components/MenuForm";
+import MenuList from "./components/MenuList";
 import {
   menuMasterFallbackColumns,
   menuMasterSchema,
@@ -23,56 +23,30 @@ import {
 
 function MenuMasterModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || menuMasterSchema.menu_id || null;
+  const permissions = useMenuPermissions(resolvedMenuID);
 
   const [fields, setFields] = useState([]);
   const [menuList, setMenuList] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
 
-  const [pagination, setPagination] = useState({});
-  const [page, setPage] = useState(1);
-
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  const [selectedRowIds, setSelectedRowIds] = useState([]);
+  const [savingSequence, setSavingSequence] = useState(false);
+  const [sequenceDirty, setSequenceDirty] = useState(false);
 
   const {
     filterState,
     setSearchText,
     applyFilterPayload,
-    setSort,
     clearFilters,
   } = useModuleFilters("menu-master", menuList);
-
-  const sortConfig = {
-    key: filterState.order_by || defaultSortConfig.key,
-    direction: String(
-      filterState.order || defaultSortConfig.direction
-    ).toLowerCase(),
-  };
 
   const columnOptions = {
     skipFields: menuMasterSchema.skipFields,
     columnMappings: menuMasterSchema.columnMappings,
     tableCellConfig: menuMasterSchema.tableCellConfig,
   };
-
-  const resolvedColumns = useMemo(
-    () =>
-      buildTableColumnsFromStructure(
-        fields,
-        menuMasterFallbackColumns,
-        columnOptions
-      ),
-    [fields]
-  );
-
-  const defaultVisibleColumnKeys = useMemo(
-    () =>
-      menuMasterFallbackColumns.map((column) => column.key),
-    []
-  );
 
   const resolvedFilterFields = useMemo(
     () =>
@@ -103,11 +77,11 @@ function MenuMasterModulePage({ menu_id }) {
         method: "POST",
         body: {
           status: "active",
-          page,
+          getAll: "Y",
           searchText: filterState.searchText,
           filters: filterState.filters,
-          order: filterState.order,
-          order_by: filterState.order_by,
+          order: 'ASC',
+          order_by: 'menu_index',
         },
       }
     );
@@ -116,9 +90,8 @@ function MenuMasterModulePage({ menu_id }) {
 
     if (res.success) {
       setMenuList(res.data || []);
-      setPagination(res.pagination || {});
       setSelectedMenu(null);
-      setSelectedRowIds([]);
+      setSequenceDirty(false);
       return;
     }
 
@@ -142,17 +115,19 @@ function MenuMasterModulePage({ menu_id }) {
 
     toast.error(
       res?.message ||
-        "Error while fetching module fields"
+      "Error while fetching module fields"
     );
   };
 
   // ======================================
-  // DELETE SELECTED
+  // DELETE MENU
   // ======================================
-  const handleDeleteSelected = async () => {
-    if (!selectedRowIds.length) {
+  const handleDeleteMenu = async (menu) => {
+    const menuId = menu?.menu_id ?? menu?.id;
+
+    if (!menuId) {
       toast.error(
-        "Please select at least one menu."
+        "Menu id not found."
       );
       return;
     }
@@ -165,7 +140,7 @@ function MenuMasterModulePage({ menu_id }) {
         method: "POST",
         body: {
           action: "delete",
-          ids: selectedRowIds,
+          ids: [menuId],
         },
       }
     );
@@ -175,7 +150,7 @@ function MenuMasterModulePage({ menu_id }) {
     if (res.success) {
       toast.success(
         res?.message ||
-          "Menus deleted successfully."
+        "Menus deleted successfully."
       );
 
       await getMenuList();
@@ -184,48 +159,51 @@ function MenuMasterModulePage({ menu_id }) {
 
     toast.error(
       res?.message ||
-        "Error while deleting menus"
+      "Error while deleting menus"
     );
   };
 
   // ======================================
-  // ROW SELECT
+  // SORT MENU CARDS
   // ======================================
-  const handleToggleRow = (
-    rowId,
-    checked
-  ) => {
-    setSelectedRowIds((current) =>
-      checked
-        ? [
-            ...new Set([
-              ...current,
-              rowId,
-            ]),
-          ]
-        : current.filter(
-            (item) => item !== rowId
-          )
-    );
+  const handleSortChange = (nextRows) => {
+    setMenuList(nextRows);
+    setSequenceDirty(true);
   };
 
-  const handleToggleAllRows = (
-    checked
-  ) => {
-    if (!checked) {
-      setSelectedRowIds([]);
+  // ======================================
+  // SAVE MENU SEQUENCE
+  // ======================================
+  const handleSaveSequence = async () => {
+    const positions = menuList.map((menu, index) => ({
+      menu_id: menu?.menu_id,
+      menu_index: index + 1,
+    })).filter((item) => item.menu_id);
+
+    if (!positions.length) {
+      toast.error("No menu sequence found to save.");
       return;
     }
 
-    setSelectedRowIds(
-      menuList
-        .map(
-          (row) =>
-            row?.menu_id ??
-            row?.id
-        )
-        .filter(Boolean)
-    );
+    setSavingSequence(true);
+
+    const res = await makeRequest("/menus/update-positions", {
+      method: "POST",
+      body: {
+        positions,
+      },
+    });
+
+    setSavingSequence(false);
+
+    if (res.success) {
+      toast.success(res?.message || "Menu sequence saved.");
+      setSequenceDirty(false);
+      await getMenuList();
+      return;
+    }
+
+    toast.error(res?.message || "Unable to save menu sequence.");
   };
 
   // ======================================
@@ -237,20 +215,6 @@ function MenuMasterModulePage({ menu_id }) {
 
   useEffect(() => {
     getMenuList();
-  }, [
-    page,
-    filterState.searchText,
-    filterState.order,
-    filterState.order_by,
-    JSON.stringify(
-      filterState.filters
-    ),
-  ]);
-
-  useEffect(() => {
-    if (page !== 1) {
-      setPage(1);
-    }
   }, [
     filterState.searchText,
     filterState.order,
@@ -269,6 +233,8 @@ function MenuMasterModulePage({ menu_id }) {
         }
         controls={
           <ModuleControls
+            canCreate={permissions.canAdd}
+            canDelete={permissions.canDelete}
             loading={loading}
             onRefresh={getMenuList}
             onCreate={() => {
@@ -276,21 +242,14 @@ function MenuMasterModulePage({ menu_id }) {
               setIsFlyoutOpen(true);
             }}
             onDeleteSelected={
-              handleDeleteSelected
+              undefined
             }
             showDelete={
-              selectedRowIds.length !== 0
+              false
             }
             deleteDisabled={
-              deleting ||
-              loading ||
-              selectedRowIds.length === 0
+              true
             }
-            deleteLabel={`Delete Selected${
-              selectedRowIds.length
-                ? ` (${selectedRowIds.length})`
-                : ""
-            }`}
             deleting={deleting}
             filter={
               <DynamicFilter
@@ -306,73 +265,40 @@ function MenuMasterModulePage({ menu_id }) {
                 onApplyFilters={
                   applyFilterPayload
                 }
-                onSaveFilter={() => {}}
-                onDeleteFilter={() => {}}
-                onSelectSavedFilter={() => {}}
+                onSaveFilter={() => { }}
+                onDeleteFilter={() => { }}
+                onSelectSavedFilter={() => { }}
                 onClearFilters={
                   clearFilters
                 }
               />
             }
-          />
+          >
+            {sequenceDirty && (
+              <ActionButton variant="primary" disabled={savingSequence} onClick={handleSaveSequence}>
+                {savingSequence ? <Spinner /> : null}
+                Save Sequence
+              </ActionButton>
+            )}
+          </ModuleControls>
         }
         table={
-          <ResizableTable
+          <MenuList
             loading={loading}
-            columns={
-              resolvedColumns
-            }
             rows={menuList}
-            storageKey="menu-module-column-widths"
-            defaultVisibleColumnKeys={
-              defaultVisibleColumnKeys
-            }
-            sortConfig={
-              sortConfig
-            }
-            onSortChange={(
-              columnKey
-            ) => {
-              const nextSort =
-                getNextSortConfig(
-                  sortConfig,
-                  columnKey
-                );
-
-              if (page !== 1) {
-                setPage(1);
-              }
-
-              setSort({
-                order_by:
-                  nextSort.key,
-                order:
-                  nextSort.direction.toUpperCase(),
-              });
-            }}
-            editRow={(menu) => {
+            canEdit={permissions.canEdit}
+            canDelete={permissions.canDelete}
+            canSort={permissions.canEdit}
+            onEdit={(menu) => {
               setSelectedMenu(menu);
               setIsFlyoutOpen(true);
             }}
-            selectedRowIds={
-              selectedRowIds
-            }
-            onToggleRow={
-              handleToggleRow
-            }
-            onToggleAllRows={
-              handleToggleAllRows
-            }
-          />
-        }
-        footer={
-          <ModulePagination
-            pagination={
-              pagination
-            }
-            onPageChange={
-              setPage
-            }
+            onDelete={handleDeleteMenu}
+            onConfigure={(menu) => {
+              setSelectedMenu(menu);
+              setIsFlyoutOpen(true);
+            }}
+            onSortChange={handleSortChange}
           />
         }
       />
@@ -385,6 +311,7 @@ function MenuMasterModulePage({ menu_id }) {
         selectedMenu={
           selectedMenu
         }
+        menu_id={resolvedMenuID}
         onAfterSave={
           getMenuList
         }

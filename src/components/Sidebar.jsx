@@ -20,9 +20,16 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
-import { makeRequest } from "../api/httpClient";
 import { useAuth } from "../auth/AuthProvider";
-import { getStoredPermissions } from "../auth/authStorage";
+import { getStoredPermissions, saveMenuList } from "../auth/authStorage";
+import {
+  buildAllowedMenuTree,
+  fetchMenuList,
+  getMenuId,
+  getMenuLabel,
+  getMenuLink,
+  normalizePath,
+} from "../auth/permissions";
 
 const iconMap = {
   Accessibility,
@@ -45,91 +52,47 @@ const iconMap = {
 
 const getIcon = (iconName) => iconMap[iconName] || Folder;
 
-const getMenuId = (menu = {}) => menu?.menu_id || menu?.menuID || menu?.menuId || menu?.id;
-const getMenuLabel = (menu = {}) => menu?.menuName || menu?.menu_name || menu?.label || menu?.module_name || "Menu";
-const getMenuLink = (menu = {}) => menu?.menuLink || menu?.menu_link || menu?.path || "";
+const buildSidebar = (menus = [], permissions = {}, user = {}) =>
+  buildAllowedMenuTree(menus, permissions, user).map((parent) => {
+    const children = parent?.subMenu || parent?.submenu || parent?.children || [];
+    const visibleChildren = children.map((child) => ({
+      id: getMenuId(child),
+      label: getMenuLabel(child),
+      path: normalizePath(getMenuLink(child)),
+      icon: getIcon(child.iconName),
+    }))
+      .filter((item) => item.path);
 
-const toBoolean = (value) => {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value === 1;
-  return ["1", "true", "yes", "y", "on"].includes(String(value || "").toLowerCase());
-};
+    const parentPath = normalizePath(getMenuLink(parent));
 
-const buildPath = (menu = {}) => {
-  const link = String(getMenuLink(menu) || "").trim();
-  if (!link) return "";
-  return link.startsWith("/") ? link : `/${link}`;
-};
+    if (!parentPath && visibleChildren.length === 0) return null;
 
-const canViewMenu = (menu = {}, permissions = {}, bypass = false) => {
-  if (bypass) return true;
-  const menuId = getMenuId(menu);
-  if (!menuId) return false;
-  const permission = permissions[String(menuId)] || permissions[menuId] || {};
-  return toBoolean(permission.view ?? permission.can_view);
-};
-
-const buildSidebar = (menus = [], permissions = {}, bypass = false) =>
-  menus
-    .map((parent) => {
-      const children = parent?.subMenu || parent?.submenu || parent?.children || [];
-      const visibleChildren = children
-        .filter((child) => canViewMenu(child, permissions, bypass))
-        .map((child) => ({
-          id: getMenuId(child),
-          label: getMenuLabel(child),
-          path: buildPath(child),
-          icon: getIcon(child.iconName),
-        }))
-        .filter((item) => item.path);
-
-      const parentVisible = canViewMenu(parent, permissions, bypass);
-      const parentPath = buildPath(parent);
-
-      if (!parentVisible && visibleChildren.length === 0) return null;
-      if (!parentPath && visibleChildren.length === 0) return null;
-
-      return {
-        id: getMenuId(parent),
-        title: getMenuLabel(parent),
-        path: parentPath,
-        icon: getIcon(parent.iconName),
-        items: visibleChildren,
-        isVisibleRoute: parentVisible && Boolean(parentPath),
-      };
-    })
+    return {
+      id: getMenuId(parent),
+      title: getMenuLabel(parent),
+      path: parentPath,
+      icon: getIcon(parent.icon_name),
+      items: visibleChildren,
+    };
+  })
     .filter(Boolean);
 
 function Sidebar({ onSelectModule }) {
   const { authSession } = useAuth();
-  const roleSlug = authSession?.user?.role_slug;
-  const canBypass = roleSlug === "super_admin";
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [collapsedGroups, setCollapsedGroups] = useState({});
-
   const permissions = useMemo(() => getStoredPermissions(), [authSession]);
-
   const sidebarGroups = useMemo(
-    () => buildSidebar(menus, permissions, canBypass),
-    [menus, permissions, canBypass]
+    () => buildSidebar(menus, permissions, authSession?.user),
+    [menus, permissions, authSession?.user]
   );
-
   const fetchMenus = async () => {
     try {
       setLoading(true);
-      let res = await makeRequest("/menus/getMenuList", {
-        method: "GET",
-      });
-
-      if (!res?.success) {
-        res = await makeRequest("/menus", {
-          method: "POST",
-          body: { getAll: "Y" },
-        });
-      }
-
-      setMenus(res?.success ? res.data || [] : []);
+      const nextMenus = await fetchMenuList();
+      saveMenuList(nextMenus);
+      setMenus(nextMenus);
     } finally {
       setLoading(false);
     }

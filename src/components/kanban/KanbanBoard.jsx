@@ -23,6 +23,8 @@ function KanbanBoard({
   lazyLoad = false,
   reloadKey = "",
   onLoadColumnPage,
+  allowUpdate = true,
+  menuId,
 }) {
   const [columns, setColumns] = useState([]);
   const [boardState, setBoardState] = useState({});
@@ -172,6 +174,12 @@ function KanbanBoard({
     const { active, over } = event;
     setActiveCardId(null);
 
+    // Drag/drop changes ticket status, so it is allowed only when edit permission exists.
+    if (!allowUpdate) {
+      toast.error("You do not have permission to edit this record.");
+      return;
+    }
+
     if (!over) {
       return;
     }
@@ -283,7 +291,7 @@ function KanbanBoard({
         </div>
       ) : null}
 
-      <KanbanProvider value={{ config, editRow }}>
+      <KanbanProvider value={{ config, editRow, menuId }}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}

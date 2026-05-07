@@ -73,7 +73,7 @@ function generateUsernamePassword() {
 
 }
 
-function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
+function UserForm({ isOpen, onClose, selectedUser, onAfterSave, menu_id }) {
   const [loading, setLoading] = useState(false);
   const [fetchingUser, setFetchingUser] = useState(false);
   const [formData, setFormData] = useState(usersModuleSchema.form.initialValues);
@@ -312,6 +312,7 @@ function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
               values={formData}
               onChange={handleChange}
               errors={errors}
+              menuId={menu_id}
             />
           )}
         </div>

@@ -5,10 +5,7 @@ function ColorSwatches({ field, value, onChange, error }) {
   const options = field.options || [];
   const isDisabled = Boolean(field.disabled || field.readOnly);
 
-  console.log('isDisabled : ' , isDisabled);
   const handleSelect = (color) => {
-    console.log('color : ' , color);
-    
     if (isDisabled) {
       return;
     }
@@ -36,7 +33,7 @@ function ColorSwatches({ field, value, onChange, error }) {
               title={color}
               disabled={isDisabled}
               onClick={() => handleSelect(color)}
-              className={`h-9 w-9 rounded-full border-2 transition-all disabled:cursor-not-allowed disabled:opacity-60 ${isActive ? "scale-105 border-slate-700 shadow-sm" : "border-white/80"
+              className={`h-9 w-9 rounded-full border-2 transition-all disabled:cursor-not-allowed disabled:opacity-60 ${isActive ? "scale-105 border-slate-700 shadow-lg" : "border-white/80"
                 }`}
               style={{ backgroundColor: color }}
             />

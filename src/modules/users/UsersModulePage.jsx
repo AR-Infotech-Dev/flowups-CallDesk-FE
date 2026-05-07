@@ -15,9 +15,11 @@ import DynamicFilter from "../../components/DynamicFilter";
 import UserForm from "./components/UserForm";
 import ResizableTable from "../../components/table/ResizableTable";
 import { usersFallbackColumns, usersModuleSchema } from "./data/module.schema";
+import useMenuPermissions from "../../auth/useMenuPermissions";
 
 function UsersModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || usersModuleSchema.menu_id || null;
+  const permissions = useMenuPermissions(resolvedMenuID);
   const [fields, setFields] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
@@ -150,8 +152,6 @@ function UsersModulePage({ menu_id }) {
 
   useEffect(() => {
     getColumnList();
-    console.log('here : ');
-    console.log(fields);
   }, [resolvedMenuID]);
 
   useEffect(() => {
@@ -171,6 +171,8 @@ function UsersModulePage({ menu_id }) {
         description={usersModuleSchema.description}
         controls={
           <ModuleControls
+            canCreate={permissions.canAdd}
+            canDelete={permissions.canDelete}
             loading={loading}
             onRefresh={getUserList}
             onCreate={() => {
@@ -199,6 +201,7 @@ function UsersModulePage({ menu_id }) {
         table={
           <ResizableTable
             loading={loading}
+            menuId={resolvedMenuID}
             columns={resolvedColumns}
             rows={userList}
             storageKey="users-module-column-widths"
@@ -214,10 +217,11 @@ function UsersModulePage({ menu_id }) {
                 order: nextSort.direction.toUpperCase(),
               });
             }}
-            editRow={(user) => {
+            editRow={permissions.canEdit ? (user) => {
               setSelectedUser(user);
               setIsFlyoutOpen(true);
-            }}
+            } : undefined}
+            allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
@@ -230,6 +234,7 @@ function UsersModulePage({ menu_id }) {
         onClose={() => setIsFlyoutOpen(false)}
         selectedUser={selectedUser}
         onAfterSave={getUserList}
+        menu_id={resolvedMenuID}
       />
     </>
   );

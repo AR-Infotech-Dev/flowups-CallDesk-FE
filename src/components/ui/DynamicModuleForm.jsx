@@ -6,6 +6,9 @@ import RichTextEditor from "../form-inputs/RichTextEditor";
 import SmartSelect from "../form-inputs/smartSelect";
 import SmartSelectInput from "../form-inputs/smartSelectInput";
 import ColorSwatches from "../form-inputs/ColorSwatches";
+import IconPicker from "../form-inputs/IconPicker";
+import { useAuth } from "../../auth/AuthProvider";
+import { hasFieldEditablePermission, hasFieldVisiblePermission } from "../../auth/permissions";
 
 const SECTION_COLUMN_CLASS = {
   1: "grid grid-cols-12 gap-x-4 gap-y-5",
@@ -29,7 +32,10 @@ const FIELD_SPAN_CLASS = {
   12: "col-span-12",
 };
 
-function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelect, addNewHandlers = {}, errors = {}, oldValues = {}, mode = '' }) {
+function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelect, addNewHandlers = {}, errors = {}, oldValues = {}, mode = '', menuId }) {
+  const { authSession } = useAuth();
+  const user = authSession?.user;
+
   const getConditionalFlag = (field, key) => {
     const flag = field[key];
     return typeof flag === "function" ? Boolean(flag(values)) : Boolean(flag);
@@ -77,6 +83,9 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
       case "colorSwatches":
         return <ColorSwatches field={field} onChange={onChange} value={value} error={errors[field.name]} />;
         break;
+      case "iconPicker":
+        return <IconPicker field={field} onChange={onChange} value={value} error={errors[field.name]} />;
+        break;
       default:
         return <Input field={field} onChange={onChange} value={value} error={errors[field.name]} />
         break;
@@ -102,6 +111,10 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                   : true;
 
                 if (!isVisible) return null;
+                const canViewField = hasFieldVisiblePermission({ menuId, field, user });
+                if (!canViewField) return null;
+
+                const canEditField = hasFieldEditablePermission({ menuId, field, user });
                 const isDisabled = getConditionalFlag(field, "disabled") || getConditionalFlag(field, "disabledWhen");
                 const isReadOnly =
                   getConditionalFlag(field, "readOnly") ||
@@ -111,7 +124,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                 const resolvedField = {
                   ...field,
                   disabled: isDisabled,
-                  readOnly: isReadOnly,
+                  readOnly: isReadOnly || !canEditField,
                 };
                 const sectionColumns = Number(section.columns) || 2;
                 const defaultSpan = Math.max(1, Math.floor(12 / sectionColumns));

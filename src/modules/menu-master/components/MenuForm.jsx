@@ -21,12 +21,12 @@ function normalizeMenuData(selectedMenu = {}) {
     module_desc: selectedMenu?.module_desc || "",
     menuLink: selectedMenu?.menuLink || "",
     parentID: selectedMenu?.parentID || "",
-    iconName: selectedMenu?.iconName || "",
+    iconName: selectedMenu?.iconName || selectedMenu?.icon_name || "",
     status: selectedMenu?.status || "active",
   };
 }
 
-function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
+function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave, menu_id: permissionMenuId }) {
   const [loading, setLoading] = useState(false);
   const [fetchingMenu, setFetchingMenu] = useState(false);
   const [formData, setFormData] = useState(menuMasterSchema.form.initialValues);
@@ -180,6 +180,7 @@ function MenuForm({ isOpen, onClose, selectedMenu, onAfterSave }) {
                 values={formData}
                 onChange={handleChange}
                 errors={errors}
+                menuId={permissionMenuId}
               />
             </div>
           )}

@@ -34,7 +34,7 @@ function normalizeCompanyData(company = {}) {
   };
 }
 
-function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave }) {
+function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu_id }) {
   const [loading, setLoading] = useState(false);
   const [fetchingCompany, setFetchingCompany] = useState(false);
   const [formData, setFormData] = useState(companyMasterSchema.form.initialValues);
@@ -175,6 +175,7 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave }) {
                 values={formData}
                 onChange={handleChange}
                 errors={errors}
+                menuId={menu_id}
               />
             </div>
           )}

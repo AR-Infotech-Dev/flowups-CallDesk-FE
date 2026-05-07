@@ -25,6 +25,7 @@ function PermissionsMatrix({
   selectedIdentity,
   loadingPermissions,
   onEnableAll,
+  enableAllLabel = "Enable All",
   onConfigure,
   onPermissionChange,
 }) {
@@ -39,7 +40,7 @@ function PermissionsMatrix({
             <>
               <span>Bulk Actions:</span>
               <button type="button" className="font-semibold text-blue-600 hover:text-blue-700" onClick={onEnableAll}>
-                Enable All
+                {enableAllLabel}
               </button>
             </>
           )}

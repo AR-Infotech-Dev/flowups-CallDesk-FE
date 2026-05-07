@@ -16,12 +16,14 @@ import ModulePagination from "../shared/ModulePagination";
 
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
+import useMenuPermissions from "../../auth/useMenuPermissions";
 
 import CompanyMasterForm from "./components/CompanyMasterForm";
 import { companyMasterFallbackColumns, companyMasterSchema } from "./data/module.schema";
 
 function CompanyMasterModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || companyMasterSchema.menu_id || null;
+  const permissions = useMenuPermissions(resolvedMenuID);
 
   const [fields, setFields] = useState([]);
   const [companyList, setCompanyList] = useState([]);
@@ -174,6 +176,8 @@ function CompanyMasterModulePage({ menu_id }) {
         description={companyMasterSchema.description}
         controls={
           <ModuleControls
+            canCreate={permissions.canAdd}
+            canDelete={permissions.canDelete}
             loading={loading}
             onRefresh={getCompanyList}
             onCreate={() => {
@@ -202,6 +206,7 @@ function CompanyMasterModulePage({ menu_id }) {
         table={
           <ResizableTable
             loading={loading}
+            menuId={resolvedMenuID}
             columns={resolvedColumns}
             rows={companyList}
             storageKey="company-master-module-column-widths"
@@ -217,10 +222,11 @@ function CompanyMasterModulePage({ menu_id }) {
                 order: nextSort.direction.toUpperCase(),
               });
             }}
-            editRow={(company) => {
+            editRow={permissions.canEdit ? (company) => {
               setSelectedCompany(company);
               setIsFlyoutOpen(true);
-            }}
+            } : undefined}
+            allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
@@ -237,6 +243,7 @@ function CompanyMasterModulePage({ menu_id }) {
         }}
         selectedCompany={selectedCompany}
         onAfterSave={getCompanyList}
+        menu_id={resolvedMenuID}
       />
     </>
   );

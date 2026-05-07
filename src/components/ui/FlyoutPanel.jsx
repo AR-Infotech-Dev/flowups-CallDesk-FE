@@ -1,4 +1,4 @@
-function FlyoutPanel({ isOpen, onClose, title, closeButton, children, footer, panelClassName = "" }) {
+function FlyoutPanel({ isOpen, onClose, title ,subtitle , closeButton, children, footer, panelClassName = "" }) {
   
   if (!isOpen) {
     return null;
@@ -16,7 +16,8 @@ function FlyoutPanel({ isOpen, onClose, title, closeButton, children, footer, pa
         >
           <div className="overlay_header">
             <div className="ws_container">
-              <h2 className="page_title">{title}</h2>
+                <h2 className="page_title">{title}</h2>
+                {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
             </div>
           </div>
           <div className="tab-pane panel_overflow">

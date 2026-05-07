@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { makeRequest } from "../../api/httpClient";
 import { useAuth } from "../../auth/AuthProvider";
 import ModulePageLayout from "../shared/ModulePageLayout";
 import IdentitySelector from "./components/IdentitySelector";
-import PermissionToggle from "./components/PermissionToggle";
 import PermissionsMatrix from "./components/PermissionsMatrix";
 import { accessModules, accessPermissionColumns } from "./data/accessControlData";
 import { flattenMenuModules } from "./data/helper";
+import ConfigureFeilds from "./components/ConfigureFeilds";
 
 const buildDefaultModules = (rows = accessModules) =>
   rows.map((module) => ({
     ...module,
     permissions: { view: false, add: false, edit: false, delete: false },
-    fields: module.fields.map((field) => ({ ...field, enabled: false })),
+    fields: module.fields.map((field) => ({ ...field, visible: false, editable: false })),
   }));
 
 const DEFAULT_MODULES = buildDefaultModules();
@@ -35,6 +34,29 @@ const parseMaybeJson = (value) => {
 };
 
 const getModulePermissionKey = (module = {}) => String(module.menu_id || module.id);
+
+const getFieldId = (field = {}) =>
+  field?.field_id || field?.fieldID || field?.id || field?._id || field?.Field || field?.field_name || field?.key || field?.name;
+
+const getFieldName = (field = {}) => field?.name || "";
+const getFieldLabel = (field = {}) =>
+  field?.label || field?.lable || field?.display_name || field?.title || getFieldName(field);
+
+const normalizeField = (field = {}, savedPermission = {}) => {
+  const fieldId = getFieldId(field);
+  const fieldName = getFieldName(field);
+  const editable = toBoolean(savedPermission?.editable ?? savedPermission?.can_edit);
+  const visible = toBoolean(savedPermission?.visible ?? savedPermission?.can_view ?? savedPermission?.enabled) || editable;
+
+  return {
+    key: String(fieldId || fieldName),
+    field_id: fieldId,
+    field_name: fieldName,
+    label: getFieldLabel(field),
+    visible,
+    editable,
+  };
+};
 
 const normalizePermissionMap = (payload = {}) => {
   const source =
@@ -61,8 +83,14 @@ const normalizePermissionMap = (payload = {}) => {
 const getFieldPermission = (permissions = [], field = {}) => {
   const normalized = Array.isArray(permissions) ? permissions : [];
   return normalized.find((item) => {
-    const fieldName = item?.field_name || item?.fieldName || item?.name || item?.key;
-    return String(fieldName) === String(field.field_name || field.key || field.name);
+    const savedFieldId = item?.field_id || item?.fieldID || item?.id;
+    const savedFieldName = item?.field_name || item?.fieldName || item?.name || item?.key;
+    const currentFieldId = field.field_id || field.id;
+    const currentFieldName = field.field_name || field.key || field.name;
+
+    if (savedFieldId && currentFieldId && String(savedFieldId) === String(currentFieldId)) return true;
+    if (savedFieldName && currentFieldName && String(savedFieldName) === String(currentFieldName)) return true;
+    return false;
   });
 };
 
@@ -83,15 +111,31 @@ const applyPermissionMapToModules = (moduleRows = [], permissionMap = {}) =>
         edit,
         delete: deleteAllowed,
       },
+      savedFieldPermissions: fields,
       fields: module.fields.map((field) => {
         const fieldPermission = getFieldPermission(fields, field);
         return {
-          ...field,
-          enabled: toBoolean(fieldPermission?.editable ?? fieldPermission?.enabled),
+          ...normalizeField(field, fieldPermission),
         };
       }),
     };
   });
+
+const prepareFieldPermissionsJson = (module = {}) => {
+  const fields = module.fields.length ? module.fields : module.savedFieldPermissions || [];
+
+  return fields.map((field) => {
+    const editable = Boolean(field.editable);
+    const visible = Boolean(field.visible) || editable;
+
+    return {
+      field_id: field.field_id || field.fieldID || field.id || field.key,
+      field_name: field.field_name || field.fieldName || field.name || field.key || field.label,
+      visible,
+      editable,
+    };
+  });
+};
 
 const preparePermissionsJson = (moduleRows = []) =>
   moduleRows.reduce((accumulator, module) => {
@@ -101,10 +145,7 @@ const preparePermissionsJson = (moduleRows = []) =>
       add: Boolean(module.permissions.add),
       edit: Boolean(module.permissions.edit),
       delete: Boolean(module.permissions.delete),
-      fields: module.fields.map((field) => ({
-        field_name: field.field_name || field.key || field.name || field.label,
-        editable: Boolean(field.enabled),
-      })),
+      fields: prepareFieldPermissionsJson(module),
     };
     return accumulator;
   }, {});
@@ -220,29 +261,74 @@ function AccessControlModulePage() {
     );
   };
 
-  const setFieldPermission = (fieldKey, nextValue) => {
+  const openAdvancedSettings = (moduleId) => {
+    setAdvancedModuleId(moduleId);
+  };
+
+  const setFieldPermission = (fieldKey, permissionKey, nextValue) => {
     setModules((current) =>
       current.map((module) =>
         module.id === advancedModuleId
           ? {
             ...module,
-            fields: module.fields.map((field) =>
-              field.key === fieldKey ? { ...field, enabled: nextValue } : field
-            ),
+            fields: module.fields.map((field) => {
+              if (field.key !== fieldKey) return field;
+
+              if (permissionKey === "visible" && !nextValue) {
+                return { ...field, visible: false, editable: false };
+              }
+
+              if (permissionKey === "editable" && nextValue) {
+                return { ...field, visible: true, editable: true };
+              }
+
+              return { ...field, [permissionKey]: nextValue };
+            }),
           }
           : module
       )
     );
   };
 
-  const enableAll = () => {
+  const setAllFieldPermissions = (permissionKey, nextValue) => {
+    setModules((current) =>
+      current.map((module) =>
+        module.id === advancedModuleId
+          ? {
+            ...module,
+            fields: module.fields.map((field) => {
+              if (permissionKey === "visible" && !nextValue) {
+                return { ...field, visible: false, editable: false };
+              }
+
+              if (permissionKey === "editable" && nextValue) {
+                return { ...field, visible: true, editable: true };
+              }
+
+              return { ...field, [permissionKey]: nextValue };
+            }),
+          }
+          : module
+      )
+    );
+  };
+
+  const hasAllModulePermissions = modules.length > 0 && modules.every((module) =>
+    accessPermissionColumns.every((column) =>
+      !module.supports[column.key] || Boolean(module.permissions[column.key])
+    )
+  );
+
+  const toggleAllModules = () => {
+    const shouldEnable = !hasAllModulePermissions;
+
     setModules((current) =>
       current.map((module) => ({
         ...module,
         permissions: Object.fromEntries(
           accessPermissionColumns.map((column) => [
             column.key,
-            Boolean(module.supports[column.key]),
+            shouldEnable && Boolean(module.supports[column.key]),
           ])
         ),
       }))
@@ -262,8 +348,6 @@ function AccessControlModulePage() {
 
   const saveChanges = async () => {
     const permissions = preparePermissionsJson(modules);
-    console.log('permissions : ',permissions);
-    
     if (!selectedIdentity?.id) {
       toast.error("Please select a user first");
       return;
@@ -311,69 +395,23 @@ function AccessControlModulePage() {
             loadingMenus={loadingMenus}
             selectedIdentity={selectedIdentity}
             loadingPermissions={loadingPermissions}
-            onEnableAll={enableAll}
-            onConfigure={setAdvancedModuleId}
+            onEnableAll={toggleAllModules}
+            enableAllLabel={hasAllModulePermissions ? "Disable All" : "Enable All"}
+            onConfigure={openAdvancedSettings}
             onPermissionChange={setModulePermission}
           />
         </div>
       </ModulePageLayout>
-
-      {advancedModule && (
-        <div className="fixed inset-0 z-[70] flex justify-end bg-slate-900/30" onClick={() => setAdvancedModuleId(null)}>
-          <aside className="flex h-full w-[360px] max-w-full flex-col bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <header className="flex min-h-16 items-center justify-between gap-3 border-b border-slate-200 px-5">
-              <div>
-                <h2 className="text-base font-semibold text-slate-900">Advanced Settings</h2>
-                <p className="text-xs text-slate-500">Field-level security controls</p>
-              </div>
-              <button
-                type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
-                onClick={() => setAdvancedModuleId(null)}
-                aria-label="Close advanced settings"
-              >
-                <X size={18} />
-              </button>
-            </header>
-
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              <div className="flex h-11 items-center gap-3 rounded-md bg-blue-50 px-3 text-sm font-semibold text-blue-700">
-                <ShieldCheck size={18} />
-                <span>Field Permissions</span>
-              </div>
-
-              <div className="mt-4 overflow-hidden rounded-md border border-slate-200">
-                <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                  {advancedModule.name}
-                </div>
-                {advancedModule.fields.map((field) => (
-                  <div
-                    key={field.key}
-                    className="flex min-h-10 items-center justify-between gap-3 border-b border-slate-100 px-3 text-xs last:border-b-0"
-                  >
-                    <span className="font-medium text-slate-700">{field.label}</span>
-                    <PermissionToggle
-                      checked={field.enabled}
-                      disabled={!advancedModule.permissions.edit}
-                      onChange={(nextValue) => setFieldPermission(field.key, nextValue)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <footer className="border-t border-slate-200 bg-slate-50 p-5">
-              <button
-                type="button"
-                className="h-10 w-full rounded-md bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700"
-                onClick={() => setAdvancedModuleId(null)}
-              >
-                Apply Changes
-              </button>
-            </footer>
-          </aside>
-        </div>
-      )}
+      <ConfigureFeilds
+        isOpen={Boolean(advancedModule)}
+        advancedModule={advancedModule}
+        loadingAdvancedFields={false}
+        onFieldPermissionChange={setFieldPermission}
+        onFieldBulkChange={setAllFieldPermissions}
+        onClose={() => {
+          setAdvancedModuleId(null);
+        }}
+      />
     </>
   );
 }

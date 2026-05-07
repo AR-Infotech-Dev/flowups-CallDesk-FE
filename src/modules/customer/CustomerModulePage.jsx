@@ -16,12 +16,14 @@ import ModulePagination from "../shared/ModulePagination";
 
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
+import useMenuPermissions from "../../auth/useMenuPermissions";
 
 import CustomerForm from "./components/CustomerForm";
 import { customerFallbackColumns, customerModuleSchema } from "./data/module.schema";
 
 function CustomerModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || customerModuleSchema.menu_id || null;
+  const permissions = useMenuPermissions(resolvedMenuID);
 
   const [fields, setFields] = useState([]);
   const [customerList, setCustomerList] = useState([]);
@@ -112,8 +114,6 @@ function CustomerModulePage({ menu_id }) {
   };
 
   const handleToggleRow = (rowId, checked) => {
-    console.log('rowId : ',rowId);
-    
     setSelectedRowIds((current) =>
       checked ? [...new Set([...current, rowId])] : current.filter((item) => item !== rowId)
     );
@@ -176,6 +176,8 @@ function CustomerModulePage({ menu_id }) {
         description={customerModuleSchema.description}
         controls={
           <ModuleControls
+            canCreate={permissions.canAdd}
+            canDelete={permissions.canDelete}
             loading={loading}
             onRefresh={getCustomerList}
             onCreate={() => {
@@ -204,6 +206,7 @@ function CustomerModulePage({ menu_id }) {
         table={
           <ResizableTable
             loading={loading}
+            menuId={resolvedMenuID}
             columns={resolvedColumns}
             rows={customerList}
             storageKey="customer-module-column-widths"
@@ -219,10 +222,11 @@ function CustomerModulePage({ menu_id }) {
                 order: nextSort.direction.toUpperCase(),
               });
             }}
-            editRow={(customer) => {
+            editRow={permissions.canEdit ? (customer) => {
               setSelectedCustomer(customer);
               setIsFlyoutOpen(true);
-            }}
+            } : undefined}
+            allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
@@ -239,6 +243,7 @@ function CustomerModulePage({ menu_id }) {
         }}
         selectedCustomer={selectedCustomer}
         onAfterSave={getCustomerList}
+        menu_id={resolvedMenuID}
       />
     </>
   );

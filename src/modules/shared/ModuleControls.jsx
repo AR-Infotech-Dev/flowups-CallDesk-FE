@@ -24,7 +24,9 @@ function ModuleControls({
   createLabel = "Add New",
   filter,
   children,
-  showTraditional = true
+  showTraditional = true,
+  canCreate = true,
+  canDelete = true
 }) {
   return (
     <div className="module-controls">
@@ -51,9 +53,11 @@ function ModuleControls({
         <div className="module-toolbar-right">
           {showTraditional &&
             <>
-              <ActionButton variant="primary" onClick={onCreate}> <CirclePlus size={16} /> {createLabel} </ActionButton>
+              {/* Add button is shown only when the user has add permission for this module. */}
+              {canCreate && <ActionButton variant="primary" onClick={onCreate}> <CirclePlus size={16} /> {createLabel} </ActionButton>}
               <ActionButton onClick={onRefresh}> {loading ? <Spinner /> : <RefreshCcw size={15} color="var(--primary)" />} </ActionButton>
-              {showDelete &&
+              {/* Delete button is shown only when delete permission exists and rows are selected. */}
+              {canDelete && showDelete &&
                 <ActionButton onClick={onDeleteSelected} disabled={deleteDisabled}>
                   {deleting ? <Spinner /> : <Trash2 size={15} color="var(--primary)" />}
                   {/* {deleteLabel} */}

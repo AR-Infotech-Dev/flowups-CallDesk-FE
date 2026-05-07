@@ -34,7 +34,7 @@ function normalizeCustomerData(customer = {}) {
 
 const EMPTY_INITIAL_VALUES = {};
 
-function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave }) {
+function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave, menu_id }) {
   const [loading, setLoading] = useState(false);
   const [fetchingCustomer, setFetchingCustomer] = useState(false);
   const [formData, setFormData] = useState(customerModuleSchema.form.initialValues);
@@ -181,6 +181,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
                 values={formData}
                 onChange={handleChange}
                 errors={errors}
+                menuId={menu_id}
               />
             </div>
           )}
