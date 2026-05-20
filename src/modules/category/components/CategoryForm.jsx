@@ -37,7 +37,7 @@ function normalizeCategoryData(category = {}) {
   };
 }
 
-function CategoryForm({ isOpen, onClose, selectedCategory, onAfterSave }) {
+function CategoryForm({ isOpen, onClose, selectedCategory, onAfterSave, menu_id }) {
   const [loading, setLoading] = useState(false);
   const [fetchingCategory, setFetchingCategory] = useState(false);
   const [formData, setFormData] = useState(categoryModuleSchema.form.initialValues);
@@ -92,9 +92,6 @@ function CategoryForm({ isOpen, onClose, selectedCategory, onAfterSave }) {
         ...current,
         [name]: value,
       };
-
-      console.log(name ," : ", value);
-      
 
       if (name === "categoryName") {
         const currentSlug = String(current.slug || "");
@@ -204,6 +201,7 @@ function CategoryForm({ isOpen, onClose, selectedCategory, onAfterSave }) {
                 values={formData}
                 onChange={handleChange}
                 errors={errors}
+                menuId={menu_id}
               />
             </div>
           )}

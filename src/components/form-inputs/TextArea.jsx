@@ -16,7 +16,7 @@ function TextArea({field , value , onChange}) {
                 placeholder={field.placeholder}
                 disabled={isDisabled}
                 readOnly={isReadOnly}
-                className="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-70 read-only:cursor-default"
+                className="rounded border border-slate-50 bg-gray-100 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-70 read-only:cursor-default"
             />
         </div>
     )

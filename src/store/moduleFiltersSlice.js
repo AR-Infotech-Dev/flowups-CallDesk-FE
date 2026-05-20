@@ -63,7 +63,6 @@ export const {
   clearModuleFilters,
 } = moduleFiltersSlice.actions;
 
-export const selectModuleFilterState = (state, moduleKey) =>
-  state.moduleFilters.byModule[moduleKey] || defaultModuleState;
+export const selectModuleFilterState = (state, moduleKey) => state.moduleFilters.byModule[moduleKey] || defaultModuleState;
 
 export default moduleFiltersSlice.reducer;

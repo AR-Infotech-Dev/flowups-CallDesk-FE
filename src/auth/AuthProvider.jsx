@@ -9,7 +9,6 @@ function AuthProvider({ children }) {
 
   useEffect(() => {
     const session = getCurrentSession();
-
     if (session) {
       setAuthSession(session);
     }
@@ -17,11 +16,9 @@ function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     authSession,
-
     login(session) {
       setAuthSession(session);
     },
-
     logout() {
       logoutFromLocalAuth();
       setAuthSession(null);

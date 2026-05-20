@@ -1,16 +1,13 @@
-
-
-
 import '../auth/styles/auth.css';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { makeRequest } from "../api/httpClient";
-import { saveAuthSession } from "./authStorage";
+import { saveAuthSession, saveMenuList, savePermissions } from "./authStorage";
+import { fetchMenuList, fetchUserPermissions } from "./permissions";
 import { useAuth } from "./AuthProvider";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Spinner from '../components/ui/Spinner';
-
 
 function LoginForm() {
   const navigate = useNavigate();
@@ -44,9 +41,8 @@ function LoginForm() {
           password: form.password
         }
       });
-      
+
       if (!res.success) {
-        console.log(res,111);
         toast.error(res.message);
         return;
       }
@@ -58,9 +54,15 @@ function LoginForm() {
       };
 
       saveAuthSession(session);
+      const [permissions, menus] = await Promise.all([
+        fetchUserPermissions(session.authid),
+        fetchMenuList('ithech Login madhe'),
+      ]);
+      savePermissions(permissions);
+      saveMenuList(menus);
       login(session);
       toast.success("Login success");
-      navigate("/users");
+      navigate("/dashboard");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -101,7 +103,8 @@ function LoginForm() {
 
         <a href="" className="text-blue-500 hover:underline">Forgot Password ?</a>
       </div>
-      <button type="submit" className="w-full bg-brand-primary text-white py-2 rounded-md hover:bg-primary/90 font-medium  text-sm mb-4" onClick={handleLogin}>
+      {/* Form submit already calls handleLogin, so button click should not call it again. */}
+      <button type="submit" className="w-full bg-brand-primary text-white py-2 rounded-md hover:bg-primary/90 font-medium  text-sm mb-4">
         {loading ? <Spinner /> : "Sign In"}
       </button>
     </form>

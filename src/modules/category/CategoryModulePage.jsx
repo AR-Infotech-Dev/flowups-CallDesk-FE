@@ -16,12 +16,14 @@ import ModulePagination from "../shared/ModulePagination";
 
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
+import useMenuPermissions from "../../auth/useMenuPermissions";
 
 import CategoryForm from "./components/CategoryForm";
 import { categoryFallbackColumns, categoryModuleSchema } from "./data/module.schema";
 
-function CategoryModulePage({ menuID }) {
-  const resolvedMenuID = menuID || categoryModuleSchema.menuID || null;
+function CategoryModulePage({ menu_id }) {
+  const resolvedMenuID = menu_id || categoryModuleSchema.menu_id || null;
+  const permissions = useMenuPermissions(resolvedMenuID);
 
   const [fields, setFields] = useState([]);
   const [categoryList, setCategoryList] = useState([]);
@@ -175,6 +177,8 @@ function CategoryModulePage({ menuID }) {
         description={categoryModuleSchema.description}
         controls={
           <ModuleControls
+            canCreate={permissions.canAdd}
+            canDelete={permissions.canDelete}
             loading={loading}
             onRefresh={getCategoryList}
             onCreate={() => {
@@ -203,6 +207,7 @@ function CategoryModulePage({ menuID }) {
         table={
           <ResizableTable
             loading={loading}
+            menuId={resolvedMenuID}
             columns={resolvedColumns}
             rows={categoryList}
             storageKey="category-module-column-widths"
@@ -218,10 +223,11 @@ function CategoryModulePage({ menuID }) {
                 order: nextSort.direction.toUpperCase(),
               });
             }}
-            editRow={(category) => {
+            editRow={permissions.canEdit ? (category) => {
               setSelectedCategory(category);
               setIsFlyoutOpen(true);
-            }}
+            } : undefined}
+            allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
@@ -238,6 +244,7 @@ function CategoryModulePage({ menuID }) {
         }}
         selectedCategory={selectedCategory}
         onAfterSave={getCategoryList}
+        menu_id={resolvedMenuID}
       />
     </>
   );

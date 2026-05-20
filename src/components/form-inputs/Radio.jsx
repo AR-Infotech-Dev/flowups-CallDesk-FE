@@ -7,9 +7,9 @@ function Radio({ field, value, onChange, className = '', error,...rest }) {
     const isDisabled = Boolean(field.disabled || field.readOnly);
     const emitChange = (name, value) => { onChange?.({ target: { name, value } }); };
     return (
-        <div className="flex flex-col gap-1 p-1">
+        <div className="flex flex-col gap-1 p-0">
             <DefaultLabel label={field.label} required={field.required} />
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="flex flex-wrap gap-2 pt-0">
                 {(field.options || []).map((option) => {
                     const isActive = value === option.value;
                     return (

@@ -6,12 +6,13 @@ const FIXED_TABLE_COLUMNS = [
   { key: "select", className: "check-col", checkbox: true, width: 42, minWidth: 42, resizable: false },
 ];
 
-const assignee = window.localStorage.getItem('_auth_id');
+const ASSIGNEE = window.localStorage.getItem('_auth_id');
+console.log('ASSIGNEE : ',ASSIGNEE);
 
 export const ticketsModuleSchema = {
   title: "Tickets",
   description: "Manage Tickets, priorities, assignments, and project tracking from one place.",
-  menuID: null, // set once menu record exists in DB
+  menu_id: null, // set once menu record exists in DB
   primaryKey: "ticket_id",
   api: {
     list: "/tickets",
@@ -22,7 +23,7 @@ export const ticketsModuleSchema = {
     definitionsFallback: "/system/getstructure",
   },
   definitionRequest: {
-    menuIDField: "menuID",
+    menuIDField: "menu_id",
     modelNameField: "model_name",
     modelName: "Ticket",
   },
@@ -35,6 +36,32 @@ export const ticketsModuleSchema = {
     { column_name: "ticket_priority", type: "tag", color_field: "priority_color" },
     // { column_name: "assignee", type: "person" }
   ],
+  kanban: {
+    enabled: true,
+    categoryParentSlug: "ticket_status",
+    categoryTableName: "categories",
+    categorySelectFields: "category_id,categoryName,cat_color",
+    categorySearchField: "categoryName",
+    categoryValueKey: "category_id",
+    categoryLabelKey: "categoryName",
+    categoryColorKey: "cat_color",
+    statusField: "ticket_status",
+    idField: "ticket_id",
+    titleField: "ticket_no",
+    updateApi: "/tickets/update-status",
+    appendIdToUpdateApi: true,
+    updateMethod: "POST",
+    buildUpdateBody: (row, targetColumnId) => ({
+      ticket_status: targetColumnId,
+    }),
+    cardFields: [
+      { key: "client_id", label: "Client" },
+      { key: "contact_person", label: "Contact" },
+      { key: "query_type", label: "Type", type: "badge", colorField: "type_color" },
+      { key: "due_date", label: "Due", type: "date" },
+      { key: "ticket_priority", label: "Priority", type: "tag", colorField: "priority_color" },
+    ],
+  },
   defaultColumns: ["query_type", "ticket_status", "ticket_priority", "start_date", "due_date"],
   skipFields: [],
   columnMappings: [
@@ -50,7 +77,7 @@ export const ticketsModuleSchema = {
       query_type: null,
       ticket_status: "205",
       ticket_priority: null,
-      assignee: assignee || null,
+      assignee: ASSIGNEE || null,
       start_date: new Date().toISOString().split("T")[0],
       due_date: null,
       company_id: null,
@@ -78,8 +105,9 @@ export const ticketsModuleSchema = {
             config: {
               type: "customer",
               source: "customer",
-              list: "customer_id,name,created_date,mobile_no",
+              list: "customer_id,name,created_date,mobile_no,email,contact_person",
               placeholder: "Select Client",
+              allowAddNew: true,
               multi: false,
               getValue: (item) => item.customer_id,
               getLabel: (item) => item.name || "Unnamed Client",
@@ -213,7 +241,7 @@ export const ticketsModuleSchema = {
             type: "text",
             placeholder: "Enter reason",
             gridSpan: 12,
-            required:true,
+            required: true,
             visibleWhen: (values, oldValues, mode) => mode === "edit" &&
               (
                 String(values.assignee || "") !== String(oldValues.assignee || "") ||
@@ -232,17 +260,19 @@ export const ticketsModuleSchema = {
   },
   validationSchema: z.object({
     client_id: z.coerce.number().min(1, "Customer is Required!"),
-    description: z.string({ required_error: "Description is Required!" }).nullable().transform(v => v ?? "").pipe(z.string().trim().min(1, "Description is Required!")),
-    contact_person: z.string({ required_error: "Contact person name required" }).optional().transform(v => v ?? "").pipe(z.string().trim().min(1, "Contact person name required")),
-    contact_no: z.string().nullable().optional().transform(v => v ?? "").refine(v => v === "" || /^[6-9]\d{9}$/.test(v), "Enter valid 10-digit mobile number"),
-    start_date: z.coerce.date({ required_error: "Start date is Required!" }),
-    due_date: z.coerce.date({ required_error: "Due date is Required!" }),
+    description: z.string().nullable().transform(v => v ?? "").pipe(z.string().trim().min(1, "Description is Required!")),
+    contact_person: z.string().nullable().optional().transform(v => v ?? "").refine(v => v === "" || v.trim().length > 0, "Contact person name required"),
+    contact_no: z.string().nullable().optional().transform(v => v ?? "").refine(v => v === "" || /^[0-9]\d{9}$/.test(v), "Enter valid 10-digit mobile number"),
+    start_date: z.coerce.date({ required_error: "Start date is Required!", invalid_type_error: "Start date is Required!", }),
+    due_date: z.coerce.date({ required_error: "Due date is Required!", invalid_type_error: "Due date is Required!", }),
     query_type: z.coerce.number().min(1, "Query type is Required!"),
     ticket_status: z.coerce.number().min(1, "Ticket status is Required!"),
     ticket_priority: z.coerce.number().min(1, "Ticket priority is Required!"),
-    status: z.string().default("active")
-  })
-    .refine((data) => data.due_date >= data.start_date, { message: "Due date must be after Start date", path: ["due_date"] })
+    status: z.string().nullable().default("active"),
+  }).refine((data) => {
+    if (!data.start_date || !data.due_date) return true; // avoid crash
+    return data.due_date >= data.start_date;
+  }, { message: "Due date must be after Start date", path: ["due_date"], })
 };
 
 export const ticketsFallbackColumns = [

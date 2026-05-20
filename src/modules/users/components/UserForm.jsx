@@ -39,7 +39,7 @@ function getSelectedLabel(field, value, selectedUser) {
   }
 
   if (field.name === "default_company") {
-    return selectedUser?.companyName || selectedUser?.default_company_name || selectedUser?.default_company || value;
+    return selectedUser?.company_name || selectedUser?.default_company_name || selectedUser?.default_company || value;
   }
 
   return value;
@@ -73,7 +73,7 @@ function generateUsernamePassword() {
 
 }
 
-function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
+function UserForm({ isOpen, onClose, selectedUser, onAfterSave, menu_id }) {
   const [loading, setLoading] = useState(false);
   const [fetchingUser, setFetchingUser] = useState(false);
   const [formData, setFormData] = useState(usersModuleSchema.form.initialValues);
@@ -283,6 +283,7 @@ function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
       isOpen={isOpen}
       onClose={handleClose}
       title={selectedUser ? "Edit User" : "Create User"}
+      panelClassName="!w-[640px] max-w-full"
       closeButton={
         <button className="flyout-close" onClick={onClose} aria-label="Close panel">
           <X size={18} />
@@ -299,7 +300,7 @@ function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
         </ActionButton>
       }
     >
-      <div className="flyout-form-shell">
+      <div className="flyout-form-shell px-2 py-1">
         <div className="ws-main-container">
           {fetchingUser ? (
             <div className="p-5 text-center">
@@ -311,6 +312,7 @@ function UserForm({ isOpen, onClose, selectedUser, onAfterSave }) {
               values={formData}
               onChange={handleChange}
               errors={errors}
+              menuId={menu_id}
             />
           )}
         </div>

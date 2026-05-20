@@ -8,7 +8,7 @@ const Input = ({ field, value, onChange, placeholder, className = '', disabled, 
   const isReadOnly = Boolean(field.readOnly);
 
   return (
-    <div className="flex min-w-0 flex-col gap-1 p-1">
+    <div className="flex min-w-0 flex-col gap-1 p-0 relative">
       <DefaultLabel label={field.label} required={field.required} />
       <input
         type={field.type}

@@ -44,3 +44,7 @@ coverage/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+#release 
+*release
+*release 0.0.1

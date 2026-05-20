@@ -2,7 +2,7 @@ import React from "react";
 
 function ValidationError({ error }) {
   return (
-    <div className="min-h-[18px] w-[70%]">
+    <div className="min-h-[18px] w-full absolute -bottom-3">
       {error ? (
         <p className="text-xs text-red-500 mt-1">
           {error}

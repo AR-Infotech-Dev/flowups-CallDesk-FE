@@ -1,5 +1,44 @@
 import { buildFallbackColumnsFromKeys } from "../../../utils/moduleStructure";
+import {
+  Accessibility,
+  BriefcaseBusiness,
+  Building2,
+  ContactRound,
+  FileText,
+  Folder,
+  Gauge,
+  LayoutGrid,
+  Mail,
+  Map,
+  MenuSquare,
+  NotepadText,
+  ShieldCheck,
+  Sparkles,
+  Ticket,
+  Users,
+  Workflow,
+} from "lucide-react";
 import { z } from "zod";
+
+export const ICONS = {
+  Accessibility,
+  BriefcaseBusiness,
+  Building2,
+  ContactRound,
+  FileText,
+  Folder,
+  Gauge,
+  LayoutGrid,
+  Mail,
+  Map,
+  MenuSquare,
+  NotepadText,
+  ShieldCheck,
+  Sparkles,
+  Ticket,
+  Users,
+  Workflow,
+};
 
 const FIXED_TABLE_COLUMNS = [
   { key: "select", className: "check-col", checkbox: true, width: 42, minWidth: 42, resizable: false },
@@ -8,12 +47,11 @@ const FIXED_TABLE_COLUMNS = [
 export const menuMasterSchema = {
   title: "Menu Master",
   description: "Create and manage menus, modules, sidebar routes and dynamic system links.",
-  menuID: 3,
-  primaryKey: "menuID",
-
+  menu_id: 3,
+  primaryKey: "menu_id",
   api: {
     list: "/menus",
-    delete: "/menus/delete",
+    delete: "/menus/changestatus",
     create: "/menus/create",
     edit: "/menus",
     definitions: "/system/getDefinations",
@@ -21,7 +59,7 @@ export const menuMasterSchema = {
   },
 
   definitionRequest: {
-    menuIDField: "menuID",
+    menuIDField: "menu_id",
     modelNameField: "model_name",
     modelName: "menu",
   },
@@ -31,170 +69,38 @@ export const menuMasterSchema = {
       field: "parentID",
       fieldtype: "joined",
       joinedTable: "menu",
-      select: "menuID,menuName",
-      primaryKey: "menuID",
+      select: "menu_id,menuName",
+      primaryKey: "menu_id",
       labelKey: "menuName",
       slug: "",
       options: [],
     },
   ],
-
   defaultColumns: [
-    "menuName",
+    "menu_name",
     "module_name",
-    "menuLink",
-    "isParent",
-    "menuIndex",
+    "menu_link",
     "status",
   ],
-
-  skipFields: [
-    "metadata",
-    "c_metadata",
-    "quick_create_fields",
-    "created_by",
-    "created_date",
-    "modified_by",
-    "modified_date",
-  ],
-
-  tableCellConfig: [
-    { column_name: "menuName", type: "person" },
-    { column_name: "module_name", type: "tag" },
-    { column_name: "status", type: "badge", color_field: "status_color" },
-  ],
-
-  columnMappings: [
-    { menuName: "Menu Name" },
-    { module_name: "Module Name" },
-    { module_desc: "Description" },
-    { menuLink: "Route Link" },
-    { menu_custom_link: "Custom Link" },
-    { isParent: "Parent Menu" },
-    { parentID: "Parent Name" },
-    { iconName: "Icon" },
-    { menuIndex: "Order" },
-    { is_create_link: "Create Link" },
-    { custom_module: "Existing Module" },
-    { linked: "Linked" },
-    { is_custom: "Custom" },
-    { show_on_website: "Website" },
-    { mobile_screen: "Mobile" },
-    { label: "Form Label" },
-    { plural_label: "Plural Label" },
-    { table_name: "Table Name" },
-    { status: "Status" },
-  ],
-
+  skipFields: [],
+  tableCellConfig: [],
+  columnMappings: [],
   savedFilters: [],
-
   form: {
     initialValues: {
-      menuID: null,
-
-      is_create_link: "yes",
-      custom_module: "no",
-      show_on_website: "yes",
-      mobile_screen: "no",
-      linked: "n",
-      is_custom: "n",
-
-      module_name: "",
-      menuName: "",
-      module_desc: "",
-      menuLink: "",
-      menu_custom_link: "",
-
-      table_name: "",
-      label: "",
-      plural_label: "",
-
-      isParent: "yes",
-      parentID: "",
-
-      iconName: "",
-      menuIndex: 1,
+      menu_id: null,
+      module_name: null,
+      menuName: null,
+      module_desc: null,
+      menuLink: null,
+      table_name: null,
+      label: null,
+      plural_label: null,
+      iconName: null,
+      menuIndex: null,
       status: "active",
     },
-
     sections: [
-      // ===================================================
-      // SECTION 1 : TOP TOGGLES
-      // ===================================================
-      {
-        columns: 3,
-        fields: [
-        //   {
-        //     name: "is_create_link",
-        //     label: "Do you want to create link?",
-        //     type: "radio",
-        //     options: [
-        //       { label: "Yes", value: "yes" },
-        //       { label: "No", value: "no" },
-        //     ],
-        //   },
-          {
-            name: "custom_module",
-            label: "Link Existing Module?",
-            type: "radio",
-            options: [
-              { label: "Yes", value: "yes" },
-              { label: "No", value: "no" },
-            ],
-            visibleWhen: (values) =>
-              values.is_create_link === "yes",
-          },
-        //   {
-        //     name: "show_on_website",
-        //     label: "Show On Website",
-        //     type: "radio",
-        //     options: [
-        //       { label: "Yes", value: "yes" },
-        //       { label: "No", value: "no" },
-        //     ],
-        //   },
-        ],
-      },
-
-      // ===================================================
-      // SECTION 2 : EXTRA TOGGLES
-      // ===================================================
-      {
-        columns: 3,
-        fields: [
-        //   {
-        //     name: "mobile_screen",
-        //     label: "Show On Mobile",
-        //     type: "radio",
-        //     options: [
-        //       { label: "Yes", value: "yes" },
-        //       { label: "No", value: "no" },
-        //     ],
-        //   },
-        //   {
-        //     name: "is_custom",
-        //     label: "Is Custom Link",
-        //     type: "radio",
-        //     options: [
-        //       { label: "Yes", value: "y" },
-        //       { label: "No", value: "n" },
-        //     ],
-        //   },
-        //   {
-        //     name: "linked",
-        //     label: "Is Linked",
-        //     type: "radio",
-        //     options: [
-        //       { label: "Yes", value: "y" },
-        //       { label: "No", value: "n" },
-        //     ],
-        //   },
-        ],
-      },
-
-      // ===================================================
-      // SECTION 3 : MAIN TEXT FIELDS
-      // ===================================================
       {
         columns: 3,
         fields: [
@@ -204,69 +110,25 @@ export const menuMasterSchema = {
             type: "text",
             placeholder: "Ex: users",
             required: true,
-            visibleWhen: (values) =>
-              values.custom_module === "no",
+            gridSpan: 4,
           },
           {
-            name: "menuName",
+            name: "menu_name",
             label: "Menu Name",
             type: "text",
             placeholder: "Ex: Users",
             required: true,
+            gridSpan: 4,
           },
           {
             name: "module_desc",
             label: "Description",
             type: "text",
+            gridSpan: 4,
             placeholder: "Enter description",
           },
-          {
-            name: "menuLink",
-            label: "Menu Link",
-            type: "text",
-            placeholder: "Ex: /users",
-            required: true,
-            visibleWhen: (values) =>
-              values.is_custom === "n",
-          },
         ],
       },
-
-      // ===================================================
-      // SECTION 4 : LINKS
-      // ===================================================
-      {
-        columns: 3,
-        fields: [
-        //   {
-        //     name: "menuLink",
-        //     label: "Menu Link",
-        //     type: "text",
-        //     placeholder: "Ex: /users",
-        //     required: true,
-        //     visibleWhen: (values) =>
-        //       values.is_custom === "n",
-        //   },
-        //   {
-        //     name: "menu_custom_link",
-        //     label: "Custom Link",
-        //     type: "text",
-        //     placeholder: "https://example.com",
-        //     visibleWhen: (values) =>
-        //       values.is_custom === "y",
-        //   },
-        //   {
-        //     name: "menuIndex",
-        //     label: "Menu Order",
-        //     type: "number",
-        //     placeholder: "1",
-        //   },
-        ],
-      },
-
-      // ===================================================
-      // SECTION 5 : LABELS
-      // ===================================================
       {
         columns: 3,
         fields: [
@@ -275,76 +137,40 @@ export const menuMasterSchema = {
             label: "Table Name",
             type: "text",
             placeholder: "Ex: admin",
-            visibleWhen: (values) =>
-              values.custom_module === "yes",
+            gridSpan: 4,
           },
           {
             name: "label",
             label: "Form Label",
             type: "text",
             placeholder: "Ex: User",
+            gridSpan: 4,
           },
           {
             name: "plural_label",
             label: "Plural Label",
             type: "text",
             placeholder: "Ex: Users",
+            gridSpan: 4,
           },
         ],
       },
-
-      // ===================================================
-      // SECTION 6 : PARENT + ICON
-      // ===================================================
-    //   {
-    //     columns: 3,
-    //     fields: [
-    //     //   {
-    //     //     name: "isParent",
-    //     //     label: "Is Parent Menu",
-    //     //     type: "radio",
-    //     //     options: [
-    //     //       { label: "Yes", value: "yes" },
-    //     //       { label: "No", value: "no" },
-    //     //     ],
-    //     //   },
-    //     //   {
-    //     //     name: "parentID",
-    //     //     label: "Parent Menu",
-    //     //     type: "smartSelect",
-    //     //     id: "parentID",
-    //     //     config: {
-    //     //       apiUrl: "/menus",
-    //     //       tableName: "menu",
-    //     //       selectFields: "menuID,menuName",
-    //     //       searchField: "menuName",
-    //     //       labelKey: "menuName",
-    //     //       valueKey: "menuID",
-    //     //       placeholder: "Select Parent Menu",
-    //     //       multi: false,
-    //     //     },
-    //     //     visibleWhen: (values) =>
-    //     //       values.isParent === "no",
-    //     //   },
-    //       {
-    //         name: "iconName",
-    //         label: "Icon Name",
-    //         type: "text",
-    //         placeholder: "Ex: Users",
-    //       },
-    //     ],
-    //   },
-
-      // ===================================================
-      // SECTION 7 : STATUS
-      // ===================================================
       {
         columns: 1,
         fields: [
           {
+            name: "menu_link",
+            label: "Menu Link",
+            type: "text",
+            placeholder: "Ex: users",
+            gridSpan: 4,
+            required: true
+          },
+          {
             name: "status",
             label: "Status",
             type: "radio",
+            gridSpan: 4,
             options: [
               { label: "Active", value: "active" },
               { label: "Inactive", value: "inactive" },
@@ -352,16 +178,51 @@ export const menuMasterSchema = {
           },
         ],
       },
+      {
+        columns: 1,
+        fields: [
+          {
+            name: "icon_name",
+            label: "Menu Icon",
+            type: "iconPicker",
+            gridSpan: 12,
+            options: [
+              "Gauge",
+              "Ticket",
+              "MenuSquare",
+              "ContactRound",
+              "Users",
+              "LayoutGrid",
+              "Map",
+              "Building2",
+              "ShieldCheck",
+              "FileText",
+              "BriefcaseBusiness",
+              "Workflow",
+              "Sparkles",
+              "Mail",
+              "NotepadText",
+              "Accessibility",
+            ],
+          },
+        ],
+      },
+
     ],
   },
 
+  // validationSchema: z.object({
+  //   module_name: z.string().min(1, "Module name is required"),
+  //   menu_name: z.string().min(1, "Menu name is required"),
+  //   menu_link: z.string().min(1, "Menu link is required"),
+  //   table_name: z.string().min(1, "Table name is required"),
+  // }),
   validationSchema: z.object({
-    menuName: z.string().min(1, "Menu name is required"),
-    menuLink: z.string().optional(),
-    module_name: z.string().optional(),
-    menuIndex: z.coerce.number().min(1, "Menu order required"),
-    status: z.string().min(1, "Status required"),
-  }),
+    module_name: z.string().nullable().transform(v => v ?? "").refine(v => v.trim() !== "", { message: "Module name is required" }),
+    menu_name: z.string().nullable().transform(v => v ?? "").refine(v => v.trim() !== "", { message: "Menu name is required" }),
+    menu_link: z.string().nullable().transform(v => v ?? "").refine(v => v.trim() !== "", { message: "Menu link is required" }),
+    table_name: z.string().nullable().transform(v => v ?? "").refine(v => v.trim() !== "", { message: "Table name is required" }),
+  })
 };
 
 export const menuMasterFallbackColumns = [

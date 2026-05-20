@@ -8,7 +8,7 @@ function LoginRoute() {
   const { authSession, authError, authHelperText, loginForm, setLoginForm, setForgotForm, login} = useAuth();
   
   if (authSession) {
-    return <Navigate to="/users" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   
 

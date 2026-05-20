@@ -13,6 +13,7 @@ import ValidationError from './ValidationError';
 // import { createEntityMap } from '@components/GlobalModals';
 const cacheStore = new Map();
 const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, config = {}, error, addNewFunction }) => {
+
   const isLocked = Boolean(field.disabled || field.readOnly);
   const {
     type = 'category',
@@ -55,25 +56,15 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   // Fetch once, then always filter locally
   const fetchOptions = async (page) => {
     setLoading(true);
-    console.log(page);
-    const headers = {
-      // token: Cookies.get('_bb_key'),
-      // SadminID: Cookies.get('authid'),
-    };
+    const headers = {};
     let res = {}, data = [], newOptions = [];
     if (type === 'category') {
       let urlType = customURL || `${API_BASE_URL}/searchSlugList`;
-
       const posData = customURL ? customParameters : { status: 'active', slug: source };
-
       res = await makeRequest(urlType, {
         method: 'POST', headers,
         body: posData,
       });
-      // res = await fetchJson(urlType, {
-      //   method: 'POST', headers,
-      //   body: JSON.stringify(posData),
-      // });
       data = customURL ? res?.data || [] : res.data[0]?.sublist || [];
     } else {
       // res = await fetchJson(`${API_BASE_URL}/searchList`, {
@@ -207,6 +198,33 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
       onSelect?.(item.value);
       onObjectSelect?.(item);
     }
+  };
+
+  const selectCreatedOption = (item = {}) => {
+    const option = item?.value && item?.label
+      ? item
+      : normalizeOptions([item?.original || item])[0];
+
+    if (!option) return;
+
+    setOptions((current) => {
+      const withoutDuplicate = current.filter((existing) => String(existing.value) !== String(option.value));
+      const nextOptions = [option, ...withoutDuplicate];
+      cacheStore.set(key, nextOptions);
+      return nextOptions;
+    });
+
+    handleSelect(option);
+  };
+
+  const handleAddNew = () => {
+    if (isLocked || typeof addNewFunction !== "function") return;
+    setShowDropdown(false);
+    addNewFunction({
+      searchText: inputValue || "",
+      selectOption: selectCreatedOption,
+      refreshOptions: handleRefresh,
+    });
   };
 
   const handleClear = () => {
@@ -369,8 +387,24 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
                   + Add New {label}
                 </button>
               )} */}
+              {allowAddNew && typeof addNewFunction === "function" && (
+                <button type="button" onClick={handleAddNew} className="hover:underline text-blue-600">
+                  + Add New {label || field.label || "Item"}
+                </button>
+              )}
             </div>
-            <List ref={listRef} height={200} itemCount={filteredOptions.length} onScroll={handleScroll} itemSize={44} width="100%">{Row}</List>
+            {filteredOptions.length ? (
+              <List ref={listRef} height={200} itemCount={filteredOptions.length} onScroll={handleScroll} itemSize={44} width="100%">{Row}</List>
+            ) : (
+              <div className="px-4 py-5 text-sm text-gray-500">
+                No options found.
+                {allowAddNew && typeof addNewFunction === "function" && (
+                  <button type="button" onClick={handleAddNew} className="ml-2 font-medium text-blue-600 hover:underline">
+                    Add New {label || field.label || "Item"}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

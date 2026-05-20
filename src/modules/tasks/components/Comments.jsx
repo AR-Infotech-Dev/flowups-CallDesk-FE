@@ -181,12 +181,10 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
       });
 
       if (res?.success) {
-        toast.success(res?.message || `Comment ${isEdit ? "updated" : "added"} successfully`);
         resetEditor();
         await fetchComments();
         return;
       }
-
       toast.error(res?.message || res?.msg || "Unable to save comment");
     } catch (error) {
       toast.error(error.message || "Unable to save comment");
@@ -219,7 +217,6 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
       });
 
       if (res?.success) {
-        toast.success(res?.message || "Comment deleted successfully");
         setComments((current) => current.filter((item) => item.id !== commentId));
         if (editingComment?.id === commentId) resetEditor();
         return;

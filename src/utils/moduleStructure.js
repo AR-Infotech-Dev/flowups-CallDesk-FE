@@ -217,12 +217,12 @@ export function buildFilterFieldsFromStructure(fields = [], fallbackFields = [],
   return normalizedFields.length ? normalizedFields : fallbackFields;
 }
 
-export async function getDefinitions(menuID) {
+export async function getDefinitions(menu_id) {
   const primaryResponse = await makeRequest('/system/getDefinations', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: {
-      "menuID": menuID,
+      "menu_id": menu_id,
     },
   });
 

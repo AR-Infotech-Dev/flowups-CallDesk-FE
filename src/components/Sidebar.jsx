@@ -1,296 +1,207 @@
-// import { useEffect, useMemo, useState } from "react";
-// import { NavLink } from "react-router-dom";
-// import { makeRequest } from "../api/httpClient";
-// import { BriefcaseBusiness, Building2, ChevronDown, FileText, Gauge, KeyRound, LayoutGrid, Mail, MenuSquare, NotepadText, Sparkles, ShieldCheck, Users, Workflow, Folder, } from "lucide-react";
-
-// const iconMap = { Users, ShieldCheck, MenuSquare, BriefcaseBusiness, Building2, FileText, Gauge, KeyRound, LayoutGrid, Mail, NotepadText, Sparkles, Workflow, };
-// const getIcon = (iconName) => iconMap[iconName] || Folder;
-// const buildSidebar = (menus = []) => {
-//   return menus.map((parent) => ({
-//     id: parent.menuID,
-//     title: parent.menuName,
-//     icon: getIcon(parent.iconName),
-//     moduleId: parent.menuLink,
-//     items: (parent.subMenu || []).map((child) => ({
-//       id: child.menuID,
-//       label: child.menuName,
-//       moduleId: child.menuLink,
-//       icon: getIcon(child.iconName),
-//     })),
-//   }));
-// };
-
-// function Sidebar({ activeModule = "", onSelectModule }) {
-//   const [sidebarGroups, setSidebarGroups] = useState([]);
-//   const [collapsedGroups, setCollapsedGroups] = useState({});
-//   const [loading, setLoading] = useState(true);
-
-//   // useEffect(() => {
-//   //   const fetchMenus = async () => {
-//   //     try {
-//   //       setLoading(true);
-
-//   //       const res = await makeRequest("/menus/getMenuList", {
-//   //         method: "GET",
-//   //       });
-
-//   //       const menuData = res?.data || [];
-
-//   //       const groups = buildSidebar(menuData);
-
-//   //       setSidebarGroups(groups);
-
-//   //       const defaultOpen = {};
-//   //       groups.forEach((g) => {
-//   //         defaultOpen[g.title] = false;
-//   //       });
-
-//   //       setCollapsedGroups(defaultOpen);
-//   //     } catch (error) {
-//   //       console.log("Sidebar Error:", error);
-//   //     } finally {
-//   //       setLoading(false);
-//   //     }
-//   //   };
-
-//   //   fetchMenus();
-//   // }, []);
-
-//   // ===============================
-//   // TOGGLE GROUP
-//   // ===============================
-//   const toggleGroup = (title) => {
-//     setCollapsedGroups((prev) => ({
-//       ...prev,
-//       [title]: !prev[title],
-//     }));
-//   };
-
-//   // ===============================
-//   // AUTO OPEN ACTIVE GROUP
-//   // ===============================
-//   useEffect(() => {
-//     sidebarGroups.forEach((group) => {
-//       const hasActiveChild = group.items.some(
-//         (item) => item.moduleId === activeModule
-//       );
-
-//       if (hasActiveChild) {
-//         setCollapsedGroups((prev) => ({
-//           ...prev,
-//           [group.title]: false,
-//         }));
-//       }
-//     });
-//   }, [activeModule, sidebarGroups]);
-
-//   return (
-//     <aside className="sidebar">
-//       <div className="sidebar-sections">
-//         {loading && (
-//           <div className="p-4 text-sm opacity-70">
-//             Loading menu...
-//           </div>
-//         )}
-
-//         {/* ======================= */}
-//         {/* MENU GROUPS */}
-//         {/* ======================= */}
-//         {!loading &&
-//           sidebarGroups.map((group) => {
-//             const GroupIcon = group.icon;
-//             const isCollapsed = collapsedGroups[group.title];
-
-//             const isDirectActive =
-//               group.moduleId &&
-//               group.items.length === 0 &&
-//               group.moduleId === activeModule;
-
-//             return (
-//               <section key={group.id} className="sidebar-group">
-
-//                 {/* ======================= */}
-//                 {/* GROUP HEADER */}
-//                 {/* ======================= */}
-//                 <button type="button" className={`sidebar-group-title sidebar-group-toggle ${isDirectActive ? "active" : ""}`}
-//                   onClick={() => {
-//                     if (group.items.length) {
-//                       toggleGroup(group.title);
-//                     } else {
-//                       onSelectModule?.(group.moduleId);
-//                     }
-//                   }} >
-//                   <span className="flex items-center gap-2">
-//                     <GroupIcon size={16} /> {group.title}
-//                   </span>
-
-//                   {group.items.length > 0 && (
-//                     <ChevronDown size={14} className={isCollapsed ? "rotate-180" : ""} />
-//                   )}
-//                 </button>
-
-//                 {/* ======================= */}
-//                 {/* CHILD ITEMS */}
-//                 {/* ======================= */}
-//                 {group.items.length > 0 && !isCollapsed && (
-//                   <div className="sidebar-group-items">
-//                     {group.items.map((item) => {
-//                       const Icon = item.icon;
-//                       const isActive = item.moduleId === activeModule;
-//                       return (
-//                         <NavLink
-//                           key={item.id}
-//                           to={`/${item.moduleId}`}
-//                           className="no-underline"
-//                           onClick={() => onSelectModule?.(item.moduleId) }
-//                         >
-//                           <button className={`sidebar-item w-full ${isActive ? "active" : "" }`} >
-//                             <span className="sidebar-icon"> {/* <Icon size={15} /> */} </span>
-//                             <span>{item.label}</span>
-//                           </button>
-//                         </NavLink>
-//                       );
-//                     })}
-//                   </div>
-//                 )}
-//               </section>
-//             );
-//           })}
-//       </div>
-
-//       {/* ======================= */}
-//       {/* FOOTER */}
-//       {/* ======================= */}
-//       <div className="sync-card">
-//         <div className="sync-ring" />
-//         <div>
-//           <div className="sync-title">CRM Connected</div>
-//           <div className="sync-subtitle">
-//             Dynamic menu loaded from API
-//           </div>
-//         </div>
-//       </div>
-//     </aside>
-//   );
-// }
-
-// export default Sidebar;
-
-import React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
-  Gauge,
-  Users,
-  Ticket,
-  LayoutGrid,
-  ShieldCheck,
+  Accessibility,
+  BriefcaseBusiness,
   Building2,
-  MenuSquare
+  ChevronDown,
+  ContactRound,
+  FileText,
+  Folder,
+  Gauge,
+  LayoutGrid,
+  Mail,
+  Map,
+  MenuSquare,
+  NotepadText,
+  ShieldCheck,
+  Sparkles,
+  Ticket,
+  Users,
+  Workflow,
 } from "lucide-react";
+import { useAuth } from "../auth/AuthProvider";
+import { getStoredMenuList, getStoredPermissions } from "../auth/authStorage";
+import {
+  buildAllowedMenuTree,
+  getMenuId,
+  getMenuLabel,
+  getMenuLink,
+  normalizePath,
+} from "../auth/permissions";
 
-// ============================================
-// STATIC MENU
-// ============================================
-const menus = [
-  {
-    label: "Dashboard",
-    path: "/dashboard",
-    icon: Gauge,
-  },
-  {
-    label: "Users",
-    path: "/users",
-    icon: Users,
-  },
-  {
-    label: "Tickets",
-    path: "/tickets",
-    icon: Ticket,
-  },
-  {
-    label: "Category",
-    path: "/category",
-    icon: LayoutGrid,
-  },
-  {
-    label: "Role Master",
-    path: "/user-roles",
-    icon: ShieldCheck,
-  },
-  {
-    label: "Company Master",
-    path: "/companyMaster",
-    icon: Building2,
-  },
-  {
-    label: "Menu Master",
-    path: "/menus",
-    icon: MenuSquare,
-  },
-];
+const iconMap = {
+  Accessibility,
+  BriefcaseBusiness,
+  Building2,
+  ContactRound,
+  FileText,
+  Gauge,
+  LayoutGrid,
+  Mail,
+  Map,
+  MenuSquare,
+  NotepadText,
+  ShieldCheck,
+  Sparkles,
+  Ticket,
+  Users,
+  Workflow,
+};
 
-// ============================================
-// COMPONENT
-// ============================================
+const getIcon = (iconName) => iconMap[iconName] || Folder;
+
+const buildSidebar = (menus = [], permissions = {}, user = {}) =>
+  buildAllowedMenuTree(menus, permissions, user).map((parent) => {
+    const children = parent?.subMenu || parent?.submenu || parent?.children || [];
+    const visibleChildren = children.map((child) => ({
+      id: getMenuId(child),
+      label: getMenuLabel(child),
+      path: normalizePath(getMenuLink(child)),
+      icon: getIcon(child.iconName),
+    }))
+      .filter((item) => item.path);
+
+    const parentPath = normalizePath(getMenuLink(parent));
+
+    if (!parentPath && visibleChildren.length === 0) return null;
+
+    return {
+      id: getMenuId(parent),
+      title: getMenuLabel(parent),
+      path: parentPath,
+      icon: getIcon(parent.icon_name),
+      items: visibleChildren,
+    };
+  })
+    .filter(Boolean);
+
 function Sidebar({ onSelectModule }) {
+  const { authSession } = useAuth();
+  const [menus, setMenus] = useState(() => getStoredMenuList());
+  const [loading, setLoading] = useState(() => !getStoredMenuList().length);
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const permissions = useMemo(() => getStoredPermissions(), [authSession]);
+  const sidebarGroups = useMemo(
+    () => buildSidebar(menus, permissions, authSession?.user),
+    [menus, permissions, authSession?.user]
+  );
+
+  useEffect(() => {
+    const syncMenus = (event) => {
+      const nextMenus = event?.detail || getStoredMenuList();
+      setMenus(nextMenus);
+      setLoading(false);
+    };
+
+    const storedMenus = getStoredMenuList();
+    if (storedMenus.length) {
+      setMenus(storedMenus);
+      setLoading(false);
+    }
+
+    window.addEventListener("crm:menus-updated", syncMenus);
+    return () => window.removeEventListener("crm:menus-updated", syncMenus);
+  }, []);
+
+  useEffect(() => {
+    const nextCollapsed = {};
+    sidebarGroups.forEach((group) => {
+      nextCollapsed[group.id] = false;
+    });
+    setCollapsedGroups(nextCollapsed);
+  }, [sidebarGroups.length]);
+
   return (
     <aside className="sidebar">
-      {/* ============================= */}
-      {/* MENU */}
-      {/* ============================= */}
       <div className="sidebar-sections">
         <section className="sidebar-group">
-          <div className="sidebar-group-title px-2">
-            Main Menu
-          </div>
+          <div className="sidebar-group-title px-2">Main Menu</div>
 
           <div className="sidebar-group-items">
-            {menus.map((item, index) => {
-              const Icon = item.icon;
+            {loading && <div className="p-3 text-xs text-slate-500">Loading menu...</div>}
+            {!loading && sidebarGroups.length === 0 && (
+              <div className="p-3 text-xs text-slate-500">No menu access</div>
+            )}
+            {!loading &&
+              sidebarGroups.map((group) => {
+                const Icon = group.icon;
+                const isCollapsed = collapsedGroups[group.id];
 
-              return (
-                <NavLink
-                  key={index}
-                  to={item.path}
-                  className="no-underline"
-                  onClick={() =>
-                    onSelectModule?.(item.path)
-                  }
-                >
-                  {({ isActive }) => (
-                    <button
-                      className={`sidebar-item w-full ${
-                        isActive ? "active" : ""
-                      }`}
-                    >
-                      <span className="sidebar-icon">
-                        <Icon size={16} />
-                      </span>
+                if (group.items.length) {
+                  return (
+                    <div key={group.id} className="sidebar-group">
+                      <button
+                        type="button"
+                        className="sidebar-group-title sidebar-group-toggle"
+                        onClick={() =>
+                          setCollapsedGroups((current) => ({
+                            ...current,
+                            [group.id]: !current[group.id],
+                          }))
+                        }
+                      >
+                        <span className="flex items-center gap-2">
+                          <Icon size={16} /> {group.title}
+                        </span>
+                        <ChevronDown size={14} className={isCollapsed ? "is-collapsed" : ""} />
+                      </button>
 
-                      <span>{item.label}</span>
-                    </button>
-                  )}
-                </NavLink>
-              );
-            })}
+                      {!isCollapsed && (
+                        <div className="sidebar-group-items">
+                          {group.items.map((item) => {
+                            const ItemIcon = item.icon;
+                            return (
+                              <NavLink
+                                key={item.id}
+                                to={item.path}
+                                className="no-underline"
+                                onClick={() => onSelectModule?.(item.path)}
+                              >
+                                {({ isActive }) => (
+                                  <button className={`sidebar-item w-full ${isActive ? "active" : ""}`}>
+                                    <span className="sidebar-icon">
+                                      <ItemIcon size={16} />
+                                    </span>
+                                    <span>{item.label}</span>
+                                  </button>
+                                )}
+                              </NavLink>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <NavLink
+                    key={group.id}
+                    to={group.path}
+                    className="no-underline"
+                    onClick={() => onSelectModule?.(group.path)}
+                  >
+                    {({ isActive }) => (
+                      <button className={`sidebar-item w-full ${isActive ? "active" : ""}`}>
+                        <span className="sidebar-icon">
+                          <Icon size={16} />
+                        </span>
+                        <span>{group.title}</span>
+                      </button>
+                    )}
+                  </NavLink>
+                );
+              })}
           </div>
         </section>
       </div>
 
-      {/* ============================= */}
-      {/* FOOTER */}
-      {/* ============================= */}
       <div className="sync-card">
         <div className="sync-ring" />
-
         <div>
-          <div className="sync-title">
-            CRM Connected
-          </div>
-
-          <div className="sync-subtitle">
-            Static Sidebar Menu
-          </div>
+          <div className="sync-title">CRM Connected</div>
+          <div className="sync-subtitle">Permission menu loaded</div>
         </div>
       </div>
     </aside>

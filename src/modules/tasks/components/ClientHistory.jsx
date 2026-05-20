@@ -5,7 +5,7 @@ import { makeRequest } from "../../../api/httpClient";
 function ClientHistory({ openedTiket = null, client = {}, CLIENT_HISTORY_ITEMS }) {
     const [ticketList, setTicketList] = useState([]);
     const hasClient = Object.keys(client).length > 0;
-    const { customer_id, name, created_date } = client;
+    const { customer_id, name, created_date, mobile_no, email, contact_person } = client;
     const displayName = name || (customer_id ? `Client #${customer_id}` : "Client");
 
     const getClientsTicket = async () => {
@@ -83,6 +83,14 @@ function ClientHistory({ openedTiket = null, client = {}, CLIENT_HISTORY_ITEMS }
                         </p>
                     </div>
                 </div>
+
+                {(mobile_no || email || contact_person) && (
+                    <div className="mt-2 space-y-1 border-t border-slate-100 pt-2 text-xs text-slate-600">
+                        {contact_person && <p><span className="font-semibold text-slate-700">Contact:</span> {contact_person}</p>}
+                        {mobile_no && <p><span className="font-semibold text-slate-700">Mobile:</span> {mobile_no}</p>}
+                        {email && <p><span className="font-semibold text-slate-700">Email:</span> {email}</p>}
+                    </div>
+                )}
             </div>
 
             <div className="histories ticket-scroll-pane px-2 space-y-2 mt-2">

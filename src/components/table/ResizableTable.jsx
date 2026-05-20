@@ -5,6 +5,8 @@ import TableHeader from "./TableHeader";
 import TableSkeleton from "./TableSkeleton";
 import NoTableData from "./NoTableData";
 import ColumnArranger from "./ColumnArranger";
+import { useAuth } from "../../auth/AuthProvider";
+import { hasFieldVisiblePermission } from "../../auth/permissions";
 
 window.TIMEFORMAT = "Do MMMM YYYY"
 
@@ -40,9 +42,12 @@ function getRowIdentifier(row) {
     row?.adminID ??
     row?.ticketID ??
     row?.ticket_id ??
-    row?.menu_id ??
     row?.roleId ??
-    row?.userId
+    row?.userId ??
+    row?.menu_id ??
+    row?.customer_id ??
+    row?.company_id ??
+    row?.category_id
   );
 }
 
@@ -88,25 +93,6 @@ function getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys = []) {
   }
 
   return columns.map((column) => column.key);
-}
-
-function reorderKeys(keys, keyToMove, direction) {
-  const currentIndex = keys.indexOf(keyToMove);
-
-  if (currentIndex === -1) {
-    return keys;
-  }
-
-  const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-
-  if (targetIndex < 0 || targetIndex >= keys.length) {
-    return keys;
-  }
-
-  const nextKeys = [...keys];
-  const [movedItem] = nextKeys.splice(currentIndex, 1);
-  nextKeys.splice(targetIndex, 0, movedItem);
-  return nextKeys;
 }
 
 // function getColumnCellType(column) {
@@ -176,8 +162,11 @@ function getBadgeClassName(type, colorValue, fallbackClassName) {
 
 function renderCheckboxCell(row, selectionProps) {
   const rowId = getRowIdentifier(row);
-  const { selectedRowIds = [], onToggleRow } = selectionProps;
+  const { selectedRowIds = [], onToggleRow, allowSelection = true } = selectionProps;
 
+  // Delete permission controls row selection. If delete is not allowed, checkbox is hidden.
+  if (!allowSelection) return null;
+  
   return (
     <input
       type="checkbox"
@@ -426,6 +415,7 @@ function DefaultRow({ row, index, columns, editRow, selectionProps }) {
           className={column.className || ""}
           style={getCellStyle(column)}
           onClick={
+            // If editRow is missing, row click does nothing. Pages pass editRow only when edit permission exists.
             typeof editRow === "function"
               ? () => editRow(row)
               : undefined
@@ -451,7 +441,11 @@ function ResizableTable({
   onToggleRow,
   onToggleAllRows,
   defaultVisibleColumnKeys = [],
+  allowSelection = true,
+  menuId,
 }) {
+  const { authSession } = useAuth();
+  const user = authSession?.user;
   const [columnWidths, setColumnWidths] = useState(() => getStoredWidths(storageKey));
   const [visibleColumnKeys, setVisibleColumnKeys] = useState(() =>
     getStoredVisibleColumnKeys(storageKey) || getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys)
@@ -488,41 +482,14 @@ function ResizableTable({
       visibleColumnKeys
         .map((key) => columns.find((column) => column.key === key))
         .filter(Boolean)
+        .filter((column) => allowSelection || !column.checkbox)
+        .filter((column) => column.checkbox || column.className === "icon-col" || hasFieldVisiblePermission({ menuId, field: column, user }))
         .map((column) => ({
           ...column,
           currentWidth: Math.max(column.minWidth || 40, columnWidths[column.key] || column.width || 800),
         })),
-    [columnWidths, columns, visibleColumnKeys]
+    [allowSelection, columnWidths, columns, menuId, user, visibleColumnKeys]
   );
-
-  const hiddenColumns = useMemo(
-    () =>
-      columns.filter(
-        (column) =>
-          !visibleColumnKeys.includes(column.key) &&
-          !column.checkbox &&
-          column.className !== "icon-col"
-      ),
-    [columns, visibleColumnKeys]
-  );
-
-  const removableColumns = useMemo(() => {
-    const items = visibleColumnKeys
-      .map((key) => columns.find((column) => column.key === key))
-      .filter(
-        (column) =>
-          column &&
-          !column.checkbox &&
-          column.className !== "icon-col" &&
-          !column.isAlwaysVisible
-      );
-
-    return items.map((column, index) => ({
-      ...column,
-      isFirst: index === 0,
-      isLast: index === items.length - 1,
-    }));
-  }, [columns, visibleColumnKeys]);
 
   const tableWidth = useMemo(
     () => resolvedColumns.reduce((sum, column) => sum + column.currentWidth, 0),
@@ -542,8 +509,9 @@ function ResizableTable({
     () => ({
       selectedRowIds,
       onToggleRow,
+      allowSelection,
     }),
-    [onToggleRow, selectedRowIds]
+    [allowSelection, onToggleRow, selectedRowIds]
   );
 
   const handleResize = (key, nextWidth) => {
@@ -553,28 +521,14 @@ function ResizableTable({
     }));
   };
 
-  const handleShowColumn = (columnKey) => {
-    setVisibleColumnKeys((current) => [...new Set([...current, columnKey])]);
-  };
-
-  const handleHideColumn = (columnKey) => {
-    setVisibleColumnKeys((current) => current.filter((key) => key !== columnKey));
-  };
-
-  const handleMoveColumn = (columnKey, direction) => {
-    setVisibleColumnKeys((current) => reorderKeys(current, columnKey, direction));
-  };
-
   return (
     <div className="table-card">
       <ColumnArranger
         setIsColumnMenuOpen={setIsColumnMenuOpen}
         isColumnMenuOpen={isColumnMenuOpen}
-        hiddenColumns={hiddenColumns}
-        removableColumns={removableColumns}
-        onShowColumn={handleShowColumn}
-        onHideColumn={handleHideColumn}
-        onMoveColumn={handleMoveColumn}
+        columns={columns}
+        visibleColumnKeys={visibleColumnKeys}
+        onApplyColumnKeys={setVisibleColumnKeys}
       />
 
       <div className="table-scroll-x">
@@ -586,7 +540,7 @@ function ResizableTable({
             sortConfig={sortConfig}
             onSortChange={onSortChange}
             allRowsSelected={allRowsSelected}
-            onToggleAllRows={onToggleAllRows}
+            onToggleAllRows={allowSelection ? onToggleAllRows : undefined}
           />
 
           <tbody>
