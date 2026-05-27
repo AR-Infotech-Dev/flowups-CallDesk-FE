@@ -77,6 +77,18 @@ function MainRoutes() {
   const storedMenus = getStoredMenuList();
   const [menus, setMenus] = useState(() => storedMenus);
   const [loadingMenus, setLoadingMenus] = useState(!storedMenus.length);
+  const { authSession } = useAuth();
+
+  useEffect(() => {
+    const syncMenus = (event) => {
+      const nextMenus = event?.detail || getStoredMenuList();
+      setMenus(nextMenus);
+      setLoadingMenus(false);
+    };
+
+    window.addEventListener("crm:menus-updated", syncMenus);
+    return () => window.removeEventListener("crm:menus-updated", syncMenus);
+  }, []);
 
   useEffect(() => {
     const loadMenus = async () => {
@@ -101,7 +113,7 @@ function MainRoutes() {
     };
 
     loadMenus();
-  }, []);
+  }, [authSession]);
 
   const dynamicRoutes = useMemo(
     () =>

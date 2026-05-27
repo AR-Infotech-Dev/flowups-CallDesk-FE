@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import Spinner from "./ui/Spinner";
 import { APP_NAME } from "../api/config";
 import NotificationBell from "./ui/NotificationBell";
+import LoadingBar from "./LoadingBar";
 
 function TopBar({ onLogout }) {
   const [isLoggingOut, setLoggingOut] = useState(false);
@@ -44,46 +45,50 @@ function TopBar({ onLogout }) {
   };
 
   return (
-    <header className="topbar">
-      <div className="topbar-left">
-        <h1>{APP_NAME}</h1>
-      </div>
+    <div className="topbar-shell">
 
-      <div className="topbar-center">
-        <div className="search-box">
-          <Search size={16} />
-          <input type="text" value="Search" readOnly />
+      <header className="topbar">
+        <div className="topbar-left">
+          <h1>{APP_NAME}</h1>
         </div>
-      </div>
 
-      <div className="topbar-right">
+        <div className="topbar-center">
+          <div className="search-box">
+            <Search size={16} />
+            <input type="text" value="Search" readOnly />
+          </div>
+        </div>
 
-        <button
-          className="top-link flex gap-2"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-        >
-          {isLoggingOut && <Spinner classNames={"mx-4"} />}
-          Logout
-        </button>
+        <div className="topbar-right">
 
-        <NotificationBell />
+          <button
+            className="top-link flex gap-2"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut && <Spinner classNames={"mx-4"} />}
+            Logout
+          </button>
 
-        {/* USER */}
-        <button className="topbar-profile flex items-center gap-2">
-          <span className="topbar-profile-ring">
-            {getInitials(user?.name)}
-          </span>
+          <NotificationBell />
 
-          <span className="text-sm font-medium">
-            {user?.name || "User"}
-          </span>
+          {/* USER */}
+          <button className="topbar-profile flex items-center gap-2">
+            <span className="topbar-profile-ring">
+              {getInitials(user?.name)}
+            </span>
 
-          {/* <ChevronDown size={14} /> */}
-        </button>
+            <span className="text-sm font-medium">
+              {user?.name || "User"}
+            </span>
 
-      </div>
-    </header>
+            {/* <ChevronDown size={14} /> */}
+          </button>
+
+        </div>
+      </header>
+        <LoadingBar />
+    </div>
   );
 }
 

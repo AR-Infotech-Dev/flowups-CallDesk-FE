@@ -1,12 +1,11 @@
-import { Code } from "lucide-react";
 import { API_BASE_URL, DEFAULT_HEADERS, getDefaultHeaders } from "./config";
 import axios from 'axios';
 import { clearAuthSession } from "../auth/authStorage";
-import { set } from "react-hook-form";
+import { hideGlobalLoader, showGlobalLoader } from "../context/loaderStore";
 
 export const makeRequest = async (url, options = {}) => {
   try {
-    const token = localStorage.getItem("_bb_key");
+    showGlobalLoader();
     const {
       method = "GET",
       headers = {},
@@ -30,7 +29,6 @@ export const makeRequest = async (url, options = {}) => {
       status: res.status,
       ...res.data
     };
-
   } catch (error) {
     console.log("Axios Error:", error.response);
     if (error.response) {
@@ -58,6 +56,8 @@ export const makeRequest = async (url, options = {}) => {
         message: error.message,
       };
     }
+  } finally{
+    hideGlobalLoader();
   }
 };
 
@@ -85,15 +85,21 @@ async function parseResponse(response) {
 export async function apiRequest(path, options = {}) {
   const { headers, ...restOptions } = options;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...restOptions,
-    headers: {
-      ...DEFAULT_HEADERS,
-      ...headers,
-    },
-  });
+  try {
+    showGlobalLoader();
 
-  return parseResponse(response);
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...restOptions,
+      headers: {
+        ...DEFAULT_HEADERS,
+        ...headers,
+      },
+    });
+
+    return parseResponse(response);
+  } finally {
+    hideGlobalLoader();
+  }
 }
 
 export function get(path, options = {}) {
