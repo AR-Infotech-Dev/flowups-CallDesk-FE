@@ -1,9 +1,9 @@
 import '../auth/styles/auth.css';
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { makeRequest } from "../api/httpClient";
-import { saveAuthSession, saveMenuList, savePermissions } from "./authStorage";
+import { getUserAuthId, saveAuthSession, saveMenuList, savePermissions } from "./authStorage";
 import { fetchMenuList, fetchUserPermissions } from "./permissions";
 import { useAuth } from "./AuthProvider";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -48,16 +48,17 @@ function LoginForm() {
       }
 
       const session = {
-        token: res?.token,
+        // token: res?.token,
         user: res?.user,
-        authid: res?.user.adminID
+        authid: getUserAuthId(res?.user),
       };
 
       saveAuthSession(session);
-      const [permissions, menus] = await Promise.all([
-        fetchUserPermissions(session.authid),
-        fetchMenuList('ithech Login madhe'),
-      ]);
+      const permissions = await fetchUserPermissions(session.authid);
+      const menus = await fetchMenuList("ithech Login madhe", {
+        fallbackPermissions: permissions,
+        forceRefresh: true,
+      });
       savePermissions(permissions);
       saveMenuList(menus);
       login(session);
@@ -101,7 +102,7 @@ function LoginForm() {
           <label htmlFor="" className="text-sm text-gray-600">Remember Me</label>
         </div>
 
-        <a href="" className="text-blue-500 hover:underline">Forgot Password ?</a>
+        <Link to="/forgot-password" className="text-blue-500 hover:underline">Forgot Password ?</Link>
       </div>
       {/* Form submit already calls handleLogin, so button click should not call it again. */}
       <button type="submit" className="w-full bg-brand-primary text-white py-2 rounded-md hover:bg-primary/90 font-medium  text-sm mb-4">

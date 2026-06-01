@@ -34,7 +34,7 @@
   --button-gradient: linear-gradient(90deg, #1399ea 0%, #004eb6 100%);
 
   color-scheme: light;
-  font-family: "Manrope", sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   color: var(--text-main);
   background: var(--bg-body);
   line-height: 1.4;

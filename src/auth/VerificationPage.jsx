@@ -12,7 +12,6 @@ function VerificationPage({
     <AuthShell
       title="Verification"
       subtitle="Enter the verification code and set a new password to finish recovery."
-      footer={<div className="auth-footer-copy">Use verification code: <strong>123456</strong></div>}
     >
       <form className="auth-form" onSubmit={onSubmit}>
         <label className="auth-field">
@@ -50,6 +49,19 @@ function VerificationPage({
             value={formData.password}
             onChange={onChange}
             placeholder="Enter new password"
+            autoComplete="off"
+          />
+        </label>
+
+        <label className="auth-field">
+          <span className="auth-label">Confirm Password</span>
+          <input
+            className="auth-input"
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={onChange}
+            placeholder="Re-enter new password"
             autoComplete="off"
           />
         </label>

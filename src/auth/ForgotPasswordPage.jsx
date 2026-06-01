@@ -11,7 +11,7 @@ function ForgotPasswordPage({
   return (
     <AuthShell
       title="Forgot Password"
-      subtitle="Enter your email to generate a local verification code and continue."
+      subtitle="Enter your email to receive a verification code and continue."
     >
       <form className="auth-form" onSubmit={onSubmit}>
         <label className="auth-field">

@@ -197,7 +197,7 @@ function renderPersonCell(value, row, colorField, index) {
   return (
     <div className="person-cell">
       <span
-        className={`person-avatar ${avatarStyle ? "" : `avatar-${index % 6}`}`.trim()}
+        className={`person-avatar ${avatarStyle ? "" : `avatar-${index % 12}`}`.trim()}
         style={avatarStyle}
       >
         {String(value || "?").charAt(0)}

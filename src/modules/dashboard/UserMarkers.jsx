@@ -113,7 +113,6 @@ export function UserMarkers() {
     }, [])
     const onChangeHandler = (nextValue) => {
         setSelectedUser(nextValue);
-        console.log('selected user : ', nextValue);
     }
 
     const validUsers = markers.filter((u) => u.latitude && u.longitude);

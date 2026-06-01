@@ -21,6 +21,20 @@ export const getMenuId = (menu = {}) => menu?.menu_id || menu?.menuID || menu?.m
 export const getMenuLabel = (menu = {}) => menu?.menuName || menu?.menu_name || menu?.label || menu?.module_name || "Menu";
 export const getMenuLink = (menu = {}) => menu?.menuLink || menu?.menu_link || menu?.path || "";
 
+const getMenuIcon = (menu = {}) => menu?.iconName || menu?.icon_name || menu?.icon || "";
+
+const getPermissionSource = (payload = {}) =>
+  payload?.permissions ||
+  payload?.data?.permissions ||
+  payload?.data?.rows ||
+  payload?.data?.result ||
+  payload?.data?.list ||
+  payload?.rows ||
+  payload?.result ||
+  payload?.list ||
+  payload?.data ||
+  payload;
+
 export const flattenMenus = (menus = []) =>
   menus.flatMap((menu) => [
     menu,
@@ -138,7 +152,7 @@ export const getFirstAllowedPath = ({ user } = {}) => {
 };
 
 export const normalizePermissionMap = (payload = {}) => {
-  const source = payload?.permissions || payload?.data?.permissions || payload?.data || payload;
+  const source = getPermissionSource(payload);
 
   if (Array.isArray(source)) {
     return source.reduce((accumulator, item) => {
@@ -151,28 +165,64 @@ export const normalizePermissionMap = (payload = {}) => {
   return source && typeof source === "object" ? source : {};
 };
 
+export const buildMenusFromPermissions = (permissions = {}) => {
+  const rows = Array.isArray(permissions)
+    ? permissions.map((permission) => [undefined, permission])
+    : Object.entries(permissions || {});
+
+  return rows
+    .map(([permissionKey, permission]) => {
+      const menu = permission?.menu || permission?.menuData || permission?.menu_details || permission;
+      const menuId = getMenuId(menu) || permission?.menu_id || permission?.menuID || permission?.menuId || permissionKey;
+      const menuLink = getMenuLink(menu) || permission?.menu_link || permission?.menuLink || permission?.path;
+
+      if (!menuId || !menuLink) return null;
+
+      return {
+        menu_id: menuId,
+        menuName: getMenuLabel(menu),
+        menu_link: menuLink,
+        icon_name: getMenuIcon(menu),
+        parentID: menu?.parentID || menu?.parent_id || permission?.parentID || permission?.parent_id || 0,
+        subMenu: [],
+      };
+    })
+    .filter(Boolean);
+};
+
 export const fetchUserPermissions = async (userId) => {
   if (!userId) return {};
 
-  const res = await makeRequest(`/permissions/${userId}`, {
+  const res = await makeRequest(`/get-permissions/${userId}`, {
     method: "GET",
   });
 
   return res?.success ? normalizePermissionMap(res) : {};
 };
 
-export const fetchMenuList = async (msg) => {
+const fetchBootstrapMenus = async () => {
+  const requestOptions = {
+    method: "POST",
+    body: { getAll: "Y" },
+  };
+
+  const res = await makeRequest("/get-menus", requestOptions);
+
+  if (res?.success || (res?.status !== 404 && res?.code !== 404)) {
+    return res;
+  }
+};
+
+export const fetchMenuList = async (msg, options = {}) => {
+  const { fallbackPermissions, forceRefresh = false } = options;
   const storedMenus = getStoredMenuList();
-  if (storedMenus.length) return storedMenus;
-  if (menuListForbidden) return [];
+  if (!forceRefresh && storedMenus.length) return storedMenus;
+  if (menuListForbidden) return buildMenusFromPermissions(fallbackPermissions);
 
   if (menuListRequest) return menuListRequest;
 
   menuListRequest = (async () => {
-    const res = await makeRequest("/menus", {
-      method: "POST",
-      body: { getAll: "Y" },
-    });
+    const res = await fetchBootstrapMenus();
 
     if (res?.success) return res.data || [];
 
@@ -182,7 +232,7 @@ export const fetchMenuList = async (msg) => {
       menuListForbidden = true;
     }
 
-    return [];
+    return buildMenusFromPermissions(fallbackPermissions);
   })();
 
   try {

@@ -30,6 +30,20 @@ function ModuleControls({
 }) {
   return (
     <div className="module-controls">
+      {showTraditional && (
+        <div className="module-header-actions">
+          {canCreate && (
+            <ActionButton variant="primary" onClick={onCreate}>
+              <CirclePlus size={16} />
+              {createLabel}
+            </ActionButton>
+          )}
+          <ActionButton onClick={onRefresh}>
+            {loading ? <Spinner /> : <RefreshCcw size={15} />}
+          </ActionButton>
+        </div>
+      )}
+
       <div className="module-toolbar-row">
         <div className="module-toolbar-left">
           {filter}
@@ -53,9 +67,6 @@ function ModuleControls({
         <div className="module-toolbar-right">
           {showTraditional &&
             <>
-              {/* Add button is shown only when the user has add permission for this module. */}
-              {canCreate && <ActionButton variant="primary" onClick={onCreate}> <CirclePlus size={16} /> {createLabel} </ActionButton>}
-              <ActionButton onClick={onRefresh}> {loading ? <Spinner /> : <RefreshCcw size={15} color="var(--primary)" />} </ActionButton>
               {/* Delete button is shown only when delete permission exists and rows are selected. */}
               {canDelete && showDelete &&
                 <ActionButton onClick={onDeleteSelected} disabled={deleteDisabled}>

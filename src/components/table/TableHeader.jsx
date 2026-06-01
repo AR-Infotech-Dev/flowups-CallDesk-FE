@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { ChevronUp, ChevronDown, ChevronsUpDown, Plus } from "lucide-react";
+import { useMemo, useRef } from "react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
 
 function TableHeader({
   columns,
@@ -48,6 +48,16 @@ function TableHeader({
     [columns]
   );
 
+  const getSortIcon = (columnKey) => {
+    if (sortConfig?.key !== columnKey) {
+      return <ChevronsUpDown size={13} />;
+    }
+
+    return sortConfig?.direction === "asc"
+      ? <ArrowUp size={13} />
+      : <ArrowDown size={13} />;
+  };
+
   return (
     <thead>
       <tr>
@@ -70,23 +80,16 @@ function TableHeader({
                   className="table-header-label"
                   onClick={() => onSortChange?.(column.key)}
                 >
-                  <span>{column.label}</span>
-                  <span className="table-header-sort">
-                    <ChevronUp
-                      size={11}
-                      opacity={sortConfig?.key === column.key && sortConfig?.direction === "asc" ? 1 : 0.35}
-                    />
-                    <ChevronDown
-                      size={11}
-                      opacity={sortConfig?.key === column.key && sortConfig?.direction === "desc" ? 1 : 0.35}
-                    />
+                  <span className="table-header-text">{column.label}</span>
+                  <span className={`table-header-sort ${sortConfig?.key === column.key ? "is-active" : ""}`}>
+                    {getSortIcon(column.key)}
                   </span>
                 </button>
                 {column.key === lastColumnKey ? (
                   <div className="table-column-picker">
                     <button
                       type="button"
-                      className="table-column-picker-trigger animate-ping"
+                      className="table-column-picker-trigger"
                       onClick={(event) => {
                         event.stopPropagation();
                         setIsColumnMenuOpen((current) => !current);

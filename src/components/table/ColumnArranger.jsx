@@ -34,7 +34,7 @@ function SortableColumnRow({ column, checked, disabled = false, onToggle }) {
       className={`column-arranger-row ${checked ? "is-selected" : "is-hidden"} ${isDragging ? "is-dragging" : ""}`}
     >
       <span className="column-arranger-grip" {...attributes} {...listeners}>
-        {checked ? <GripVertical size={14} /> : null}
+        {checked ? <GripVertical size={12} /> : null}
       </span>
       <label className="column-arranger-label">
         <input

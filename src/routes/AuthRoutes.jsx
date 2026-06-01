@@ -1,7 +1,11 @@
-import { Navigate, Route, useNavigate } from "react-router-dom";
+import { Navigate, Route, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import Login from "../auth/Login";
 import Feedback from "../public/Feedback";
+import ForgotPasswordPage from "../auth/ForgotPasswordPage";
+import VerificationPage from "../auth/VerificationPage";
+import { makeRequest } from "../api/httpClient";
 
 function LoginRoute() {
   const navigate = useNavigate();
@@ -19,17 +23,13 @@ function LoginRoute() {
 
 function ForgotPasswordRoute() {
   const navigate = useNavigate();
-  const {
-    authSession,
-    authError,
-    authHelperText,
-    forgotForm,
-    setForgotForm,
-    requestPasswordReset,
-  } = useAuth();
+  const { authSession } = useAuth();
+  const [forgotForm, setForgotForm] = useState({ email: "" });
+  const [authError, setAuthError] = useState("");
+  const [authHelperText, setAuthHelperText] = useState("");
 
   if (authSession) {
-    return <Navigate to="/users" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -41,12 +41,22 @@ function ForgotPasswordRoute() {
         const { name, value } = event.target;
         setForgotForm((prev) => ({ ...prev, [name]: value }));
       }}
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
-        const result = requestPasswordReset(forgotForm.email);
-        if (result?.success) {
-          navigate("/verify-reset");
+        setAuthError("");
+        setAuthHelperText("");
+        const result = await makeRequest("forgotPassword", {
+          method: "POST",
+          body: { email: forgotForm.email },
+        });
+
+        if (!result?.success) {
+          setAuthError(result?.message || "Unable to send verification code");
+          return;
         }
+
+        setAuthHelperText(result?.message || "Verification code sent successfully");
+        navigate("/verify-reset", { state: { email: forgotForm.email } });
       }}
       onBack={() => {
         navigate("/login");
@@ -57,17 +67,19 @@ function ForgotPasswordRoute() {
 
 function VerificationRoute() {
   const navigate = useNavigate();
-  const {
-    authSession,
-    authError,
-    authHelperText,
-    verificationForm,
-    setVerificationForm,
-    verifyReset,
-  } = useAuth();
+  const location = useLocation();
+  const { authSession } = useAuth();
+  const [verificationForm, setVerificationForm] = useState({
+    email: location.state?.email || "",
+    code: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [authError, setAuthError] = useState("");
+  const [authHelperText, setAuthHelperText] = useState("");
 
   if (authSession) {
-    return <Navigate to="/users" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -79,12 +91,32 @@ function VerificationRoute() {
         const { name, value } = event.target;
         setVerificationForm((prev) => ({ ...prev, [name]: value }));
       }}
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
-        const result = verifyReset(verificationForm);
-        if (result?.success) {
-          navigate("/login");
+        setAuthError("");
+        setAuthHelperText("");
+
+        if (verificationForm.password !== verificationForm.confirmPassword) {
+          setAuthError("New password and confirm password must match");
+          return;
         }
+
+        const result = await makeRequest("verifyOtp", {
+          method: "POST",
+          body: {
+            otp: verificationForm.code,
+            new_password: verificationForm.password,
+            re_enter_password: verificationForm.confirmPassword,
+          },
+        });
+
+        if (!result?.success) {
+          setAuthError(result?.message || "Unable to reset password");
+          return;
+        }
+
+        setAuthHelperText(result?.message || "Password updated successfully");
+        navigate("/login");
       }}
       onBack={() => {
         navigate("/forgot-password");
@@ -97,6 +129,8 @@ export function getAuthRoutes() {
   return (
     <>
       <Route path="/login" element={<LoginRoute />} />
+      <Route path="/forgot-password" element={<ForgotPasswordRoute />} />
+      <Route path="/verify-reset" element={<VerificationRoute />} />
       <Route path="/feedback/:ticket_id/:token" element={<Feedback />} />
     </>
   );

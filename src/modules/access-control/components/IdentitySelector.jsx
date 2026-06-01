@@ -59,7 +59,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
     <aside className="min-h-full border border-slate-200 bg-white">
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Select User or Role</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Select User or Role</h3>
           <p className="text-[11px] text-slate-500">{countLabel}</p>
         </div>
         <button
@@ -113,7 +113,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
                 {identity.initials}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-semibold text-slate-900">{identity.name}</span>
+                <span className="block truncate text-xs font-semibold text-slate-700">{identity.name}</span>
                 <span className="block truncate text-[11px] text-slate-500">{identity.email}</span>
                 <span className="block truncate text-[10px] font-medium text-slate-400">
                   Company ID: {identity.company_id || "-"}

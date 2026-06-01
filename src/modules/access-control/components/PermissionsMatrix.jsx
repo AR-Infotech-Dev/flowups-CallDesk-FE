@@ -10,7 +10,7 @@ function PermissionsEmptyState() {
             <span className="text-4xl font-bold">ID</span>
           </div>
         </div>
-        <h3 className="mt-6 text-lg font-semibold text-slate-900">Select User or Role</h3>
+        <h3 className="mt-6 text-lg font-semibold text-slate-700">Select User or Role</h3>
         <p className="mt-2 text-sm leading-6 text-slate-500">
           Select a user or role from the sidebar to begin managing their specific permissions across the platform modules.
         </p>
@@ -32,7 +32,7 @@ function PermissionsMatrix({
   return (
     <section className="min-w-0 overflow-hidden border border-slate-200 bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-        <h3 className="text-sm font-semibold text-slate-900">Module Permissions</h3>
+        <h3 className="text-sm font-semibold text-slate-700">Module Permissions</h3>
         <div className="flex items-center gap-1 text-xs text-slate-500">
           {loadingMenus && <span>Loading menus...</span>}
           {loadingPermissions && <span>Loading permissions...</span>}

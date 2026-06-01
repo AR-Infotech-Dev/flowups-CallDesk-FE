@@ -32,8 +32,6 @@ export const formatDate = (dateString, type = "full") => {
 
   // Jan 12, 2021
   if (type === "short") {
-    console.log(`${shortMonth} ${day}, ${year}`);
-    
     return `${shortMonth} ${day}, ${year}`;
   }
 

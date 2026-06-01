@@ -68,10 +68,7 @@ function normalizeComments(rows = []) {
 }
 
 function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, endpoints = DEFAULT_ENDPOINTS,}) {
-  // const user = AuthProvider.us
   const user_id = localStorage.getItem("_auth_id")
-  console.log('user_id :', user_id);
-
   const resolvedId = ticket_id || module_id;
   const api = { ...DEFAULT_ENDPOINTS, ...endpoints };
 

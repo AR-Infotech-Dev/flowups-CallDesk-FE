@@ -113,10 +113,10 @@ function KanbanCardView({
   const cardId = row._kanbanId;
   const titleValue =
     row?.[config.cardTitleField] ||
+    row?.[config.titleField] ||
     row?.title ||
     row?.subject ||
     row?.description ||
-    row?.[config.titleField] ||
     `#${cardId}`;
   const cardFields = (config.cardFields || []).filter((field) =>
     hasFieldVisiblePermission({ menuId, field: typeof field === "string" ? { key: field } : field, user })
@@ -228,6 +228,7 @@ function KanbanCardView({
 function KanbanCard({ row, columnId, isActiveDrag = false }) {
   const { config, editRow } = useKanbanContext();
   const cardId = row._kanbanId;
+  
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: cardId,
     data: {

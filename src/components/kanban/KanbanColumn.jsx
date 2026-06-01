@@ -37,58 +37,61 @@ function KanbanColumn({
       onLoadMore();
     }
   };
-
+  
   const resolvedTotal = Number.isFinite(Number(totalCount)) ? Number(totalCount) : items.length;
-
+  
   return (
-    <section className="kanban-column">
-      <header
-        className="kanban-column-head"
-        style={{
-          backgroundColor: column.color || "var(--primary-100)",
-        }}
-      >
-        <div className="kanban-column-title-wrap">
-          <span className="kanban-column-grip" aria-hidden="true">
-            <GripVertical size={14} />
-          </span>
-          <div className="kanban-column-copy">
-            <h3 className="kanban-column-title">{column.title}</h3>
-            <span className="kanban-column-meta">
-              {items.length} of {resolvedTotal}
+    <div className="block">
+      <div className="kanban-column-top" style={{ backgroundColor: column.color || "var(--primary-100)" }}>&nbsp;</div>
+      <section className="kanban-column">
+        <header
+          className="kanban-column-head"
+          style={{
+            // backgroundColor: column.color || "var(--primary-100)",
+          }}
+        >
+          <div className="kanban-column-title-wrap">
+            <span className="kanban-column-grip" aria-hidden="true">
+              <GripVertical size={14} />
             </span>
+            <div className="kanban-column-copy">
+              <h3 className="kanban-column-title">{column.title}</h3>
+              <span className="kanban-column-meta">
+                {items.length} of {resolvedTotal}
+              </span>
+            </div>
           </div>
-        </div>
-        <span className="kanban-column-count">{items.length}</span>
-      </header>
+          <span className="kanban-column-count">{items.length}</span>
+        </header>
 
-      <div
-        ref={setNodeRef}
-        className={`kanban-column-body ${isOver ? "is-over" : ""}`}
-        onScroll={handleColumnScroll}
-      >
-        <SortableContext items={items.map((item) => item._kanbanId)} strategy={verticalListSortingStrategy}>
-          {items.length ? (
-            items.map((item) => (
-              <KanbanCard
-                key={item._kanbanId}
-                row={item}
-                columnId={column.id}
-                isActiveDrag={String(activeCardId) === String(item._kanbanId)}
-              />
-            ))
-          ) : (
-            <div className="kanban-column-empty">Drop items here</div>
-          )}
-        </SortableContext>
-        {loadingMore ? <div className="kanban-column-loader">Loading more...</div> : null}
-        {hasMore && !loadingMore ? (
-          <button type="button" className="kanban-load-more" onClick={onLoadMore}>
-            Load more
-          </button>
-        ) : null}
-      </div>
-    </section>
+        <div
+          ref={setNodeRef}
+          className={`kanban-column-body ${isOver ? "is-over" : ""}`}
+          onScroll={handleColumnScroll}
+        >
+          <SortableContext items={items.map((item) => item._kanbanId)} strategy={verticalListSortingStrategy}>
+            {items.length ? (
+              items.map((item) => (
+                <KanbanCard
+                  key={item._kanbanId}
+                  row={item}
+                  columnId={column.id}
+                  isActiveDrag={String(activeCardId) === String(item._kanbanId)}
+                />
+              ))
+            ) : (
+              <div className="kanban-column-empty">Drop items here</div>
+            )}
+          </SortableContext>
+          {loadingMore ? <div className="kanban-column-loader">Loading more...</div> : null}
+          {hasMore && !loadingMore ? (
+            <button type="button" className="kanban-load-more" onClick={onLoadMore}>
+              Load more
+            </button>
+          ) : null}
+        </div>
+      </section>
+    </div>
   );
 }
 

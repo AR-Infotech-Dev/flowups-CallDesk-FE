@@ -115,7 +115,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
 
     // If user scrolled near bottom
     if (scrollHeight - scrollTop - clientHeight < 50 && hasMore && !loading) {
-      console.log("Fetch next page", page);
+      console.info("Fetch next page", page);
       fetchOptions(page);
     }
   };

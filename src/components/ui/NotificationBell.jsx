@@ -84,7 +84,7 @@ export default function NotificationBell() {
             const total = await unreadCountRequest;
             setCount(total);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             unreadCountRequest = null;
         }
@@ -106,7 +106,7 @@ export default function NotificationBell() {
                     setList(res.data || []);
                 }
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         }, []);
 
@@ -130,7 +130,7 @@ export default function NotificationBell() {
                 setCount((prev) => prev > 0 ? prev - 1 : 0);
 
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         };
 
@@ -153,7 +153,7 @@ export default function NotificationBell() {
         socket.emit("join_room", userId);
 
         const onNotification = (data = {}) => {
-            console.log("SOCKET EVENT:", data);
+            console.error("SOCKET EVENT:", data);
 
             /* sound */
             audioRef.current.currentTime = 0;
@@ -184,7 +184,7 @@ export default function NotificationBell() {
 
         /* 🔥 reconnect fix */
         const onConnect = () => {
-            console.log("Socket Reconnected");
+            console.info("Socket Reconnected");
             socket.emit("join_room", userId);
         };
 
@@ -268,21 +268,21 @@ export default function NotificationBell() {
             {open && (
                 <div
                     ref={boxRef}
-                    className="absolute right-0 top-12 w-96 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
+                    className="absolute right-0 top-9 w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden"
                 >
-                    <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-100">
-                        <h3 className="text-sm font-semibold">
+                    <div className="flex items-center justify-between px-3 py-2 border-b bg-slate-50">
+                        <h3 className="text-xs font-semibold text-slate-800">
                             Notifications
                         </h3>
 
                         {!!count && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-[11px] text-slate-500">
                                 {count} unread
                             </span>
                         )}
                     </div>
 
-                    <div className="max-h-105 overflow-y-auto">
+                    <div className="max-h-80 overflow-y-auto notification-list-scroll">
                         {list.length ? (
                             list.map((item) => (
                                 <div
@@ -290,26 +290,26 @@ export default function NotificationBell() {
                                     onClick={() =>
                                         handleNotificationClick(item)
                                     }
-                                    className={`px-4 py-3 border-b cursor-pointer hover:bg-gray-50 ${item.is_read === "n"
+                                    className={`px-3 py-2 border-b border-slate-100 cursor-pointer hover:bg-slate-50 ${item.is_read === "n"
                                         ? "bg-blue-50"
                                         : ""
                                         }`}
                                 >
-                                    <h4 className="text-sm font-semibold">
+                                    <h4 className="text-xs font-semibold text-slate-800 leading-4">
                                         {item.title}
                                     </h4>
 
-                                    <p className="text-sm text-gray-600 mt-1">
+                                    <p className="text-xs text-slate-600 mt-0.5 leading-4 line-clamp-2">
                                         {item.message}
                                     </p>
 
-                                    <p className="text-xs text-gray-400 mt-1">
+                                    <p className="text-[11px] text-slate-400 mt-0.5 leading-4">
                                         {formatRelativeTime(item.created_date)}
                                     </p>
                                 </div>
                             ))
                         ) : (
-                            <div className="p-6 text-center text-sm text-gray-500">
+                            <div className="p-4 text-center text-xs text-slate-500">
                                 No notifications found
                             </div>
                         )}

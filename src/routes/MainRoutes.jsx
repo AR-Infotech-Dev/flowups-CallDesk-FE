@@ -1,21 +1,22 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
-import { UsersModulePage } from "../modules/users";
-import { AccessControlModulePage } from "../modules/access-control";
-import { MenuMasterModulePage } from "../modules/menu-master";
-import { TicketsModulePage } from "../modules/tasks";
-import { CategoryModulePage } from "../modules/category";
-import { CustomerModulePage } from "../modules/customer";
-import { CompanyMasterModulePage } from "../modules/company-master";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getAuthRoutes } from "./AuthRoutes";
 import { useAuth } from "../auth/AuthProvider";
-import { getStoredMenuList, saveMenuList } from "../auth/authStorage";
+import { getCurrentSession, getStoredMenuList, getStoredPermissions, saveMenuList } from "../auth/authStorage";
 import { fetchMenuList, flattenMenus, getFirstAllowedPath, getMenuId, getMenuLink, normalizePath } from "../auth/permissions";
 import ProtectedRoute from "./ProtectedRoute";
 import PermissionRoute from "./PermissionRoute";
-import Dashboard from "../modules/dashboard/Dashboard";
-import UserMarkers from "../modules/dashboard/UserMarkers";
-import AppLayout from "../layouts/AppLayout";
+
+const AppLayout = lazy(() => import("../layouts/AppLayout"));
+const Dashboard = lazy(() => import("../modules/dashboard/Dashboard"));
+const UsersModulePage = lazy(() => import("../modules/users/UsersModulePage"));
+const TicketsModulePage = lazy(() => import("../modules/tasks/TicketsModulePage"));
+const MenuMasterModulePage = lazy(() => import("../modules/menu-master/MenuMasterModulePage"));
+const CustomerModulePage = lazy(() => import("../modules/customer/CustomerModulePage"));
+const CategoryModulePage = lazy(() => import("../modules/category/CategoryModulePage"));
+const CompanyMasterModulePage = lazy(() => import("../modules/company-master/CompanyMasterModulePage"));
+const AccessControlModulePage = lazy(() => import("../modules/access-control/AccessControlModulePage"));
+const UserMarkers = lazy(() => import("../modules/dashboard/UserMarkers"));
 
 const withPermission = (menuId, element) => (
   <PermissionRoute menuId={menuId}>{element}</PermissionRoute>
@@ -60,6 +61,10 @@ function RouteFallback({ loading }) {
   return <DefaultMenuRedirect />;
 }
 
+function PageLoader() {
+  return <div className="p-6 text-sm text-slate-500">Loading page...</div>;
+}
+
 function NoMenuPermission() {
   return (
     <div className="flex min-h-[420px] items-center justify-center p-6">
@@ -74,6 +79,7 @@ function NoMenuPermission() {
 }
 
 function MainRoutes() {
+  const location = useLocation();
   const storedMenus = getStoredMenuList();
   const [menus, setMenus] = useState(() => storedMenus);
   const [loadingMenus, setLoadingMenus] = useState(!storedMenus.length);
@@ -92,7 +98,13 @@ function MainRoutes() {
 
   useEffect(() => {
     const loadMenus = async () => {
-      if (!window.localStorage.getItem("_bb_key")) {
+      if (location.pathname === "/login" || location.pathname.startsWith("/feedback/")) {
+        setLoadingMenus(false);
+        return;
+      }
+
+      if (!getCurrentSession()) {
+        setMenus([]);
         setLoadingMenus(false);
         return;
       }
@@ -104,7 +116,9 @@ function MainRoutes() {
           setMenus(stored);
           return;
         }
-        const nextMenus = await fetchMenuList('ithech mainroutes madhe');
+        const nextMenus = await fetchMenuList("ithech mainroutes madhe", {
+          fallbackPermissions: getStoredPermissions(),
+        });
         saveMenuList(nextMenus);
         setMenus(nextMenus);
       } finally {
@@ -113,7 +127,7 @@ function MainRoutes() {
     };
 
     loadMenus();
-  }, [authSession]);
+  }, [authSession, location.pathname]);
 
   const dynamicRoutes = useMemo(
     () =>
@@ -136,19 +150,21 @@ function MainRoutes() {
   );
 
   return (
-    <Routes>
-      <Route path="/" element={<DefaultMenuRedirect />} />
-      {getAuthRoutes()}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AppLayout />}>
-          {dynamicRoutes.map((route) => (
-            <Route key={`${route.path}-${route.menuId}`} path={route.path} element={route.element} />
-          ))}
-          <Route path="*" element={<RouteFallback loading={loadingMenus} />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<DefaultMenuRedirect />} />
+        {getAuthRoutes()}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            {dynamicRoutes.map((route) => (
+              <Route key={`${route.path}-${route.menuId}`} path={route.path} element={route.element} />
+            ))}
+            <Route path="*" element={<RouteFallback loading={loadingMenus} />} />
+          </Route>
         </Route>
-      </Route>
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 

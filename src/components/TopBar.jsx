@@ -1,11 +1,11 @@
 import {
-  Bell,
   ChevronDown,
-  Command,
+  LogOut,
   Search,
+  UserRound,
 } from "lucide-react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Spinner from "./ui/Spinner";
 import { APP_NAME } from "../api/config";
 import NotificationBell from "./ui/NotificationBell";
@@ -14,6 +14,8 @@ import LoadingBar from "./LoadingBar";
 function TopBar({ onLogout }) {
   const [isLoggingOut, setLoggingOut] = useState(false);
   const [user, setUser] = useState(null);
+  const [isProfileOpen, setProfileOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -22,8 +24,19 @@ function TopBar({ onLogout }) {
         setUser(JSON.parse(stored));
       }
     } catch (e) {
-      console.log("User parse error");
+      console.error("User parse error");
     }
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!profileMenuRef.current?.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const getInitials = (name = "") =>
@@ -46,7 +59,6 @@ function TopBar({ onLogout }) {
 
   return (
     <div className="topbar-shell">
-
       <header className="topbar">
         <div className="topbar-left">
           <h1>{APP_NAME}</h1>
@@ -55,39 +67,63 @@ function TopBar({ onLogout }) {
         <div className="topbar-center">
           <div className="search-box">
             <Search size={16} />
-            <input type="text" value="Search" readOnly />
+            <input type="text" placeholder="Search" readOnly />
           </div>
         </div>
 
         <div className="topbar-right">
-
-          <button
-            className="top-link flex gap-2"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut && <Spinner classNames={"mx-4"} />}
-            Logout
-          </button>
-
           <NotificationBell />
 
-          {/* USER */}
-          <button className="topbar-profile flex items-center gap-2">
-            <span className="topbar-profile-ring">
-              {getInitials(user?.name)}
-            </span>
+          <div className="topbar-profile-menu" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="topbar-profile"
+              onClick={() => setProfileOpen((open) => !open)}
+            >
+              <span className="topbar-profile-ring">
+                {getInitials(user?.name)}
+              </span>
+              <span className="topbar-profile-name">{user?.name || "User"}</span>
+              <ChevronDown size={13} className={isProfileOpen ? "is-open" : ""} />
+            </button>
 
-            <span className="text-sm font-medium">
-              {user?.name || "User"}
-            </span>
+            {isProfileOpen && (
+              <div className="profile-dropdown">
+                <div className="profile-dropdown-user">
+                  <span className="topbar-profile-ring">
+                    {getInitials(user?.name)}
+                  </span>
+                  <div className="profile-dropdown-copy">
+                    <span>{user?.name || "User"}</span>
+                    <small>{user?.role || user?.role_name || "Account"}</small>
+                  </div>
+                </div>
 
-            {/* <ChevronDown size={14} /> */}
-          </button>
+                <button
+                  type="button"
+                  className="profile-dropdown-item"
+                  disabled
+                >
+                  <UserRound size={14} />
+                  Profile
+                </button>
+
+                <button
+                  type="button"
+                  className="profile-dropdown-item danger"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                >
+                  {isLoggingOut ? <Spinner classNames="mx-1" /> : <LogOut size={14} />}
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
 
         </div>
       </header>
-        <LoadingBar />
+      <LoadingBar />
     </div>
   );
 }

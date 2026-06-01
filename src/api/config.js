@@ -25,18 +25,15 @@ export const APP_NAME = import.meta.env.APP_NAME || "flowupS" ;
 export const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
   'Accept': 'application/json',
-  'Authorization': localStorage.getItem("_bb_key") ? `Bearer ${localStorage.getItem("_bb_key")}` : "",
   'authid': localStorage.getItem("_auth_id")
 };
 
 export const getDefaultHeaders = () => {
-  const token = localStorage.getItem("_bb_key");
   const authid = localStorage.getItem("_auth_id");
 
   return {
     "Content-Type": "application/json",
     "Accept": "application/json",
-    "Authorization": token ? `Bearer ${token}` : "",
     "authid": authid || ""
   };
 };

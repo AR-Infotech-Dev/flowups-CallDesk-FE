@@ -166,8 +166,8 @@ const DynamicFilter = ({
     };
 
     return (
-        <div className="flex flex-wrap items-start gap-2 w-full">
-            <div className="min-w-50">
+        <div className="flex w-full flex-wrap items-start gap-1.5 text-xs">
+            <div className="min-w-44">
                 <input
                     type="text"
                     value={searchText}
@@ -177,53 +177,53 @@ const DynamicFilter = ({
                         onSearch?.(value);
                     }}
                     placeholder="Search..."
-                    className="h-7.5 w-full rounded-md border border-slate-200 bg-white px-4 text-sm outline-none ring-0 placeholder:text-slate-400 focus:border-blue-500"
+                    className="h-7 w-full rounded-md border border-slate-200 bg-white px-2.5 text-xs outline-none ring-0 placeholder:text-slate-400 focus:border-blue-500"
                 />
             </div>
 
             <div className="relative" ref={savedMenuRef}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     <button
                         type="button"
                         onClick={() => setShowSavedFilterMenu((prev) => !prev)}
-                        className="gradient-button inline-flex h-7.5 w-11 items-center justify-center rounded-md border border-slate-200 text-white"
+                        className="gradient-button inline-flex h-7 w-8 items-center justify-center rounded-md"
                         title="Filter View"
                     >
-                        <FilterX color="#ffffff" />
+                        <FilterX size={14} color="#ffffff" />
                         {/* <span className="material-symbols-outlined text-[20px]">filter_alt</span> */}
                     </button>
 
                     <button
                         type="button"
                         onClick={clearFilters}
-                        className="inline-flex gradient-button h-7.5 items-center justify-center rounded-md border  border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        className="ghost-button inline-flex h-7 items-center justify-center rounded-md"
                     >
                         Clear
                     </button>
 
                     {selectedFilterId ? (
-                        <div className="inline-flex h-11 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700">
+                        <div className="inline-flex h-7 max-w-40 items-center truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 text-xs text-slate-600">
                             {filterName || "Selected Filter"}
                         </div>
                     ) : null}
                 </div>
 
                 {showSavedFilterMenu ? (
-                    <div className="absolute left-0 top-14 z-30 w-90 rounded-xl border border-slate-200 bg-white shadow-xl">
-                        <div className="sticky top-0 border-b border-slate-100 bg-white p-3">
+                    <div className="absolute left-0 top-8 z-30 w-72 rounded-md border border-slate-200 bg-white shadow-lg">
+                        <div className="sticky top-0 border-b border-slate-100 bg-white p-2">
                             <div className="relative">
                                 <input
                                     type="text"
                                     value={savedFilterSearch}
                                     onChange={(e) => setSavedFilterSearch(e.target.value)}
                                     placeholder="Search filter"
-                                    className="h-10 w-full rounded-md border border-slate-200 px-3 pr-10 text-sm outline-none placeholder:text-slate-400 focus:border-blue-500"
+                                    className="h-7 w-full rounded-md border border-slate-200 px-2.5 pr-8 text-xs outline-none placeholder:text-slate-400 focus:border-blue-500"
                                 />
                                 {savedFilterSearch ? (
                                     <button
                                         type="button"
                                         onClick={() => setSavedFilterSearch("")}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400"
                                     >
                                         ✕
                                     </button>
@@ -231,12 +231,12 @@ const DynamicFilter = ({
                             </div>
                         </div>
 
-                        <div className="max-h-80 overflow-y-auto p-2">
+                        <div className="max-h-60 overflow-y-auto p-1.5">
                             {filteredSavedFilters.length ? (
                                 filteredSavedFilters.map((filter) => (
                                     <div
                                         key={filter.filter_id}
-                                        className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-slate-50"
+                                        className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50"
                                     >
                                         <div className="w-5 text-slate-500">
                                             {filter.visibility === "public" ? "🌐" : ""}
@@ -245,7 +245,7 @@ const DynamicFilter = ({
                                         <button
                                             type="button"
                                             onClick={() => handleSelectSavedFilter(filter)}
-                                            className="flex-1 text-left text-sm text-slate-700"
+                                            className="flex-1 text-left text-xs text-slate-700"
                                         >
                                             {filter.filter_name}
                                         </button>
@@ -266,7 +266,7 @@ const DynamicFilter = ({
                                     </div>
                                 ))
                             ) : (
-                                <div className="py-8 text-center text-sm text-slate-500">
+                                <div className="py-5 text-center text-xs text-slate-500">
                                     No Filters Available
                                 </div>
                             )}
@@ -279,14 +279,14 @@ const DynamicFilter = ({
                 <button
                     type="button"
                     onClick={() => setShowFieldMenu((prev) => !prev)}
-                    className="inline-flex h-7.5 gradient-button w-11 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    className="ghost-button inline-flex h-7 w-10 items-center justify-center rounded-md"
                     title="Add Filter"
                 >
                     add
                 </button>
 
                 {showFieldMenu ? (
-                    <div className="absolute left-0 top-9.25 z-30 w-55 rounded-xl border border-slate-200 bg-white shadow-xl py-1">
+                    <div className="absolute left-0 top-8 z-30 w-56 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
                         <div className="sticky top-0 border-slate-100 bg-white p-1.5">
                             <div className="relative">
                                 <input
@@ -294,7 +294,7 @@ const DynamicFilter = ({
                                     value={fieldSearch}
                                     onChange={(e) => setFieldSearch(e.target.value)}
                                     placeholder="Search field"
-                                    className="h-7.5 w-full rounded-md border border-slate-200 px-3 pr-10 text-sm outline-none placeholder:text-slate-400 focus:border-blue-500"
+                                    className="h-7 w-full rounded-md border border-slate-200 px-2.5 pr-8 text-xs outline-none placeholder:text-slate-400 focus:border-blue-500"
                                 />
                                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                                     🔍
@@ -302,20 +302,20 @@ const DynamicFilter = ({
                             </div>
                         </div>
 
-                        <div className="px-1 max-h-25 overflow-y-auto py-1 [&>*:last-child]:rounded-b-xl">
+                        <div className="max-h-40 overflow-y-auto px-1 py-1">
                             {filteredFields.length ? (
                                 filteredFields.map((field) => (
                                     <button
                                         key={field.value}
                                         type="button"
                                         onClick={() => addField(field)}
-                                        className="block border-b-gray-700 w-full px-4 py-2 text-left text-sm text-slate-500 bg-gray-50 hover:bg-gray-100 hover:text-slate-500"
+                                        className="block w-full rounded px-2.5 py-1.5 text-left text-xs text-slate-600 hover:bg-slate-50 hover:text-blue-600"
                                     >
                                         {field.label}
                                     </button>
                                 ))
                             ) : (
-                                <div className="py-8 text-center text-sm text-slate-500">
+                                <div className="py-5 text-center text-xs text-slate-500">
                                     No fields available
                                 </div>
                             )}
@@ -326,11 +326,11 @@ const DynamicFilter = ({
 
             {activeFilters.map((item) => (
                 <div key={item.id} className="relative">
-                    <div className="inline-flex h-7.5 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-4 text-sm">
+                    <div className="inline-flex h-7 items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 text-xs">
                         <button
                             type="button"
                             onClick={() => setEditingFieldKey(editingFieldKey === item.id ? null : item.id)}
-                            className="flex items-center gap-2 text-slate-700"
+                            className="flex items-center gap-1.5 text-slate-700"
                         >
                             <span>{item.label}</span>
                             <span className="text-slate-400">∈</span>
@@ -346,16 +346,16 @@ const DynamicFilter = ({
                     </div>
 
                     {editingFieldKey === item.id ? (
-                        <div className="absolute left-0 top-8.25 z-30 w-60 rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
-                            <div className="mb-3">
-                                <div className="mb-2 text-sm font-semibold text-slate-800">
+                        <div className="absolute left-0 top-8 z-30 w-56 rounded-md border border-slate-200 bg-white p-3 shadow-lg">
+                            <div className="mb-2">
+                                <div className="mb-1.5 text-xs font-semibold text-slate-700">
                                     {item.label}
                                 </div>
 
                                 <select
                                     value={item.condition}
                                     onChange={(e) => updateFilter(item.id, "condition", e.target.value)}
-                                    className="h-7.5 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500"
+                                    className="h-7 w-full rounded-md border border-slate-300 bg-white px-2.5 text-xs outline-none focus:border-blue-500"
                                 >
                                     {getConditions(item.type).map((condition) => (
                                         <option key={condition.value} value={condition.value}>
@@ -367,22 +367,22 @@ const DynamicFilter = ({
 
                             {!EMPTY_VALUE_CONDITIONS.includes(item.condition) &&
                                 !["today", "tomorrow", "yesterday", "this_month", "this_week"].includes(item.condition) ? (
-                                <div className="mb-4">
+                                <div className="mb-3">
                                     <input
                                         type={item.type === "number" ? "number" : item.type === "date" ? "date" : "text"}
                                         value={item.value}
                                         onChange={(e) => updateFilter(item.id, "value", e.target.value)}
                                         placeholder={`Enter ${item.label}`}
-                                        className="h-7.5 w-full rounded-md border border-slate-200 px-3 text-sm outline-none placeholder:text-slate-400 focus:border-blue-500"
+                                        className="h-7 w-full rounded-md border border-slate-200 px-2.5 text-xs outline-none placeholder:text-slate-400 focus:border-blue-500"
                                     />
                                 </div>
                             ) : null}
 
-                            <div className="flex items-center justify-end gap-3">
+                            <div className="flex items-center justify-end gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setEditingFieldKey(null)}
-                                    className="text-sm text-slate-600 hover:text-slate-800"
+                                    className="ghost-button h-7"
                                 >
                                     Cancel
                                 </button>
@@ -393,7 +393,7 @@ const DynamicFilter = ({
                                         setEditingFieldKey(null);
                                         applyFilters();
                                     }}
-                                    className="rounded-md gradient-button hover:bg-purple-500 hover:text-white px-4 py-2 text-sm font-medium text-white"
+                                    className="gradient-button h-7"
                                 >
                                     Apply
                                 </button>

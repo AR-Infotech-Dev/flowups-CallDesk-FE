@@ -13,8 +13,8 @@ function App() {
       <LoaderProvider>
         <AuthProvider>
           <ToastContainer
-            position="top-right" // Position of the toast
-            autoClose={2000}    // Close after 3s
+            position="top-right"
+            autoClose={1800}
             hideProgressBar={false}
             newestOnTop={false}
             closeOnClick
@@ -22,7 +22,11 @@ function App() {
             pauseOnFocusLoss
             draggable
             pauseOnHover
-            theme="dark"     // light, dark, or colored
+            theme="dark"
+            className="toast-container-compact"
+            toastClassName="toast-item-compact"
+            bodyClassName="toast-body-compact"
+            progressClassName="toast-progress-compact"
           />
           <MainRoutes />
         </AuthProvider>

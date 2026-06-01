@@ -16,6 +16,8 @@ export const makeRequest = async (url, options = {}) => {
       url,
       baseURL: API_BASE_URL,
       method,
+      timeout: 10000,
+      withCredentials: true,
       headers: {
         ...getDefaultHeaders(),
         ...headers,
@@ -30,7 +32,7 @@ export const makeRequest = async (url, options = {}) => {
       ...res.data
     };
   } catch (error) {
-    console.log("Axios Error:", error.response);
+    console.error("Axios Error:", error.response);
     if (error.response) {
       // AUTO LOGOUT ON 401
       if (error.response.status === 401) {

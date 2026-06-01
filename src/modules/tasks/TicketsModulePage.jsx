@@ -4,6 +4,8 @@ import { useAuth } from "../../auth/AuthProvider";
 import { makeRequest } from "../../api/httpClient";
 import { useModuleFilters } from "../../store/hooks";
 import { useLocation } from "react-router-dom";
+import { Columns3, Table2 } from "lucide-react";
+import { saveViewMode , getViewMode} from "../../auth/authStorage"
 import {
   defaultSortConfig,
   getNextSortConfig,
@@ -33,11 +35,9 @@ import {
 } from "./data/module.schema";
 
 function TicketModulePage({ menu_id }) {
-  const location = useLocation();
+  const location = useLocation();  
   const { authSession } = useAuth();
   const role_slug = authSession?.user?.role_slug;
-  // console.log(authSession.user.role_slug);
-
   // const role_slug = authSession.user.role_slug;
   // ==================================================
   // STATES
@@ -53,9 +53,8 @@ function TicketModulePage({ menu_id }) {
   const [loading, setLoading] = useState(false);
   const [selectedRowIds, setSelectedRowIds,] = useState([]);
   const [deleting, setDeleting] = useState(false);
-  const [viewMode, setViewMode] = useState("table");
+  const [viewMode, setViewMode] = useState(getViewMode(resolvedMenuID) || "table");
   const [viewAll, setViewAll] = useState(false);
-
   // ==================================================
   // FILTERS
   // ==================================================
@@ -67,6 +66,10 @@ function TicketModulePage({ menu_id }) {
       setIsFlyoutOpen(true);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    saveViewMode( resolvedMenuID, viewMode);
+  }, [viewMode]);
 
   // ==================================================
   // SORT CONFIG
@@ -315,8 +318,24 @@ function TicketModulePage({ menu_id }) {
               }
             >
               <div className="flex items-center justify-end gap-2">
-                <ActionButton variant={viewMode === "table" ? "ghostPrimary" : "ghost"} onClick={() => setViewMode("table")}>Table</ActionButton>
-                <ActionButton variant={viewMode === "kanban" ? "ghostPrimary" : "ghost"} onClick={() => setViewMode("kanban")}>Kanban</ActionButton>
+                <div className="view-switch" data-view={viewMode} aria-label="Ticket view mode">
+                  <button
+                    type="button"
+                    className={`view-switch-button ${viewMode === "table" ? "active" : ""}`}
+                    onClick={() => setViewMode("table")}
+                  >
+                    <Table2 size={12} />
+                    Table
+                  </button>
+                  <button
+                    type="button"
+                    className={`view-switch-button ${viewMode === "kanban" ? "active" : ""}`}
+                    onClick={() => setViewMode("kanban")}
+                  >
+                    <Columns3 size={12} />
+                    Kanban
+                  </button>
+                </div>
                 {
                   (role_slug == "admin" || role_slug == "super_admin") && 
                   <ActionButton variant={viewAll ? "ghostPrimary" : "ghost"} onClick={() => setViewAll((prev)=> !prev)}>All</ActionButton>

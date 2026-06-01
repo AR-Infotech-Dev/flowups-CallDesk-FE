@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 import { buildFallbackColumnsFromKeys } from "../../../utils/moduleStructure";
 import { z } from "zod";
 
