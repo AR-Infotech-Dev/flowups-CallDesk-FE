@@ -7,6 +7,7 @@ import IdentitySelector from "./components/IdentitySelector";
 import PermissionsMatrix from "./components/PermissionsMatrix";
 import { accessModules, accessPermissionColumns } from "./data/accessControlData";
 import { flattenMenuModules } from "./data/helper";
+import { getStoredPermissions } from "../../auth/authStorage";
 import ConfigureFeilds from "./components/ConfigureFeilds";
 
 const buildDefaultModules = (rows = accessModules) =>
@@ -152,7 +153,9 @@ const preparePermissionsJson = (moduleRows = []) =>
 
 function AccessControlModulePage() {
   const { authSession } = useAuth();
-  const currentCompanyId = authSession?.user?.company_id || authSession?.user?.default_company || "";
+  const currentUser = authSession?.user || {};
+  const isSuperAdmin = currentUser?.role_slug === "super_admin";
+  const currentCompanyId = isSuperAdmin ? "" : currentUser?.company_id || currentUser?.default_company || "";
   const [selectedIdentity, setSelectedIdentity] = useState(null);
   const [loadingMenus, setLoadingMenus] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
@@ -165,7 +168,7 @@ function AccessControlModulePage() {
   const fetchMenus = async () => {
     try {
       setLoadingMenus(true);
-      const res = await makeRequest("/menus", {
+      const res = await makeRequest("/get-menus", {
         method: "POST",
         body: {
           getAll: "Y",
@@ -178,7 +181,17 @@ function AccessControlModulePage() {
         return [];
       }
       const menuModules = flattenMenuModules(res.data || []);
-      const nextModules = menuModules.length ? buildDefaultModules(menuModules) : [];
+      const userPermissions = getStoredPermissions();
+      const filteredMenus = isSuperAdmin
+        ? menuModules
+        : menuModules
+          .filter(menu => userPermissions[menu.menu_id])
+          .map(menu => ({
+            ...menu,
+            permissions: userPermissions[menu.menu_id]
+          }));
+
+      const nextModules = filteredMenus.length ? buildDefaultModules(filteredMenus) : [];
       setDefaultModules(nextModules);
       return nextModules;
     } catch (error) {
@@ -352,7 +365,12 @@ function AccessControlModulePage() {
       toast.error("Please select a user first");
       return;
     }
-
+    console.log({
+        user_id: selectedIdentity.id,
+        company_id: selectedIdentity.company_id,
+        permissions,
+      },);
+    
     const res = await makeRequest(`/permissions/save/${selectedIdentity?.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

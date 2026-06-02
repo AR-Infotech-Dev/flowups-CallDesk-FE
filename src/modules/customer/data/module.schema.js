@@ -29,8 +29,9 @@ export const customerModuleSchema = {
     { column_name: "email", type: "clip" },
     { column_name: "company_name", type: "tag" },
     { column_name: "billing_name", type: "tag" },
+    { column_name: "is_amc", type: "badge" },
   ],
-  defaultColumns: ["name", "email", "mobile_no", "company_name", "billing_name"],
+  defaultColumns: ["name", "email", "mobile_no", "company_name", "is_amc"],
   skipFields: ["created_by", "created_date", "modified_by"],
   columnMappings: [
     { mobile_no: "Mobile No" },
@@ -42,6 +43,10 @@ export const customerModuleSchema = {
     { billing_address: "Billing Address" },
     { mailing_address: "Mailing Address" },
     { company_id: "Mapped Company" },
+    { is_amc: "AMC" },
+    { amc_term_period: "Term Period" },
+    { amc_start_date: "AMC Start Date" },
+    { amc_end_date: "AMC End Date" },
   ],
   savedFilters: [],
   form: {
@@ -59,6 +64,10 @@ export const customerModuleSchema = {
       billing_address: null,
       company_id: null,
       mailing_address: "",
+      is_amc: "no",
+      amc_term_period: null,
+      amc_start_date: null,
+      amc_end_date: null,
       created_by: null,
       created_date: null,
       modified_by: null,
@@ -92,6 +101,47 @@ export const customerModuleSchema = {
           { name: "address", label: "Address", type: "textarea", rows: 3, placeholder: "Enter primary address", gridSpan: 12 },
         ],
       },
+      {
+        columns: 4,
+        fields: [
+          {
+            name: "is_amc",
+            label: "Is AMC",
+            type: "radio",
+            gridSpan: 3,
+            options: [
+              { value: "yes", label: "Yes" },
+              { value: "no", label: "No" },
+            ],
+          },
+          {
+            name: "amc_term_period",
+            label: "Term Period",
+            type: "select",
+            gridSpan: 3,
+            visibleWhen: (values) => values.is_amc === "yes",
+            options: [
+              { value: "4_month", label: "4 Month" },
+              { value: "6_month", label: "6 Month" },
+              { value: "yearly", label: "Yearly" },
+            ],
+          },
+          {
+            name: "amc_start_date",
+            label: "AMC Start Date",
+            type: "date",
+            gridSpan: 3,
+            visibleWhen: (values) => values.is_amc === "yes",
+          },
+          {
+            name: "amc_end_date",
+            label: "AMC End Date",
+            type: "date",
+            gridSpan: 3,
+            visibleWhen: (values) => values.is_amc === "yes",
+          },
+        ],
+      },
     ],
   },
   validationSchema: z.object({
@@ -99,12 +149,34 @@ export const customerModuleSchema = {
     email: z.union([z.literal(null), z.string().email("Invalid email address")]).optional(),
     mobile_no: z.string().trim().min(10, "Mobile number is required"),
     wa_no: z.union([z.literal(null), z.string()]).optional(),
+    is_amc: z.enum(["yes", "no"]).optional(),
+    amc_term_period: z.union([z.literal(null), z.enum(["4_month", "6_month", "yearly"])]).optional(),
+    amc_start_date: z.union([z.literal(null), z.string()]).optional(),
+    amc_end_date: z.union([z.literal(null), z.string()]).optional(),
     addno: z.string().optional(),
     birress: z.string().optional(),
     pan_number: z.union([
       z.literal(null),
       z.string().trim().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, "Invalid PAN number"),
     ]).optional(),
+  }).superRefine((data, ctx) => {
+    if (data.is_amc !== "yes") return;
+
+    if (!data.amc_term_period) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["amc_term_period"],
+        message: "Term period is required",
+      });
+    }
+
+    if (data.amc_start_date && data.amc_end_date && new Date(data.amc_end_date) < new Date(data.amc_start_date)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["amc_end_date"],
+        message: "AMC end date must be after start date",
+      });
+    }
   }),
 };
 

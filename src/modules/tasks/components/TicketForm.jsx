@@ -66,6 +66,27 @@ function getTicketIdentifier(ticket = {}) {
   return ticket?.ticket_id;
 }
 
+function normalizeCustomerProducts(source = []) {
+  const rows = typeof source === "string" ? safeParseJson(source, []) : source;
+  return Array.isArray(rows)
+    ? rows
+      .map((row) => ({
+        product_id: row?.product_id || "",
+        product_name: row?.product_name || "",
+        serial_number: row?.serial_number || row?.product_serial_number || "",
+      }))
+      .filter((row) => row.product_id || row.product_name || row.serial_number)
+    : [];
+}
+
+function safeParseJson(value, fallback) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
 function normalizeTaskData(ticket = {}) {
   return {
     ...ticketsModuleSchema.form.initialValues,
@@ -83,6 +104,10 @@ function normalizeTaskData(ticket = {}) {
     query_type: ticket?.query_type || null,
     ticket_status: ticket?.ticket_status || null,
     ticket_priority: ticket?.ticket_priority || null,
+    product_id: ticket?.product_id || null,
+    product_name: ticket?.product_name || null,
+    product_serial_number: ticket?.product_serial_number || ticket?.serial_number || null,
+    customer_products: normalizeCustomerProducts(ticket?.customer_products || ticket?.products || []),
     assignee: ticket?.assignee || null,
     status: ticket?.status || "active",
   };
@@ -123,7 +148,26 @@ function normalizeCustomerData(ticket = {}) {
       ticket?.mobile_no ||
       ticket?.contact_no ||
       "",
+    customer_products: normalizeCustomerProducts(customer?.customer_products || customer?.products || ticket?.customer_products || ticket?.products || []),
+    products: normalizeCustomerProducts(customer?.products || ticket?.products || customer?.customer_products || ticket?.customer_products || []),
   };
+}
+
+function mergeCurrentTicketProduct(products = [], ticket = {}) {
+  const normalizedProducts = normalizeCustomerProducts(products);
+  if (!ticket?.product_id) return normalizedProducts;
+
+  const hasCurrentProduct = normalizedProducts.some((product) => String(product.product_id) === String(ticket.product_id));
+  if (hasCurrentProduct) return normalizedProducts;
+
+  return [
+    {
+      product_id: ticket.product_id,
+      product_name: ticket.product_name || "",
+      serial_number: ticket.product_serial_number || ticket.serial_number || "",
+    },
+    ...normalizedProducts,
+  ];
 }
 
 function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
@@ -140,7 +184,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
   const mode = selectedTicket ? "edit" : "create";
   const ticket_id = getTicketIdentifier(selectedTicket);
   const visibleTabs = mode === "edit" ? TAB_ITEMS : TAB_ITEMS.filter(([key]) => key === "client");
-  
+
   useEffect(() => {
     if (mode !== "edit" && tab !== "client") {
       setTab("client");
@@ -157,9 +201,24 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
           method: "GET",
         });
         const ticketData = res?.data || selectedTicket;
-        setFormData(normalizeTaskData(ticketData));
-        setOldFormData(normalizeTaskData(ticketData));
-        setSelectedCustomer(normalizeCustomerData(ticketData));
+        const normalizedTicket = normalizeTaskData(ticketData);
+        const normalizedCustomer = normalizeCustomerData(ticketData);
+        const customerId = normalizedCustomer?.customer_id || normalizedTicket?.client_id;
+        const detailedCustomer = customerId
+          ? await loadCustomerDetails(customerId, normalizedCustomer)
+          : normalizedCustomer;
+        const normalizedDetailedCustomer = normalizeCustomerData({ ...ticketData, customer: detailedCustomer });
+        const customerProducts = mergeCurrentTicketProduct(normalizedDetailedCustomer.customer_products, normalizedTicket);
+        setFormData({
+          ...normalizedTicket,
+          customer_products: customerProducts,
+        });
+        setOldFormData(normalizedTicket);
+        setSelectedCustomer({
+          ...normalizedDetailedCustomer,
+          customer_products: customerProducts,
+          products: customerProducts,
+        });
       } catch (error) {
         toast.error("Unable to fetch ticket details");
         setFormData(normalizeTaskData(selectedTicket));
@@ -200,18 +259,56 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
     setFormData((current) => ({
       ...current,
       [name]: value,
+      ...(name === "product_id"
+        ? (() => {
+          const product = normalizeCustomerProducts(current.customer_products).find((item) => String(item.product_id) === String(value));
+          return {
+            product_name: product?.product_name || null,
+            product_serial_number: product?.serial_number || null,
+          };
+        })()
+        : {}),
       // title: name === "client_name" && !current.title ? value : current.title,
     }));
   };
 
-  const handleObjectSelect = (field, item = {}) => {
+  const loadCustomerDetails = async (customerId, fallback = {}) => {
+    if (!customerId) return fallback;
+
+    try {
+      const res = await makeRequest(`${customerModuleSchema.api.edit}/${customerId}`, {
+        method: "GET",
+      });
+      return {
+        ...fallback,
+        ...(res?.data || {}),
+        customer_id: customerId,
+      };
+    } catch {
+      return fallback;
+    }
+  };
+
+  const handleObjectSelect = async (field, item = {}) => {
     if (field.name !== "client_id") return;
     const customer = item?.original || item || {};
-    setSelectedCustomer(customer?.customer_id ? customer : {});
+    const customerId = customer?.customer_id;
+    const detailedCustomer = customerId ? await loadCustomerDetails(customerId, customer) : {};
+    const normalizedCustomer = normalizeCustomerData({ customer: detailedCustomer });
+    const customerProducts = normalizeCustomerProducts(normalizedCustomer.customer_products);
+    setSelectedCustomer(customerId ? { ...normalizedCustomer, customer_products: customerProducts, products: customerProducts } : {});
     setFormData((current) => ({
       ...current,
-      contact_no: customer?.mobile_no || "",
-      contact_person: customer?.contact_person || current.contact_person || "",
+      contact_no: detailedCustomer?.mobile_no || "",
+      contact_person: detailedCustomer?.contact_person || current.contact_person || "",
+      ...(String(current.client_id || "") !== String(customerId || "")
+        ? {
+          product_id: null,
+          product_name: null,
+          product_serial_number: null,
+        }
+        : {}),
+      customer_products: customerProducts,
     }));
   };
 
@@ -285,12 +382,22 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
       };
 
       pendingCustomerSelect?.(option);
-      setSelectedCustomer(customer);
+      const normalizedCustomer = normalizeCustomerData({ customer });
+      const customerProducts = normalizeCustomerProducts(normalizedCustomer.customer_products);
+      setSelectedCustomer({
+        ...normalizedCustomer,
+        customer_products: customerProducts,
+        products: customerProducts,
+      });
       setFormData((current) => ({
         ...current,
         client_id: customer.customer_id,
         contact_no: customer.mobile_no || "",
         contact_person: customer.contact_person || current.contact_person || "",
+        product_id: null,
+        product_name: null,
+        product_serial_number: null,
+        customer_products: customerProducts,
       }));
     } catch (error) {
       toast.error(error.message || "Unable to load saved customer");
@@ -301,8 +408,12 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
   };
 
   const handleSave = async () => {
+    const {
+      customer_products,
+      ...ticketPayload
+    } = formData;
     const payload = {
-      ...formData,
+      ...ticketPayload,
       title: formData.title || formData.client_name,
     };
 
@@ -413,7 +524,13 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
                       </div>
                     </div>
                     <div className={`min-h-0 flex-1 min-w-0 ${tab === "client" ? "overflow-hidden" : "ticket-scroll-pane overflow-y-auto p-2"}`}>
-                      {tab === "client" && <ClientHistory openedTiket={ticket_id} client={selectedCustomer} />}
+                      {tab === "client" && (
+                        <div className="flex h-full min-h-0 flex-col overflow-hidden">
+                          <div className="min-h-0 flex-1 overflow-hidden">
+                            <ClientHistory openedTiket={ticket_id} client={selectedCustomer} />
+                          </div>
+                        </div>
+                      )}
                       {tab === "history" && mode === "edit" && <TicketHistory ticket_id={ticket_id} />}
                       {tab === "comments" && mode === "edit" && <Comments module="tickets" client={selectedCustomer} ticket_id={ticket_id} />}
                     </div>

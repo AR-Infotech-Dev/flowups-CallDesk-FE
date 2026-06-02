@@ -72,6 +72,10 @@ export const ticketsModuleSchema = {
     initialValues: {
       ticket_id: null,
       client_id: null,
+      product_id: null,
+      product_name: null,
+      product_serial_number: null,
+      customer_products: [],
       contact_no: null,
       description: null,
       query_type: null,
@@ -113,6 +117,23 @@ export const ticketsModuleSchema = {
               getLabel: (item) => item.name || "Unnamed Client",
             },
           },
+        ],
+      },
+      {
+        columns: 2,
+        fields: [
+          {
+            name: "product_id",
+            label: "Product",
+            type: "select",
+            placeholder: "Select product",
+            gridSpan: 12,
+            visibleWhen: (values) => Boolean(values.client_id),
+            options: (values) => (Array.isArray(values.customer_products) ? values.customer_products : []).map((product) => ({
+              value: product.product_id,
+              label: `${product.product_name || "Unnamed Product"}${product.serial_number ? ` - ${product.serial_number}` : ""}`,
+            })),
+          }
         ],
       },
       {

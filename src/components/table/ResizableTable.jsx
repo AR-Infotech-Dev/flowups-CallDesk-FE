@@ -7,6 +7,7 @@ import NoTableData from "./NoTableData";
 import ColumnArranger from "./ColumnArranger";
 import { useAuth } from "../../auth/AuthProvider";
 import { hasFieldVisiblePermission } from "../../auth/permissions";
+import { isAmcActive } from "../../utils/amc";
 
 window.TIMEFORMAT = "Do MMMM YYYY"
 
@@ -203,6 +204,7 @@ function renderPersonCell(value, row, colorField, index) {
         {String(value || "?").charAt(0)}
       </span>
       <span className="text-overflow">{value || "-"}</span>
+      {isAmcActive(row) ? <span className="table-amc-chip">AMC</span> : null}
     </div>
   );
 }
@@ -406,9 +408,10 @@ function renderValueCell(column, row, index, selectionProps) {
 // }
 function DefaultRow({ row, index, columns, editRow, selectionProps }) {
   const rowKey = getRowIdentifier(row) ?? row?.name ?? index;
+  const activeAmc = isAmcActive(row);
 
   return (
-    <tr key={rowKey} className="group">
+    <tr key={rowKey} className={`group ${activeAmc ? "table-row-amc-active" : ""}`}>
       {columns.map((column) => (
         <td
           key={column.key}

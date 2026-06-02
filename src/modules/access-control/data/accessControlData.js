@@ -2,6 +2,7 @@ import {
   Gauge,
   LayoutGrid,
   MapPin,
+  Package,
   Shapes,
   Ticket,
   User,
@@ -37,7 +38,7 @@ export const accessIdentities = [
 
 export const accessModules = [
   {
-    id: "dashboard",
+    id: "dashboardddd",
     name: "Dashboard",
     icon: LayoutGrid,
     supports: { view: true, add: false, edit: false, delete: false },
@@ -83,6 +84,19 @@ export const accessModules = [
       { key: "name", label: "Customer Name", enabled: true },
       { key: "mobile_no", label: "Mobile No", enabled: true },
       { key: "billing_details", label: "Billing Details", enabled: false },
+      { key: "product_ids", label: "Products", enabled: true },
+    ],
+  },
+  {
+    id: "products",
+    name: "Products",
+    icon: Package,
+    supports: { view: true, add: true, edit: true, delete: true },
+    permissions: { view: true, add: true, edit: false, delete: false },
+    fields: [
+      { key: "product_name", label: "Product Name", enabled: true },
+      { key: "product_type", label: "Product Type", enabled: true },
+      { key: "product_description", label: "Description", enabled: true },
     ],
   },
   {

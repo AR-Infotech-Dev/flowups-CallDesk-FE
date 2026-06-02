@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { makeRequest } from "../../../api/httpClient";
@@ -29,15 +29,33 @@ function normalizeCustomerData(customer = {}) {
     billing_address: customer?.billing_address || "",
     company_id: customer?.company_id || "",
     mailing_address: customer?.mailing_address || "",
+    is_amc: customer?.is_amc || "no",
+    amc_term_period: customer?.amc_term_period || null,
+    amc_start_date: customer?.amc_start_date ? new Date(customer.amc_start_date).toISOString().split("T")[0] : null,
+    amc_end_date: customer?.amc_end_date ? new Date(customer.amc_end_date).toISOString().split("T")[0] : null,
   };
 }
 
 const EMPTY_INITIAL_VALUES = {};
 
+const normalizeCustomerProducts = (customer = {}) => {
+  const rows = customer?.customer_products || customer?.products || [];
+  if (!Array.isArray(rows)) return [];
+
+  return rows.map((row) => ({
+    product_id: row?.product_id || "",
+    product_name: row?.product_name || "",
+    serial_number: row?.serial_number || "",
+  })).filter((row) => row.product_id || row.product_name || row.serial_number);
+};
+
 function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave, menu_id }) {
   const [loading, setLoading] = useState(false);
   const [fetchingCustomer, setFetchingCustomer] = useState(false);
   const [formData, setFormData] = useState(customerModuleSchema.form.initialValues);
+  const [productOptions, setProductOptions] = useState([]);
+  const [productRows, setProductRows] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [errors, setErrors] = useState({});
   const mode = selectedCustomer ? "edit" : "create";
   const customerId = getCustomerIdentifier(selectedCustomer);
@@ -53,10 +71,13 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
         const res = await makeRequest(`${customerModuleSchema.api.edit}/${customerId}`, {
           method: "GET",
         });
-        setFormData(normalizeCustomerData(res?.data || selectedCustomer));
+        const customerData = res?.data || selectedCustomer;
+        setFormData(normalizeCustomerData(customerData));
+        setProductRows(normalizeCustomerProducts(customerData));
       } catch (error) {
         toast.error("Unable to fetch customer details");
         setFormData(normalizeCustomerData(selectedCustomer));
+        setProductRows(normalizeCustomerProducts(selectedCustomer));
       } finally {
         setFetchingCustomer(false);
       }
@@ -71,8 +92,38 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
       ...customerModuleSchema.form.initialValues,
       ...initialValues,
     });
+    setProductRows(normalizeCustomerProducts(initialValues));
     setErrors({});
   }, [selectedCustomer, isOpen, customerId, initialValues]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!isOpen) return;
+
+      try {
+        setLoadingProducts(true);
+        const res = await makeRequest("/system/searchList", {
+          method: "POST",
+          body: {
+            text: "",
+            system: "new",
+            tableName: "products",
+            wherec: "product_name",
+            status: false,
+            list: "product_id,product_name",
+            curpage: 0,
+          },
+        });
+        setProductOptions(res?.success ? res.data || [] : []);
+      } catch {
+        setProductOptions([]);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;
@@ -80,21 +131,83 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
 
   const handleClose = () => {
     setFormData(customerModuleSchema.form.initialValues);
+    setProductRows([]);
     setErrors({});
     onClose();
   };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((current) => ({
+    setFormData((current) => {
+      const nextState = {
+        ...current,
+        [name]: value,
+      };
+
+      if (name === "is_amc" && value !== "yes") {
+        nextState.amc_term_period = null;
+        nextState.amc_start_date = null;
+        nextState.amc_end_date = null;
+      }
+
+      return nextState;
+    });
+  };
+
+  const addProductRow = () => {
+    setProductRows((current) => [
       ...current,
-      [name]: value,
-    }));
+      { product_id: "", product_name: "", serial_number: "" },
+    ]);
+  };
+
+  const updateProductRow = (index, key, value) => {
+    setProductRows((current) =>
+      current.map((row, rowIndex) => {
+        if (rowIndex !== index) return row;
+
+        if (key === "product_id") {
+          const product = productOptions.find((item) => String(item.product_id) === String(value));
+
+          return {
+            ...row,
+            product_id: value,
+            product_name: product?.product_name || "",
+          };
+        }
+
+        return { ...row, [key]: value };
+      })
+    );
+  };
+
+  const removeProductRow = (index) => {
+    setProductRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
   };
 
   const handleSave = async () => {
+    const normalizedAmcData = formData.is_amc === "yes"
+      ? {
+        amc_term_period: formData.amc_term_period || null,
+        amc_start_date: formData.amc_start_date || null,
+        amc_end_date: formData.amc_end_date || null,
+      }
+      : {
+        amc_term_period: null,
+        amc_start_date: null,
+        amc_end_date: null,
+      };
+
     const payload = {
       ...formData,
+      ...normalizedAmcData,
+      customer_products: productRows
+        .filter((row) => row.product_id)
+        .map((row) => ({
+          product_id: row.product_id,
+          product_name: row.product_name || "",
+          serial_number: row.serial_number || "",
+        })),
     };
 
     const result = customerModuleSchema.validationSchema.safeParse(payload);
@@ -183,6 +296,58 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
                 errors={errors}
                 menuId={menu_id}
               />
+              <div className={`mt-5 flex text-md font-semibold items-center justify-between mb-1 "mt-4"`}  >
+                <div>
+                  <h4 className="">Products</h4>
+                  <p className="text-[10px] font-light text-slate-400">Assign products and serial numbers for this customer.</p>
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex h-6 items-center gap-1 rounded-md bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-700"
+                  onClick={addProductRow}
+                >
+                  <Plus size={14} /> Add Product
+                </button>
+              </div>
+              <div className="py-2">
+                {productRows.length === 0 && (
+                  <div className="rounded-md border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400">
+                    No products added
+                  </div>
+                )}
+                <div className="py-2">
+                  {productRows.map((row, index) => (
+                    <div key={`customer-product-${index}`} className="grid grid-cols-12 gap-2 mb-2">
+                      <select
+                        value={row.product_id || ""}
+                        onChange={(event) => updateProductRow(index, "product_id", event.target.value)}
+                        className="col-span-12 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-6"
+                      >
+                        <option value="">{loadingProducts ? "Loading products..." : "Select product"}</option>
+                        {productOptions.map((product) => (
+                          <option key={product.product_id} value={product.product_id}>
+                            {product.product_name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        value={row.serial_number || ""}
+                        onChange={(event) => updateProductRow(index, "serial_number", event.target.value)}
+                        placeholder="Serial number"
+                        className="col-span-10 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-5"
+                      />
+                      <button
+                        type="button"
+                        className="col-span-2 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-600 md:col-span-1"
+                        onClick={() => removeProductRow(index)}
+                        aria-label="Remove product"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

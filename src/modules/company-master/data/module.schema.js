@@ -13,6 +13,19 @@ const DATE_FORMAT_OPTIONS = [
   { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
 ];
 
+const MAIL_PROVIDER_OPTIONS = [
+  { value: "gmail", label: "Gmail" },
+  { value: "yahoo", label: "Yahoo" },
+  { value: "outlook", label: "Outlook / Microsoft 365" },
+  { value: "custom", label: "Custom SMTP" },
+];
+
+const SMTP_ENCRYPTION_OPTIONS = [
+  { value: "tls", label: "TLS" },
+  { value: "ssl", label: "SSL" },
+  { value: "none", label: "None" },
+];
+
 export const companyMasterSchema = {
   title: "Company Master",
   description: "Manage company profile, contact emails, address details, and formatting preferences from one place.",
@@ -23,6 +36,7 @@ export const companyMasterSchema = {
     delete: "/companies/delete",
     create: "/companies/create",
     edit: "/companies",
+    testMail: "/companies/mail-config/test",
     definitions: "/system/getDefinations",
     definitionsFallback: "/system/getstructure",
   },
@@ -34,17 +48,17 @@ export const companyMasterSchema = {
   staticJoined: [],
   tableCellConfig: [
     { column_name: "company_name", type: "person" },
-    { column_name: "from_email", type: "clip" },
+    { column_name: "sender_email", type: "clip" },
     { column_name: "cc_email", type: "clip" },
     { column_name: "date_format", type: "tag" },
     { column_name: "status", type: "badge" },
   ],
-  defaultColumns: ["company_name", "from_email", "mobile_number", "city", "date_format", "status"],
+  defaultColumns: ["company_name", "sender_email", "mobile_number", "city", "date_format", "status"],
   skipFields: ["created_by", "created_date", "modified_by", "modified_date"],
   columnMappings: [
-    { from_email: "From Email" },
+    { sender_email: "Sender Email" },
     { cc_email: "CC Email" },
-    { from_name: "From Name" },
+    { sender_name: "Sender Name" },
     { mobile_number: "Mobile Number" },
     { company_address: "Company Address" },
     { email_logo: "Email Logo" },
@@ -55,9 +69,16 @@ export const companyMasterSchema = {
     initialValues: {
       company_id: null,
       company_name: "",
-      from_email: "",
+      sender_email: "",
       cc_email: "",
-      from_name: "",
+      sender_name: "",
+      mail_provider: "gmail",
+      smtp_host: "smtp.gmail.com",
+      smtp_port: "587",
+      smtp_encryption: "tls",
+      smtp_username: "",
+      mail_connection_status: "not_tested",
+      mail_last_tested_at: null,
       mobile_number: "",
       company_address: "",
       country: "",
@@ -65,8 +86,10 @@ export const companyMasterSchema = {
       city: "",
       zip: "",
       pan: "",
+      time_format: "DD-MM-YYYY",
       date_format: "DD-MM-YYYY",
       email_logo: "",
+      email_app_password: "",
       created_by: null,
       created_date: null,
       modified_by: null,
@@ -109,15 +132,27 @@ export const companyMasterSchema = {
         icon: Settings,
         columns: 4,
         fields: [
-          { name: "sender_name", label: "Sender Name", type: "text", placeholder: "Enter sender name", gridSpan: 4 },
+          { name: "mail_provider", label: "Mail Provider", type: "select", required: true, gridSpan: 4, options: MAIL_PROVIDER_OPTIONS },
           { name: "sender_email", label: "Sender Email", type: "email", required: true, placeholder: "Enter sender email", gridSpan: 4 },
+          { name: "sender_name", label: "Sender Name", type: "text", placeholder: "Enter sender name", gridSpan: 4 },
+          { name: "cc_email", label: "CC Email", type: "email", placeholder: "Enter CC email", gridSpan: 4 },
           { name: "email_app_password", label: "Email App Password", type: "password", placeholder: "Enter email app password", gridSpan: 4 },
+        ],
+      },
+      {
+        columns: 4,
+        fields: [
+          { name: "smtp_host", label: "SMTP Host", type: "text", required: true, placeholder: "smtp.gmail.com", gridSpan: 4, visibleWhen: (values) => values.mail_provider === "custom" },
+          { name: "smtp_username", label: "SMTP Username", type: "text", required: true, placeholder: "Enter SMTP username", gridSpan: 4, visibleWhen: (values) => values.mail_provider === "custom" },
+          { name: "smtp_port", label: "SMTP Port", type: "text", required: true, placeholder: "587", gridSpan: 2, visibleWhen: (values) => values.mail_provider === "custom" },
+          { name: "smtp_encryption", label: "Encryption", type: "select", required: true, gridSpan: 2, options: SMTP_ENCRYPTION_OPTIONS, visibleWhen: (values) => values.mail_provider === "custom" },
         ],
       },
       {
         columns: 3,
         fields: [
           { name: "date_format", label: "Date Format", type: "select", gridSpan: 4, options: DATE_FORMAT_OPTIONS },
+          { name: "time_format", label: "Time Format", type: "select", gridSpan: 4, options: DATE_FORMAT_OPTIONS },
         ],
       },
       // {
@@ -149,6 +184,11 @@ export const companyMasterSchema = {
     cc_email: z.union([z.literal(""), z.string().trim().email("Invalid CC email address")]).optional(),
     sender_email: z.string().trim().email("Invalid from email address"),
     sender_name: z.string().optional(),
+    mail_provider: z.enum(["gmail", "yahoo", "outlook", "custom"]).default("gmail"),
+    smtp_host: z.string().optional(),
+    smtp_port: z.string().optional(),
+    smtp_encryption: z.enum(["tls", "ssl", "none"]).optional(),
+    smtp_username: z.string().optional(),
     email_app_password: z.string().optional(),
     mobile_number: z.string().optional(),
     company_address: z.string().optional(),
@@ -161,8 +201,21 @@ export const companyMasterSchema = {
       z.string().trim().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, "Invalid PAN number"),
     ]).optional(),
     date_format: z.string().trim().min(1, "Date format is required"),
+    time_format: z.string().trim().min(1, "Time format is required"),
     email_logo: z.string().optional(),
     status: z.enum(["active", "inactive", "delete"]),
+  }).superRefine((data, ctx) => {
+    if (data.mail_provider !== "custom") return;
+
+    ["smtp_host", "smtp_port", "smtp_encryption", "smtp_username"].forEach((field) => {
+      if (!data[field]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `${field.replaceAll("_", " ")} is required`,
+        });
+      }
+    });
   }),
 };
 

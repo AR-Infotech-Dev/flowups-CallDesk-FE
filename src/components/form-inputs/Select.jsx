@@ -4,9 +4,10 @@ import DefaultLabel from './DefaultLabel';
 
 const Select = ({ field, value, onChange, className = '', ...rest }) => {
   const isLocked = Boolean(field.disabled || field.readOnly);
+  const options = Array.isArray(field.options) ? field.options : [];
 
   return (
-    <div className="flex flex-col gap-1 p-2">
+    <div className="flex flex-col gap-1">
       <DefaultLabel label={field.label} required={field.required} />
       <select
         name={field.name}
@@ -17,9 +18,9 @@ const Select = ({ field, value, onChange, className = '', ...rest }) => {
         {...rest}
       >
         <option value="">{field.placeholder || `Select ${field.label}`}</option>
-        {field.options.map((opt) => (
+        {options.map((opt) => (
           <option key={opt.label} value={opt.value}>
-            {opt.value}
+            {opt.label}
           </option>
         ))}
       </select>

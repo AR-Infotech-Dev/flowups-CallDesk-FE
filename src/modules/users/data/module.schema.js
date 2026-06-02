@@ -49,7 +49,7 @@ export const usersModuleSchema = {
       options: [],
     },
   ],
-  defaultColumns: ["name", "userName", "email", "contactNo", "roleID", "status"],
+  defaultColumns: ["name", "userName", "email", "contactNo", "roleID", "status", "company_id"],
   skipFields: ["user_setting", "gfcmToken", "otp", "country_code", "otp_exp_time", "g_cal_token", "one_drive_access_token", "is_google_sync", "is_one_drive_sync", "ftoken", "isVerified", "photo", "adminID", "latitude", "longitude", "roleOfUser"],
   tableCellConfig: [
     { column_name: "name", type: "person" },
@@ -64,7 +64,7 @@ export const usersModuleSchema = {
     { whatsappNo: "Whatsapp No" },
     { dateOfBirth: "Date Of Birth" },
     { lastLogin: "Last Login" },
-    { company_id: "Assigned Company/Branch" },
+    { company_id: "Assigned Company" },
     { userName: "User Name" },
     { roleID: "User Role" },
     { is_approver: "Approval Privileges" },

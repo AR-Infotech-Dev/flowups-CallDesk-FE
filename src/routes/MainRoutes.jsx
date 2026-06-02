@@ -14,6 +14,7 @@ const TicketsModulePage = lazy(() => import("../modules/tasks/TicketsModulePage"
 const MenuMasterModulePage = lazy(() => import("../modules/menu-master/MenuMasterModulePage"));
 const CustomerModulePage = lazy(() => import("../modules/customer/CustomerModulePage"));
 const CategoryModulePage = lazy(() => import("../modules/category/CategoryModulePage"));
+const ProductModulePage = lazy(() => import("../modules/products/ProductModulePage"));
 const CompanyMasterModulePage = lazy(() => import("../modules/company-master/CompanyMasterModulePage"));
 const AccessControlModulePage = lazy(() => import("../modules/access-control/AccessControlModulePage"));
 const UserMarkers = lazy(() => import("../modules/dashboard/UserMarkers"));
@@ -30,6 +31,8 @@ const menuRouteComponents = {
   "/tickets": TicketsModulePage,
   "/menus": MenuMasterModulePage,
   "/customers": CustomerModulePage,
+  "/products": ProductModulePage,
+  "/product": ProductModulePage,
   "/categories": CategoryModulePage,
   "/category": CategoryModulePage,
   "/user-markers": UserMarkers,

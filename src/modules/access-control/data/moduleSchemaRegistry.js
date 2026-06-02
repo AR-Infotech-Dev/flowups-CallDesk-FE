@@ -2,6 +2,7 @@ import { categoryModuleSchema } from "../../category/data/module.schema";
 import { companyMasterSchema } from "../../company-master/data/module.schema";
 import { customerModuleSchema } from "../../customer/data/module.schema";
 import { menuMasterSchema } from "../../menu-master/data/module.schema";
+import { productsModuleSchema } from "../../products/data/module.schema";
 import { ticketsModuleSchema } from "../../tasks/data/module.schema";
 import { usersModuleSchema } from "../../users/data/module.schema";
 
@@ -25,6 +26,10 @@ const schemaRegistry = [
   {
     schema: customerModuleSchema,
     aliases: ["customers", "customer"],
+  },
+  {
+    schema: productsModuleSchema,
+    aliases: ["products", "product"],
   },
   {
     schema: usersModuleSchema,

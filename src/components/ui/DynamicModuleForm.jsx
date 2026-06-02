@@ -123,6 +123,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                   getConditionalFlag(field, "readonlyWhen");
                 const resolvedField = {
                   ...field,
+                  options: typeof field.options === "function" ? field.options(values) : field.options,
                   disabled: isDisabled,
                   readOnly: isReadOnly || !canEditField,
                 };

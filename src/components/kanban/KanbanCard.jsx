@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/AuthProvider";
 import { hasFieldVisiblePermission } from "../../auth/permissions";
 import { useKanbanContext } from "./KanbanContext";
 import { isInlineColorValue, resolveCardValue } from "./kanbanUtils";
+import { isAmcActive } from "../../utils/amc";
 
 function formatFieldValue(field, value) {
   if (value === null || value === undefined || value === "") {
@@ -127,6 +128,7 @@ function KanbanCardView({
   const showDueDate = hasFieldVisiblePermission({ menuId, field: { key: "due_date", name: "due_date" }, user });
   const showDateRange = showStartDate || showDueDate;
   const overdue = isOverdue(row, columnId, config);
+  const activeAmc = isAmcActive(row);
   const { onKeyDown: onDragKeyDown, ...cardDragProps } = dragHandleProps;
 
   const handleCardKeyDown = (event) => {
@@ -149,7 +151,7 @@ function KanbanCardView({
   return (
     <article
       style={style}
-      className={className}
+      className={`${className} ${activeAmc ? "kanban-card-amc-active" : ""}`.trim()}
       onClick={interactive ? onOpen : undefined}
       onKeyDown={handleCardKeyDown}
       role={interactive ? "button" : undefined}
@@ -168,6 +170,7 @@ function KanbanCardView({
         <div className="kanban-card-title-wrap">
           <h4 className="kanban-card-title">{titleValue}</h4>
         </div>
+        {activeAmc ? <span className="kanban-card-amc-badge">AMC</span> : null}
         {overdue ? <span className="kanban-card-alert">Overdue</span> : null}
       </div>
 
