@@ -155,6 +155,34 @@ function CompanyMasterModulePage({ menu_id }) {
     toast.error(res?.message || "Error while deleting companies");
   };
 
+  const handleDeleteRow = async (row) => {
+    const rowId = row?.company_id ?? row?.id;
+    if (!rowId) {
+      toast.error("Company id not found.");
+      return;
+    }
+
+    if (!window.confirm("Delete this company?")) return;
+
+    setDeleting(true);
+    const res = await makeRequest(companyMasterSchema.api.delete, {
+      method: "POST",
+      body: {
+        action: "delete",
+        ids: [rowId],
+      },
+    });
+    setDeleting(false);
+
+    if (res.success) {
+      toast.success(res?.message || "Company deleted successfully.");
+      await getCompanyList();
+      return;
+    }
+
+    toast.error(res?.message || "Error while deleting company");
+  };
+
   useEffect(() => {
     getColumnList();
   }, [resolvedMenuID]);
@@ -226,6 +254,7 @@ function CompanyMasterModulePage({ menu_id }) {
               setSelectedCompany(company);
               setIsFlyoutOpen(true);
             } : undefined}
+            onDeleteRow={permissions.canDelete ? handleDeleteRow : undefined}
             allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}

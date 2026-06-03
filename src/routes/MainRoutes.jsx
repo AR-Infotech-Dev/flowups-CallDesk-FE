@@ -18,6 +18,9 @@ const CategoryModulePage = lazy(() => import("../modules/category/CategoryModule
 const ProductModulePage = lazy(() => import("../modules/products/ProductModulePage"));
 const CompanyMasterModulePage = lazy(() => import("../modules/company-master/CompanyMasterModulePage"));
 const AccessControlModulePage = lazy(() => import("../modules/access-control/AccessControlModulePage"));
+const PerformanceReportPage = lazy(() => import("../modules/reports/PerformanceReportPage"));
+const UserPerformancePage = lazy(() => import("../modules/reports/UserPerformancePage"));
+const CustomerReport = lazy(() => import("../modules/customer/components/CustomerReport"));
 const UserMarkers = lazy(() => import("../modules/dashboard/UserMarkers"));
 const UserProfilePage = lazy(() => import("../modules/profile/UserProfilePage"));
 
@@ -44,6 +47,7 @@ const menuRouteComponents = {
   "/companyMaster": CompanyMasterModulePage,
   "/company-master": CompanyMasterModulePage,
   "/access-control": AccessControlModulePage,
+  "/reports/performance": PerformanceReportPage,
 };
 
 function DefaultMenuRedirect() {
@@ -156,6 +160,11 @@ function MainRoutes() {
     [menus]
   );
 
+  const performanceReportMenuId = useMemo(() => {
+    const reportMenu = flattenMenus(menus).find((menu) => normalizePath(getMenuLink(menu)) === "/reports/performance");
+    return getMenuId(reportMenu);
+  }, [menus]);
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
@@ -164,6 +173,23 @@ function MainRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<UserProfilePage />} />
+            <Route
+              path="/reports/performance"
+              element={
+                performanceReportMenuId
+                  ? withPermission(performanceReportMenuId, <PerformanceReportPage menu_id={performanceReportMenuId} />)
+                  : <PerformanceReportPage menu_id={performanceReportMenuId} />
+              }
+            />
+            <Route
+              path="/reports/performance/:userId"
+              element={
+                performanceReportMenuId
+                  ? withPermission(performanceReportMenuId, <UserPerformancePage menu_id={performanceReportMenuId} />)
+                  : <UserPerformancePage menu_id={performanceReportMenuId} />
+              }
+            />
+            <Route path="/customer/report/:customerId" element={<CustomerReport />} />
             {dynamicRoutes.map((route) => (
               <Route key={`${route.path}-${route.menuId}`} path={route.path} element={route.element} />
             ))}

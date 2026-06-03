@@ -141,6 +141,35 @@ function UsersModulePage({ menu_id }) {
     toast.error(res?.message || "Error while deleting users");
   };
 
+  const handleDeleteRow = async (row) => {
+    const rowId = row?._id ?? row?.id ?? row?.adminID;
+    if (!rowId) {
+      toast.error("User id not found.");
+      return;
+    }
+
+    if (!window.confirm("Delete this user?")) return;
+
+    setDeleting(true);
+    const res = await makeRequest(usersModuleSchema.api.delete, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: {
+        action: "delete",
+        ids: [rowId],
+      },
+    });
+    setDeleting(false);
+
+    if (res.success) {
+      toast.success(res?.message || "User deleted successfully.");
+      await getUserList();
+      return;
+    }
+
+    toast.error(res?.message || "Error while deleting user");
+  };
+
   const getColumnList = async () => {
     const res = await getDefinitions(resolvedMenuID);
     if (res.success) {
@@ -221,6 +250,7 @@ function UsersModulePage({ menu_id }) {
               setSelectedUser(user);
               setIsFlyoutOpen(true);
             } : undefined}
+            onDeleteRow={permissions.canDelete ? handleDeleteRow : undefined}
             allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}

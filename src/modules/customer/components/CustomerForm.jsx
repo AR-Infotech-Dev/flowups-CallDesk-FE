@@ -29,7 +29,7 @@ function normalizeCustomerData(customer = {}) {
     billing_address: customer?.billing_address || "",
     company_id: customer?.company_id || "",
     mailing_address: customer?.mailing_address || "",
-    is_amc: customer?.is_amc || "no",
+    is_amc: String(customer?.is_amc || "no").toLowerCase(),
     amc_term_period: customer?.amc_term_period || null,
     amc_start_date: customer?.amc_start_date ? new Date(customer.amc_start_date).toISOString().split("T")[0] : null,
     amc_end_date: customer?.amc_end_date ? new Date(customer.amc_end_date).toISOString().split("T")[0] : null,

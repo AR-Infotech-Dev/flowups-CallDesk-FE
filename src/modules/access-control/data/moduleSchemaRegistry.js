@@ -4,6 +4,7 @@ import { customerModuleSchema } from "../../customer/data/module.schema";
 import { amcReminderModuleSchema } from "../../amc-reminders/data/module.schema";
 import { menuMasterSchema } from "../../menu-master/data/module.schema";
 import { productsModuleSchema } from "../../products/data/module.schema";
+import { performanceReportSchema } from "../../reports/data/module.schema";
 import { ticketsModuleSchema } from "../../tasks/data/module.schema";
 import { usersModuleSchema } from "../../users/data/module.schema";
 
@@ -35,6 +36,10 @@ const schemaRegistry = [
   {
     schema: productsModuleSchema,
     aliases: ["products", "product"],
+  },
+  {
+    schema: performanceReportSchema,
+    aliases: ["reports", "report", "performance-reports", "performance-report", "reports-performance"],
   },
   {
     schema: usersModuleSchema,

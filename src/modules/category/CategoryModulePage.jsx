@@ -156,6 +156,34 @@ function CategoryModulePage({ menu_id }) {
     toast.error(res?.message || "Error while deleting categories");
   };
 
+  const handleDeleteRow = async (row) => {
+    const rowId = row?.category_id ?? row?.id;
+    if (!rowId) {
+      toast.error("Category id not found.");
+      return;
+    }
+
+    if (!window.confirm("Delete this category?")) return;
+
+    setDeleting(true);
+    const res = await makeRequest(categoryModuleSchema.api.delete, {
+      method: "POST",
+      body: {
+        action: "delete",
+        ids: [rowId],
+      },
+    });
+    setDeleting(false);
+
+    if (res.success) {
+      toast.success(res?.message || "Category deleted successfully.");
+      await getCategoryList();
+      return;
+    }
+
+    toast.error(res?.message || "Error while deleting category");
+  };
+
   useEffect(() => {
     getColumnList();
   }, [resolvedMenuID]);
@@ -227,6 +255,7 @@ function CategoryModulePage({ menu_id }) {
               setSelectedCategory(category);
               setIsFlyoutOpen(true);
             } : undefined}
+            onDeleteRow={permissions.canDelete ? handleDeleteRow : undefined}
             allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}

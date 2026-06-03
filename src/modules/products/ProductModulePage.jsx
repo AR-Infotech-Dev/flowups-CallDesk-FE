@@ -156,6 +156,34 @@ function ProductModulePage({ menu_id }) {
     toast.error(res?.message || "Error while deleting products");
   };
 
+  const handleDeleteRow = async (row) => {
+    const rowId = row?.product_id ?? row?.id;
+    if (!rowId) {
+      toast.error("Product id not found.");
+      return;
+    }
+
+    if (!window.confirm("Delete this product?")) return;
+
+    setDeleting(true);
+    const res = await makeRequest(productsModuleSchema.api.delete, {
+      method: "POST",
+      body: {
+        action: "delete",
+        ids: [rowId],
+      },
+    });
+    setDeleting(false);
+
+    if (res.success) {
+      toast.success(res?.message || "Product deleted successfully.");
+      await getProductList();
+      return;
+    }
+
+    toast.error(res?.message || "Error while deleting product");
+  };
+
   useEffect(() => {
     getColumnList();
   }, [resolvedMenuID]);
@@ -227,6 +255,7 @@ function ProductModulePage({ menu_id }) {
               setSelectedProduct(product);
               setIsFlyoutOpen(true);
             } : undefined}
+            onDeleteRow={permissions.canDelete ? handleDeleteRow : undefined}
             allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}

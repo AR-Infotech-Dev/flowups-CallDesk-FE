@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Input from "../form-inputs/Input";
 import Radio from "../form-inputs/Radio";
 import Select from "../form-inputs/Select";
@@ -97,7 +98,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
       {sections.map((section, sectionIndex) => {
         const Icon = section.icon; 
         return (
-          <>
+          <Fragment key={section.key || section.title || `section-${sectionIndex}`}>
             {section.title &&
               <div className={`flex text-md font-semibold items-center mb-1 ${sectionIndex != 0 && "mt-4"}`}  >
                 {Icon && <Icon className="m1 mr-2" size={15} />}
@@ -111,10 +112,10 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                   : true;
 
                 if (!isVisible) return null;
-                const canViewField = hasFieldVisiblePermission({ menuId, field, user });
+                const canViewField = field.alwaysVisible || hasFieldVisiblePermission({ menuId, field, user });
                 if (!canViewField) return null;
 
-                const canEditField = hasFieldEditablePermission({ menuId, field, user });
+                const canEditField = field.alwaysEditable || hasFieldEditablePermission({ menuId, field, user });
                 const isDisabled = getConditionalFlag(field, "disabled") || getConditionalFlag(field, "disabledWhen");
                 const isReadOnly =
                   getConditionalFlag(field, "readOnly") ||
@@ -138,7 +139,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                 )
               })}
             </div>
-          </>
+          </Fragment>
         )
       })}
     </div>

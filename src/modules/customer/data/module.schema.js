@@ -109,6 +109,8 @@ export const customerModuleSchema = {
             label: "Is AMC",
             type: "radio",
             gridSpan: 3,
+            alwaysVisible: true,
+            alwaysEditable: true,
             options: [
               { value: "yes", label: "Yes" },
               { value: "no", label: "No" },
@@ -119,6 +121,8 @@ export const customerModuleSchema = {
             label: "Term Period",
             type: "select",
             gridSpan: 3,
+            alwaysVisible: true,
+            alwaysEditable: true,
             visibleWhen: (values) => values.is_amc === "yes",
             options: [
               { value: "4_month", label: "4 Month" },
@@ -131,6 +135,8 @@ export const customerModuleSchema = {
             label: "AMC Start Date",
             type: "date",
             gridSpan: 3,
+            alwaysVisible: true,
+            alwaysEditable: true,
             visibleWhen: (values) => values.is_amc === "yes",
           },
           {
@@ -138,6 +144,8 @@ export const customerModuleSchema = {
             label: "AMC End Date",
             type: "date",
             gridSpan: 3,
+            alwaysVisible: true,
+            alwaysEditable: true,
             visibleWhen: (values) => values.is_amc === "yes",
           },
         ],

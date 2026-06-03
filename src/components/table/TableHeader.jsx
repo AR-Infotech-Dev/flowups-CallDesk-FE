@@ -73,6 +73,26 @@ function TableHeader({
                 checked={allRowsSelected}
                 onChange={(event) => onToggleAllRows?.(event.target.checked)}
               />
+            ) : column.isActionsColumn ? (
+              <div className="table-header-shell table-actions-header">
+                <span className="table-header-label table-header-label-static">
+                  <span className="table-header-text">{column.label}</span>
+                </span>
+                {column.key === lastColumnKey ? (
+                  <div className="table-column-picker">
+                    <button
+                      type="button"
+                      className="table-column-picker-trigger"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setIsColumnMenuOpen((current) => !current);
+                      }}
+                    >
+                      <Plus className={''} size={10} />
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             ) : column.className === "icon-col" ? null : (
               <div className="table-header-shell">
                 <button

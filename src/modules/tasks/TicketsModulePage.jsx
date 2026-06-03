@@ -245,6 +245,36 @@ function TicketModulePage({ menu_id }) {
     toast.error(res?.message || "Error while deleting tickets");
   };
 
+  const handleDeleteRow = async (row) => {
+    const rowId = row?.ticketID ?? row?.ticket_id ?? row?.id;
+    if (!rowId) {
+      toast.error("Ticket id not found.");
+      return;
+    }
+
+    if (!window.confirm("Delete this ticket?")) return;
+
+    setDeleting(true);
+    const res = await makeRequest(ticketsModuleSchema.api.delete,
+      {
+        method: "POST",
+        body: {
+          action: "delete",
+          ids: [rowId],
+        },
+      }
+    );
+    setDeleting(false);
+
+    if (res.success) {
+      toast.success(res?.message || "Ticket deleted successfully.");
+      await getTicketList();
+      return;
+    }
+
+    toast.error(res?.message || "Error while deleting ticket");
+  };
+
   // ==================================================
   // EFFECTS
   // ==================================================
@@ -366,6 +396,7 @@ function TicketModulePage({ menu_id }) {
               setSelectedTicket(ticket);
               setIsFlyoutOpen(true);
             } : undefined}
+            onDeleteRow={permissions.canDelete ? handleDeleteRow : undefined}
             allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}

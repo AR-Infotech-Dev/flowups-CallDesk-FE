@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Columns, Star, Pencil } from "lucide-react";
+import { createElement, isValidElement, useEffect, useMemo, useState } from "react";
+import { Edit3, Star, Trash2 } from "lucide-react";
 import moment from "moment";
 import TableHeader from "./TableHeader";
 import TableSkeleton from "./TableSkeleton";
@@ -35,6 +35,16 @@ function getCellStyle(column) {
     maxWidth: column.currentWidth,
   };
 }
+
+const ACTIONS_COLUMN = {
+  key: "__actions",
+  label: "Actions",
+  width: "auto",
+  minWidth: 90,
+  resizable: false,
+  isAlwaysVisible: true,
+  isActionsColumn: true,
+};
 
 function getRowIdentifier(row) {
   return (
@@ -167,7 +177,7 @@ function renderCheckboxCell(row, selectionProps) {
 
   // Delete permission controls row selection. If delete is not allowed, checkbox is hidden.
   if (!allowSelection) return null;
-  
+
   return (
     <input
       type="checkbox"
@@ -381,6 +391,82 @@ function renderValueCell(column, row, index, selectionProps) {
   }
 }
 
+function normalizeAction(action, row, index) {
+  if (typeof action === "function") {
+    return action(row, index);
+  }
+
+  return action;
+}
+
+function renderActionIcon(icon) {
+  if (!icon) return null;
+  if (isValidElement(icon)) return icon;
+  if (typeof icon === "function") {
+    const Icon = icon;
+    return <Icon size={14} />;
+  }
+  if (typeof icon === "object" && icon.$$typeof) {
+    return createElement(icon, { size: 14 });
+  }
+
+  return null;
+}
+
+function ActionCell({ row, index, editRow, onDeleteRow, rowActions = [], renderActions }) {
+  const customContent = typeof renderActions === "function" ? renderActions(row, index) : null;
+
+  if (customContent) {
+    return <div className="table-row-actions">{customContent}</div>;
+  }
+
+  const actions = [
+    typeof editRow === "function"
+      ? {
+        key: "edit",
+        label: "Edit",
+        icon: Edit3,
+        className: "table-action-edit",
+        onClick: editRow,
+      }
+      : null,
+    typeof onDeleteRow === "function"
+      ? {
+        key: "delete",
+        label: "Delete",
+        icon: Trash2,
+        className: "table-action-delete",
+        onClick: onDeleteRow,
+      }
+      : null,
+    ...rowActions.map((action) => normalizeAction(action, row, index)),
+  ].filter(Boolean).filter((action) => !action.hidden);
+
+  if (!actions.length) return null;
+
+  return (
+    <div className="table-row-actions">
+      {actions.map((action, actionIndex) => (
+        <button
+          key={action.key || action.label || actionIndex}
+          type="button"
+          className={`table-icon-button table-action-button ${action.className || ""}`.trim()}
+          title={action.label}
+          data-tooltip={action.label}
+          aria-label={action.label}
+          disabled={Boolean(action.disabled)}
+          onClick={(event) => {
+            event.stopPropagation();
+            action.onClick?.(row, index, event);
+          }}
+        >
+          {renderActionIcon(action.icon)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // function DefaultRow({ row, index, columns, editRow, selectionProps }) {
 //   const rowKey = getRowIdentifier(row) ?? row?.name ?? index;
 
@@ -406,7 +492,7 @@ function renderValueCell(column, row, index, selectionProps) {
 //     </tr>
 //   );
 // }
-function DefaultRow({ row, index, columns, editRow, selectionProps }) {
+function DefaultRow({ row, index, columns, editRow, selectionProps, onDeleteRow, rowActions, renderActions }) {
   const rowKey = getRowIdentifier(row) ?? row?.name ?? index;
   const activeAmc = isAmcActive(row);
 
@@ -415,16 +501,27 @@ function DefaultRow({ row, index, columns, editRow, selectionProps }) {
       {columns.map((column) => (
         <td
           key={column.key}
-          className={column.className || ""}
+          className={`${column.className || ""} ${column.isActionsColumn ? "table-actions-cell" : ""}`.trim()}
           style={getCellStyle(column)}
           onClick={
             // If editRow is missing, row click does nothing. Pages pass editRow only when edit permission exists.
-            typeof editRow === "function"
+            typeof editRow === "function" && !column.isActionsColumn && !column.checkbox
               ? () => editRow(row)
               : undefined
           }
         >
-          {renderValueCell(column, row, index, selectionProps)}
+          {column.isActionsColumn ? (
+            <ActionCell
+              row={row}
+              index={index}
+              editRow={editRow}
+              onDeleteRow={onDeleteRow}
+              rowActions={rowActions}
+              renderActions={renderActions}
+            />
+          ) : (
+            renderValueCell(column, row, index, selectionProps)
+          )}
         </td>
       ))}
     </tr>
@@ -437,6 +534,11 @@ function ResizableTable({
   storageKey,
   renderRow,
   editRow,
+  onEditRow,
+  onDeleteRow,
+  rowActions = [],
+  renderActions,
+  showActions,
   loading,
   sortConfig,
   onSortChange,
@@ -454,6 +556,8 @@ function ResizableTable({
     getStoredVisibleColumnKeys(storageKey) || getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys)
   );
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
+  const handleEditRow = onEditRow || editRow;
+  const shouldShowActions = showActions ?? Boolean(handleEditRow || onDeleteRow || rowActions.length || renderActions);
 
   useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify(columnWidths));
@@ -481,8 +585,8 @@ function ResizableTable({
   }, [columns, defaultVisibleColumnKeys, storageKey]);
 
   const resolvedColumns = useMemo(
-    () =>
-      visibleColumnKeys
+    () => {
+      const visibleColumns = visibleColumnKeys
         .map((key) => columns.find((column) => column.key === key))
         .filter(Boolean)
         .filter((column) => allowSelection || !column.checkbox)
@@ -490,8 +594,21 @@ function ResizableTable({
         .map((column) => ({
           ...column,
           currentWidth: Math.max(column.minWidth || 40, columnWidths[column.key] || column.width || 800),
-        })),
-    [allowSelection, columnWidths, columns, menuId, user, visibleColumnKeys]
+        }));
+
+      if (!shouldShowActions) {
+        return visibleColumns;
+      }
+
+      return [
+        ...visibleColumns,
+        {
+          ...ACTIONS_COLUMN,
+          currentWidth: Math.max(ACTIONS_COLUMN.minWidth, columnWidths[ACTIONS_COLUMN.key] || ACTIONS_COLUMN.width),
+        },
+      ];
+    },
+    [allowSelection, columnWidths, columns, menuId, shouldShowActions, user, visibleColumnKeys]
   );
 
   const tableWidth = useMemo(
@@ -559,8 +676,11 @@ function ResizableTable({
                     row={row}
                     index={index}
                     columns={resolvedColumns}
-                    editRow={editRow}
+                    editRow={handleEditRow}
                     selectionProps={selectionProps}
+                    onDeleteRow={onDeleteRow}
+                    rowActions={rowActions}
+                    renderActions={renderActions}
                   />
                 )
               )}

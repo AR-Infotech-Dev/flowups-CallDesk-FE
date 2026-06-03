@@ -2446,6 +2446,89 @@ thead th:hover .table-resize-handle::after {
   background: var(--primary-50);
 }
 
+.table-actions-cell {
+  text-align: center;
+}
+
+.table-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.table-action-button {
+  position: relative;
+  min-width: 24px;
+  min-height: 24px;
+  color: #64748b;
+  border: none;
+  background-color: transparent;
+}
+
+.table-action-button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  z-index: 20;
+  width: max-content;
+  max-width: 140px;
+  transform: translateX(-50%) translateY(2px);
+  border-radius: 5px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.table-action-button::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  z-index: 20;
+  transform: translateX(-50%) translateY(2px);
+  border: 5px solid transparent;
+  border-top-color: #0f172a;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.table-action-button:hover::after,
+.table-action-button:focus-visible::after,
+.table-action-button:hover::before,
+.table-action-button:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.table-action-edit:hover {
+  color: var(--primary);
+}
+
+.table-action-delete:hover {
+  /* border-color: #fecaca; */
+  /* background: #fef2f2; */
+  color: #dc2626;
+}
+
+.table-header-label-static {
+  cursor: default;
+}
+
+.table-actions-header {
+  justify-content: space-between;
+}
+
 .user-favorite-button {
   color: var(--text-primary);
 }
@@ -4199,4 +4282,391 @@ table input[type="checkbox"]:focus-visible {
 
 .toast-progress-compact.Toastify__progress-bar {
   height: 2px;
+}
+
+.customer-report-page {
+  display: flex;
+  height: calc(100vh - 78px);
+  min-height: 0;
+  flex-direction: column;
+  background: #f8fafc;
+}
+
+.customer-report-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 10px 14px;
+}
+
+.customer-report-back,
+.customer-report-generate,
+.customer-report-export {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.customer-report-back {
+  border: 1px solid #dbe3ef;
+  background: #ffffff;
+  color: #334155;
+  padding: 0 10px;
+}
+
+.customer-report-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.customer-report-header p {
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.customer-report-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 10px 14px;
+}
+
+.customer-report-date-field {
+  display: flex;
+  min-width: 210px;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.customer-report-date-field span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.customer-report-date-field div {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #dbe3ef;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #64748b;
+  padding: 0 9px;
+}
+
+.customer-report-date-field input {
+  width: 100%;
+  border: 0;
+  color: #0f172a;
+  font-size: 12px;
+  outline: 0;
+}
+
+.customer-report-generate,
+.customer-report-export {
+  border: 1px solid #0f5ea8;
+  background: #0f5ea8;
+  color: #ffffff;
+  padding: 0 12px;
+}
+
+.customer-report-export {
+  border-color: #dbe3ef;
+  background: #ffffff;
+  color: #334155;
+}
+
+.customer-report-generate:disabled,
+.customer-report-export:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.customer-report-scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  padding: 12px 14px;
+}
+
+.customer-report-customer-card,
+.customer-report-panel,
+.customer-report-info-grid,
+.customer-report-summary {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.customer-report-customer-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+}
+
+.customer-report-customer-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.customer-report-avatar {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #0f5ea8;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.customer-report-customer-title h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.customer-report-customer-title p {
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.customer-report-amc {
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.customer-report-amc.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.customer-report-info-grid,
+.customer-report-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* overflow: hidden; */
+}
+
+.customer-report-info-item,
+.customer-report-card {
+  min-width: 0;
+  border-right: 1px solid #e2e8f0;
+  padding: 10px 12px;
+}
+
+.customer-report-info-item:last-child,
+.customer-report-card:last-child {
+  border-right: 0;
+}
+
+.customer-report-info-item span,
+.customer-report-panel-head span,
+.customer-report-card p {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.customer-report-info-item strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-report-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.customer-report-card-icon {
+  display: inline-flex;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.customer-report-card strong {
+  display: block;
+  margin-top: 2px;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.customer-report-green .customer-report-card-icon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.customer-report-amber .customer-report-card-icon {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.customer-report-red .customer-report-card-icon {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.customer-report-panel {
+  padding: 10px;
+}
+
+.customer-report-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.customer-report-panel-head h3 {
+  margin: 1px 0 0;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.customer-report-panel-head p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.customer-report-table-wrap {
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.customer-report-table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+.customer-report-table tr {
+  width: 100%;
+}
+
+.customer-report-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+  color: #475569;
+  padding: 8px 10px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.customer-report-table td {
+  border-top: 1px solid #edf2f7;
+  color: #334155;
+  padding: 8px 10px;
+}
+
+.customer-report-empty {
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 12px;
+  text-align: center;
+}
+
+.customer-report-products {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.customer-report-products article {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 9px;
+}
+
+.customer-report-products strong {
+  display: block;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.customer-report-products span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+@media (max-width: 860px) {
+  .customer-report-page {
+    height: auto;
+    min-height: calc(100vh - 78px);
+  }
+
+  .customer-report-toolbar,
+  .customer-report-header,
+  .customer-report-customer-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .customer-report-info-grid,
+  .customer-report-summary,
+  .customer-report-products {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-report-info-item,
+  .customer-report-card {
+    border-right: 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
 }

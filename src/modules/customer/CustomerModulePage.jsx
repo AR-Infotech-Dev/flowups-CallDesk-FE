@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import { useEffect, useMemo, useState } from "react";
-
+import { BarChart3 } from "lucide-react";
 import { makeRequest } from "../../api/httpClient";
 import { useModuleFilters } from "../../store/hooks";
 import { defaultSortConfig, getNextSortConfig } from "../../utils/sorting";
@@ -9,6 +9,8 @@ import {
   buildTableColumnsFromStructure,
   getDefinitions,
 } from "../../utils/moduleStructure";
+import { useNavigate } from "react-router-dom";
+
 
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
@@ -22,6 +24,7 @@ import CustomerForm from "./components/CustomerForm";
 import { customerFallbackColumns, customerModuleSchema } from "./data/module.schema";
 
 function CustomerModulePage({ menu_id }) {
+  const navigate = useNavigate();
   const resolvedMenuID = menu_id || customerModuleSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
 
@@ -119,6 +122,15 @@ function CustomerModulePage({ menu_id }) {
     );
   };
 
+  const handleReport = (customer) => {
+    const customerId = customer?.customer_id ?? customer?.id;
+    if (!customerId) {
+      toast.error("Customer id not found.");
+      return;
+    }
+    navigate(`/customer/report/${customerId}`, { state: { customer } });
+  };
+
   const handleToggleAllRows = (checked) => {
     if (!checked) {
       setSelectedRowIds([]);
@@ -153,6 +165,34 @@ function CustomerModulePage({ menu_id }) {
     }
 
     toast.error(res?.message || "Error while deleting customers");
+  };
+
+  const handleDeleteRow = async (row) => {
+    const rowId = row?.customer_id ?? row?.id;
+    if (!rowId) {
+      toast.error("Customer id not found.");
+      return;
+    }
+
+    if (!window.confirm("Delete this customer?")) return;
+
+    setDeleting(true);
+    const res = await makeRequest(customerModuleSchema.api.delete, {
+      method: "POST",
+      body: {
+        action: "delete",
+        ids: [rowId],
+      },
+    });
+    setDeleting(false);
+
+    if (res.success) {
+      toast.success(res?.message || "Customer deleted successfully.");
+      await getCustomerList();
+      return;
+    }
+
+    toast.error(res?.message || "Error while deleting customer");
   };
 
   useEffect(() => {
@@ -195,9 +235,9 @@ function CustomerModulePage({ menu_id }) {
                 savedFilters={customerModuleSchema.savedFilters}
                 onSearch={setSearchText}
                 onApplyFilters={applyFilterPayload}
-                onSaveFilter={() => {}}
-                onDeleteFilter={() => {}}
-                onSelectSavedFilter={() => {}}
+                onSaveFilter={() => { }}
+                onDeleteFilter={() => { }}
+                onSelectSavedFilter={() => { }}
                 onClearFilters={clearFilters}
               />
             }
@@ -226,10 +266,20 @@ function CustomerModulePage({ menu_id }) {
               setSelectedCustomer(customer);
               setIsFlyoutOpen(true);
             } : undefined}
+            onDeleteRow={permissions.canDelete ? handleDeleteRow : undefined}
             allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            rowActions={[
+              {
+                key: "report",
+                label: "Report",
+                icon: BarChart3,
+                className: "table-action-edit",
+                onClick: handleReport,
+              }
+            ]}
           />
         }
         footer={<ModulePagination pagination={pagination} onPageChange={setPage} />}

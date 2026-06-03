@@ -325,9 +325,9 @@ function AmcRemindersModulePage({ menu_id }) {
                 savedFilters={amcReminderModuleSchema.savedFilters}
                 onSearch={setSearchText}
                 onApplyFilters={applyFilterPayload}
-                onSaveFilter={() => {}}
-                onDeleteFilter={() => {}}
-                onSelectSavedFilter={() => {}}
+                onSaveFilter={() => { }}
+                onDeleteFilter={() => { }}
+                onSelectSavedFilter={() => { }}
                 onClearFilters={clearFilters}
               />
             }
