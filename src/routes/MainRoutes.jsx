@@ -13,11 +13,13 @@ const UsersModulePage = lazy(() => import("../modules/users/UsersModulePage"));
 const TicketsModulePage = lazy(() => import("../modules/tasks/TicketsModulePage"));
 const MenuMasterModulePage = lazy(() => import("../modules/menu-master/MenuMasterModulePage"));
 const CustomerModulePage = lazy(() => import("../modules/customer/CustomerModulePage"));
+const AmcRemindersModulePage = lazy(() => import("../modules/amc-reminders/AmcRemindersModulePage"));
 const CategoryModulePage = lazy(() => import("../modules/category/CategoryModulePage"));
 const ProductModulePage = lazy(() => import("../modules/products/ProductModulePage"));
 const CompanyMasterModulePage = lazy(() => import("../modules/company-master/CompanyMasterModulePage"));
 const AccessControlModulePage = lazy(() => import("../modules/access-control/AccessControlModulePage"));
 const UserMarkers = lazy(() => import("../modules/dashboard/UserMarkers"));
+const UserProfilePage = lazy(() => import("../modules/profile/UserProfilePage"));
 
 const withPermission = (menuId, element) => (
   <PermissionRoute menuId={menuId}>{element}</PermissionRoute>
@@ -31,6 +33,8 @@ const menuRouteComponents = {
   "/tickets": TicketsModulePage,
   "/menus": MenuMasterModulePage,
   "/customers": CustomerModulePage,
+  "/amc-reminders": AmcRemindersModulePage,
+  "/amc-reminder": AmcRemindersModulePage,
   "/products": ProductModulePage,
   "/product": ProductModulePage,
   "/categories": CategoryModulePage,
@@ -159,6 +163,7 @@ function MainRoutes() {
         {getAuthRoutes()}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
+            <Route path="/profile" element={<UserProfilePage />} />
             {dynamicRoutes.map((route) => (
               <Route key={`${route.path}-${route.menuId}`} path={route.path} element={route.element} />
             ))}

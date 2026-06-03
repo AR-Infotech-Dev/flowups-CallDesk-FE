@@ -6,12 +6,14 @@ import {
 } from "lucide-react";
 
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Spinner from "./ui/Spinner";
 import { APP_NAME } from "../api/config";
 import NotificationBell from "./ui/NotificationBell";
 import LoadingBar from "./LoadingBar";
 
 function TopBar({ onLogout }) {
+  const navigate = useNavigate();
   const [isLoggingOut, setLoggingOut] = useState(false);
   const [user, setUser] = useState(null);
   const [isProfileOpen, setProfileOpen] = useState(false);
@@ -102,7 +104,10 @@ function TopBar({ onLogout }) {
                 <button
                   type="button"
                   className="profile-dropdown-item"
-                  disabled
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/profile");
+                  }}
                 >
                   <UserRound size={14} />
                   Profile
