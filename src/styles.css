@@ -1220,6 +1220,36 @@ button {
   gap: 12px 16px;
 }
 
+.profile-password-input-wrap {
+  position: relative;
+  display: block;
+}
+
+.profile-password-field .profile-password-input-wrap input {
+  padding-right: 38px;
+}
+
+.profile-password-eye-button {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.profile-password-eye-button:hover {
+  color: var(--primary);
+}
+
 .profile-password-actions {
   display: flex;
   justify-content: flex-end;
@@ -1663,14 +1693,14 @@ thead th {
   text-transform: uppercase;
   letter-spacing: 0.025em;
   text-align: left;
-  background: #ffffff;
+  /* background: #ffffff; */
   border-top: 1px solid #dbe3ef;
   border-bottom: 1px solid #dbe3ef;
   box-shadow: inset 0 1px 0 #ffffff;
 }
 
 thead th:hover {
-  background: #ffffff;
+  /* background: #ffffff; */
 }
 
 .table-header-label {
@@ -2144,6 +2174,10 @@ tbody td:last-child {
   border-right: 0;
 }
 
+.table-card thead th:last-child,.table-card tbody td:last-child{
+  width: 100%;
+}
+
 /* thead th:first-child {
   border-top-left-radius: 18px;
 } */
@@ -2374,17 +2408,17 @@ tbody .check-col {
   position: sticky !important;
   left: 0;
   text-align: center;
-  background: #ffffff;
+  /* background: #ffffff; */
 }
 
 thead .check-col {
   z-index: 30;
-  background: #ffffff;
+  /* background: #ffffff; */
 }
 
 tbody .check-col {
   z-index: 10;
-  background: #ffffff;
+  /* background: #ffffff; */
   box-shadow: 1px 0 0 #edf2f7;
 }
 
@@ -4291,6 +4325,86 @@ table input[type="checkbox"]:focus-visible {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+.company-logo-uploader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 12px;
+}
+
+.company-logo-preview {
+  display: inline-flex;
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+}
+
+.company-logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 5px;
+}
+
+.company-logo-copy {
+  min-width: 0;
+}
+
+.company-logo-copy h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.company-logo-copy p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.company-logo-copy span {
+  display: block;
+  margin-top: 5px;
+  overflow: hidden;
+  color: #31537a;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-logo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.company-logo-remove {
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.company-logo-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .customer-report-page {

@@ -6,6 +6,7 @@ import Feedback from "../public/Feedback";
 import ForgotPasswordPage from "../auth/ForgotPasswordPage";
 import VerificationPage from "../auth/VerificationPage";
 import { makeRequest } from "../api/httpClient";
+import { validatePasswordUpdate } from "../utils/passwordValidation";
 
 function LoginRoute() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ function ForgotPasswordRoute() {
   const [forgotForm, setForgotForm] = useState({ email: "" });
   const [authError, setAuthError] = useState("");
   const [authHelperText, setAuthHelperText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (authSession) {
     return <Navigate to="/dashboard" replace />;
@@ -37,6 +39,7 @@ function ForgotPasswordRoute() {
       formData={forgotForm}
       error={authError}
       helperText={authHelperText}
+      loading={isSubmitting}
       onChange={(event) => {
         const { name, value } = event.target;
         setForgotForm((prev) => ({ ...prev, [name]: value }));
@@ -45,18 +48,30 @@ function ForgotPasswordRoute() {
         event.preventDefault();
         setAuthError("");
         setAuthHelperText("");
-        const result = await makeRequest("forgotPassword", {
-          method: "POST",
-          body: { email: forgotForm.email },
-        });
 
-        if (!result?.success) {
-          setAuthError(result?.message || "Unable to send verification code");
+        if (isSubmitting) {
           return;
         }
 
-        setAuthHelperText(result?.message || "Verification code sent successfully");
-        navigate("/verify-reset", { state: { email: forgotForm.email } });
+        try {
+          setIsSubmitting(true);
+          const result = await makeRequest("forgotPassword", {
+            method: "POST",
+            body: { email: forgotForm.email },
+          });
+
+          if (!result?.success) {
+            setAuthError(result?.message || "Unable to send verification code");
+            return;
+          }
+
+          setAuthHelperText(result?.message || "Verification code sent successfully");
+          navigate("/verify-reset", { state: { email: forgotForm.email } });
+        } catch (error) {
+          setAuthError(error?.message || "Unable to send verification code");
+        } finally {
+          setIsSubmitting(false);
+        }
       }}
       onBack={() => {
         navigate("/login");
@@ -77,6 +92,7 @@ function VerificationRoute() {
   });
   const [authError, setAuthError] = useState("");
   const [authHelperText, setAuthHelperText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (authSession) {
     return <Navigate to="/dashboard" replace />;
@@ -87,6 +103,7 @@ function VerificationRoute() {
       formData={verificationForm}
       error={authError}
       helperText={authHelperText}
+      loading={isSubmitting}
       onChange={(event) => {
         const { name, value } = event.target;
         setVerificationForm((prev) => ({ ...prev, [name]: value }));
@@ -96,27 +113,43 @@ function VerificationRoute() {
         setAuthError("");
         setAuthHelperText("");
 
-        if (verificationForm.password !== verificationForm.confirmPassword) {
-          setAuthError("New password and confirm password must match");
+        if (isSubmitting) {
           return;
         }
 
-        const result = await makeRequest("verifyOtp", {
-          method: "POST",
-          body: {
-            otp: verificationForm.code,
-            new_password: verificationForm.password,
-            re_enter_password: verificationForm.confirmPassword,
-          },
+        const validationMessage = validatePasswordUpdate({
+          newPassword: verificationForm.password,
+          confirmPassword: verificationForm.confirmPassword,
         });
 
-        if (!result?.success) {
-          setAuthError(result?.message || "Unable to reset password");
+        if (validationMessage) {
+          setAuthError(validationMessage);
           return;
         }
 
-        setAuthHelperText(result?.message || "Password updated successfully");
-        navigate("/login");
+        try {
+          setIsSubmitting(true);
+          const result = await makeRequest("verifyOtp", {
+            method: "POST",
+            body: {
+              otp: verificationForm.code,
+              new_password: verificationForm.password,
+              re_enter_password: verificationForm.confirmPassword,
+            },
+          });
+
+          if (!result?.success) {
+            setAuthError(result?.message || "Unable to reset password");
+            return;
+          }
+
+          setAuthHelperText(result?.message || "Password updated successfully");
+          navigate("/login");
+        } catch (error) {
+          setAuthError(error?.message || "Unable to reset password");
+        } finally {
+          setIsSubmitting(false);
+        }
       }}
       onBack={() => {
         navigate("/forgot-password");

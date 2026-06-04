@@ -1,4 +1,6 @@
-import AuthShell from "./AuthShell";
+import Spinner from "../components/ui/Spinner";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 function VerificationPage({
   formData,
@@ -7,82 +9,142 @@ function VerificationPage({
   onChange,
   onSubmit,
   onBack,
+  loading = false,
 }) {
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    password: false,
+    confirmPassword: false,
+  });
+
+  const togglePasswordVisibility = (fieldName) => {
+    setVisiblePasswords((current) => ({
+      ...current,
+      [fieldName]: !current[fieldName],
+    }));
+  };
+
   return (
-    <AuthShell
-      title="Verification"
-      subtitle="Enter the verification code and set a new password to finish recovery."
-    >
-      <form className="auth-form" onSubmit={onSubmit}>
-        <label className="auth-field">
-          <span className="auth-label">Email</span>
-          <input
-            className="auth-input"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={onChange}
-            placeholder="Enter your email"
-            autoComplete="off"
-          />
-        </label>
+    <div className="flex flex-col md:flex-row h-screen">
+      <div className="hidden md:flex md:w-[42%] items-center justify-center p-10 bg-brand-primary text-white" />
 
-        <label className="auth-field">
-          <span className="auth-label">Verification Code</span>
-          <input
-            className="auth-input"
-            type="text"
-            name="code"
-            value={formData.code}
-            onChange={onChange}
-            placeholder="Enter code"
-            autoComplete="off"
-          />
-        </label>
+      <div className="w-full md:w-[58%] flex items-center justify-center p-8 bg-gray-50">
+        <div className="w-full max-w-md">
+          <h1 className="text-2xl font-semibold text-[#172b4d] mb-2">
+            Verification
+          </h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Enter the code and set your new password.
+          </p>
 
-        <label className="auth-field">
-          <span className="auth-label">New Password</span>
-          <input
-            className="auth-input"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={onChange}
-            placeholder="Enter new password"
-            autoComplete="off"
-          />
-        </label>
+          <form onSubmit={onSubmit}>
+            <div className="mb-4">
+              <input
+                className="bg-[#e9ebf4] border-none rounded-md p-3 text-sm w-full text-[#172b4d] placeholder:text-[#172b4d]/50"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={onChange}
+                placeholder="Email address"
+                autoComplete="off"
+                disabled={loading}
+              />
+            </div>
 
-        <label className="auth-field">
-          <span className="auth-label">Confirm Password</span>
-          <input
-            className="auth-input"
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={onChange}
-            placeholder="Re-enter new password"
-            autoComplete="off"
-          />
-        </label>
+            <div className="mb-4">
+              <input
+                className="bg-[#e9ebf4] border-none rounded-md p-3 text-sm w-full text-[#172b4d] placeholder:text-[#172b4d]/50"
+                type="text"
+                name="code"
+                value={formData.code}
+                onChange={onChange}
+                placeholder="Verification code"
+                autoComplete="off"
+                disabled={loading}
+              />
+            </div>
 
-        {error ? <div className="auth-message error">{error}</div> : null}
-        {helperText ? <div className="auth-message info">{helperText}</div> : null}
+            <div className="mb-4 relative">
+              <input
+                className="bg-[#e9ebf4] border-none rounded-md p-3 pr-11 text-sm w-full text-[#172b4d] placeholder:text-[#172b4d]/50"
+                type={visiblePasswords.password ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={onChange}
+                placeholder="New password"
+                autoComplete="off"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="absolute right-4 top-3.5 text-gray-500"
+                onClick={() => togglePasswordVisibility("password")}
+                disabled={loading}
+                aria-label={visiblePasswords.password ? "Hide password" : "Show password"}
+              >
+                {visiblePasswords.password ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
 
-        <div className="auth-actions">
-          <button type="submit" className="auth-button auth-button-primary">
-            Verify and Reset
-          </button>
-          <button
-            type="button"
-            className="auth-button auth-button-secondary"
-            onClick={onBack}
-          >
-            Back
-          </button>
+            <div className="mb-4 relative">
+              <input
+                className="bg-[#e9ebf4] border-none rounded-md p-3 pr-11 text-sm w-full text-[#172b4d] placeholder:text-[#172b4d]/50"
+                type={visiblePasswords.confirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={onChange}
+                placeholder="Confirm password"
+                autoComplete="off"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="absolute right-4 top-3.5 text-gray-500"
+                onClick={() => togglePasswordVisibility("confirmPassword")}
+                disabled={loading}
+                aria-label={visiblePasswords.confirmPassword ? "Hide confirm password" : "Show confirm password"}
+              >
+                {visiblePasswords.confirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            {error ? (
+              <div className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+                {error}
+              </div>
+            ) : null}
+            {helperText ? (
+              <div className="mb-4 rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
+                {helperText}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              className="w-full bg-brand-primary text-white py-2 rounded-md hover:bg-primary/90 font-medium text-sm mb-4 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Spinner />
+                  Resetting...
+                </span>
+              ) : (
+                "Verify and Reset"
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="w-full rounded-md border border-gray-200 bg-white py-2 text-sm font-medium text-[#172b4d] hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+              onClick={onBack}
+              disabled={loading}
+            >
+              Back
+            </button>
+          </form>
         </div>
-      </form>
-    </AuthShell>
+      </div>
+    </div>
   );
 }
 

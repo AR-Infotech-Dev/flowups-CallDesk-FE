@@ -59,12 +59,12 @@ function TableHeader({
   };
 
   return (
-    <thead>
+    <thead className="bg-blue-50" >
       <tr>
         {columns.map((column) => (
           <th
             key={column.key}
-            className={`${column.className || ""} ${column.resizable === false ? "" : "is-resizable"}`}
+            className={`${column.className || ""} ${column.resizable === false ? "" : "is-resizable"} bg-blue-50`}
             style={{ width: column.currentWidth, minWidth: column.currentWidth, maxWidth: column.currentWidth }}
           >
             {column.checkbox ? (
@@ -78,20 +78,6 @@ function TableHeader({
                 <span className="table-header-label table-header-label-static">
                   <span className="table-header-text">{column.label}</span>
                 </span>
-                {column.key === lastColumnKey ? (
-                  <div className="table-column-picker">
-                    <button
-                      type="button"
-                      className="table-column-picker-trigger"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setIsColumnMenuOpen((current) => !current);
-                      }}
-                    >
-                      <Plus className={''} size={10} />
-                    </button>
-                  </div>
-                ) : null}
               </div>
             ) : column.className === "icon-col" ? null : (
               <div className="table-header-shell">
@@ -105,22 +91,6 @@ function TableHeader({
                     {getSortIcon(column.key)}
                   </span>
                 </button>
-                {column.key === lastColumnKey ? (
-                  <div className="table-column-picker">
-                    <button
-                      type="button"
-                      className="table-column-picker-trigger"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setIsColumnMenuOpen((current) => !current);
-                      }}
-                    >
-                      <Plus className={''} size={10} />
-                      {/* <span>Add</span> */}
-                    </button>
-                    
-                  </div>
-                ) : null}
               </div>
             )}
             {column.resizable === false ? null : (
@@ -131,6 +101,22 @@ function TableHeader({
             )}
           </th>
         ))}
+        <th >
+          <div className="table-column-picker">
+            <button
+              type="button"
+              className="table-column-picker-trigger"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsColumnMenuOpen((current) => !current);
+              }}
+            >
+              <Plus className={'animate-pulse'} size={10} />
+              {/* <span>Add</span> */}
+            </button>
+
+          </div>
+        </th>
       </tr>
     </thead>
   );

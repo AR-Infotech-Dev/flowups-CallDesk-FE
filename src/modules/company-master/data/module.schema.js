@@ -37,6 +37,7 @@ export const companyMasterSchema = {
     create: "/companies/create",
     edit: "/companies",
     testMail: "/companies/mail-config/test",
+    logoUpload: "/companies/logo",
     definitions: "/system/getDefinations",
     definitionsFallback: "/system/getstructure",
   },

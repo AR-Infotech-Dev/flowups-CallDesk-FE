@@ -41,7 +41,7 @@ const ACTIONS_COLUMN = {
   label: "Actions",
   width: "auto",
   minWidth: 90,
-  resizable: false,
+  resizable: true,
   isAlwaysVisible: true,
   isActionsColumn: true,
 };
@@ -83,27 +83,44 @@ function getStoredWidths(storageKey) {
 }
 
 function getStoredVisibleColumnKeys(storageKey) {
-  if (typeof window === "undefined") {
+  if (!storageKey || typeof window === "undefined") {
     return null;
   }
 
   try {
-    return JSON.parse(window.localStorage.getItem(`${storageKey}-visible-columns`) || "null");
+    const parsedValue = JSON.parse(window.localStorage.getItem(`${storageKey}-visible-columns`) || "null");
+    return Array.isArray(parsedValue) ? parsedValue : null;
   } catch {
     return null;
   }
 }
 
-function getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys = []) {
-  const fixedColumnKeys = columns
+function getFixedColumnKeys(columns) {
+  return columns
     .filter((column) => column.checkbox || column.className === "icon-col" || column.isAlwaysVisible)
     .map((column) => column.key);
+}
+
+function getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys = []) {
+  const fixedColumnKeys = getFixedColumnKeys(columns);
 
   if (defaultVisibleColumnKeys.length) {
     return [...new Set([...fixedColumnKeys, ...defaultVisibleColumnKeys])];
   }
 
   return columns.map((column) => column.key);
+}
+
+function normalizeVisibleColumnKeys(columns, columnKeys = [], defaultVisibleColumnKeys = [], useDefaults = false) {
+  const availableKeySet = new Set(columns.map((column) => column.key));
+  const fixedColumnKeys = getFixedColumnKeys(columns);
+  const sourceKeys = useDefaults
+    ? getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys)
+    : columnKeys;
+  const normalizedKeys = sourceKeys.filter((key) => availableKeySet.has(key));
+  const missingFixedKeys = fixedColumnKeys.filter((key) => !normalizedKeys.includes(key));
+
+  return [...new Set([...missingFixedKeys, ...normalizedKeys])];
 }
 
 // function getColumnCellType(column) {
@@ -524,6 +541,7 @@ function DefaultRow({ row, index, columns, editRow, selectionProps, onDeleteRow,
           )}
         </td>
       ))}
+      <td></td>
     </tr>
   );
 }
@@ -552,37 +570,64 @@ function ResizableTable({
   const { authSession } = useAuth();
   const user = authSession?.user;
   const [columnWidths, setColumnWidths] = useState(() => getStoredWidths(storageKey));
-  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() =>
-    getStoredVisibleColumnKeys(storageKey) || getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys)
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
+    const storedKeys = getStoredVisibleColumnKeys(storageKey);
+    return normalizeVisibleColumnKeys(
+      columns,
+      storedKeys || [],
+      defaultVisibleColumnKeys,
+      !storedKeys
+    );
+  }
   );
+  
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
   const handleEditRow = onEditRow || editRow;
   const shouldShowActions = showActions ?? Boolean(handleEditRow || onDeleteRow || rowActions.length || renderActions);
 
   useEffect(() => {
+    if (!storageKey) {
+      return;
+    }
+
     window.localStorage.setItem(storageKey, JSON.stringify(columnWidths));
   }, [columnWidths, storageKey]);
 
   useEffect(() => {
+    if (!storageKey || columns.length === 0) {
+      return;
+    }
+
+    const storedKeys = getStoredVisibleColumnKeys(storageKey);
+    if (storedKeys && visibleColumnKeys.length === 0) {
+      return;
+    }
+
     window.localStorage.setItem(`${storageKey}-visible-columns`, JSON.stringify(visibleColumnKeys));
-  }, [storageKey, visibleColumnKeys]);
+  }, [columns.length, storageKey, visibleColumnKeys]);
 
   useEffect(() => {
-    const nextDefaultKeys = getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys);
     const storedKeys = getStoredVisibleColumnKeys(storageKey);
 
     setVisibleColumnKeys((current) => {
-      const preferredKeys =
-        Array.isArray(storedKeys) && storedKeys.length
-          ? storedKeys
-          : current?.length
-            ? current
-            : nextDefaultKeys;
+      if (storedKeys) {
+        return normalizeVisibleColumnKeys(columns, storedKeys, defaultVisibleColumnKeys, false);
+      }
 
-      const fixedKeysToAppend = nextDefaultKeys.filter((key) => !preferredKeys.includes(key));
-      return [...new Set([...preferredKeys, ...fixedKeysToAppend])];
+      return normalizeVisibleColumnKeys(
+        columns,
+        current?.length ? current : [],
+        defaultVisibleColumnKeys,
+        !current?.length
+      );
     });
   }, [columns, defaultVisibleColumnKeys, storageKey]);
+
+  const handleApplyColumnKeys = (nextColumnKeys) => {
+    setVisibleColumnKeys(
+      normalizeVisibleColumnKeys(columns, nextColumnKeys, defaultVisibleColumnKeys, false)
+    );
+  };
 
   const resolvedColumns = useMemo(
     () => {
@@ -648,11 +693,11 @@ function ResizableTable({
         isColumnMenuOpen={isColumnMenuOpen}
         columns={columns}
         visibleColumnKeys={visibleColumnKeys}
-        onApplyColumnKeys={setVisibleColumnKeys}
+        onApplyColumnKeys={handleApplyColumnKeys}
       />
 
       <div className="table-scroll-x">
-        <table style={{ width: tableWidth, minWidth: tableWidth }}>
+        <table style={{ width: "100%", minWidth: "100%" }}>
           <TableHeader
             setIsColumnMenuOpen={setIsColumnMenuOpen}
             columns={resolvedColumns}

@@ -330,7 +330,7 @@ table {
 }
 
 thead th {
-  background: #f8fbff;
+  /* background: #f8fbff; */
   color: var(--text-soft);
   font-size: 12px;
   padding: 10px;

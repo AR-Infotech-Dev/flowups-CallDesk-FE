@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ImagePlus, Upload, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { makeRequest } from "../../../api/httpClient";
+import { API_SERVER_URL } from "../../../api/config";
 import FlyoutPanel from "../../../components/ui/FlyoutPanel";
 import ActionButton from "../../../components/ui/ActionButton";
 import Spinner from "../../../components/ui/Spinner";
@@ -11,6 +12,12 @@ import { companyMasterSchema } from "../data/module.schema";
 
 function getCompanyIdentifier(company = {}) {
   return company?.company_id;
+}
+
+function getLogoUrl(logo = "") {
+  if (!logo) return "";
+  if (/^https?:\/\//i.test(logo)) return logo;
+  return `${API_SERVER_URL}${String(logo).startsWith("/") ? logo : `/${logo}`}`;
 }
 
 const MAIL_PROVIDER_DEFAULTS = {
@@ -54,8 +61,10 @@ function normalizeCompanyData(company = {}) {
 }
 
 function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu_id }) {
+  const logoInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [fetchingCompany, setFetchingCompany] = useState(false);
   const [formData, setFormData] = useState(companyMasterSchema.form.initialValues);
   const [errors, setErrors] = useState({});
@@ -107,6 +116,63 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
       ...current,
       [name]: value,
       ...(name === "mail_provider" ? (MAIL_PROVIDER_DEFAULTS[value] || {}) : {}),
+    }));
+  };
+
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!file.type?.startsWith("image/")) {
+      toast.error("Please select image file only.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Logo size should be less than 2MB.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("logo", file);
+    if (companyId) {
+      formData.append("company_id", companyId);
+    }
+
+    try {
+      setUploadingLogo(true);
+      const uploadUrl = companyId ? `${companyMasterSchema.api.edit}/${companyId}/logo`: companyMasterSchema.api.logoUpload;
+      const res = await makeRequest(uploadUrl, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.success) {
+        toast.error(res.message || "Unable to upload company logo.");
+        return;
+      }
+
+      const logoPath = res?.data?.email_logo || res?.email_logo;
+      setFormData((current) => ({
+        ...current,
+        email_logo: logoPath || current.email_logo,
+      }));
+
+      toast.success(res.message || "Company logo uploaded successfully.");
+      if (companyId) onAfterSave?.();
+    } catch (error) {
+      toast.error(error.message || "Unable to upload company logo.");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setFormData((current) => ({
+      ...current,
+      email_logo: "",
     }));
   };
 
@@ -269,7 +335,39 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
               <Spinner />
             </div>
           ) : (
-            <div className="rounded-xl bg-white px-4 py-3">
+            <div className="rounded-sm bg-white px-4 py-3">
+              <section className="company-logo-uploader">
+                <div className="company-logo-preview">
+                  {formData.email_logo ? (
+                    <img src={getLogoUrl(formData.email_logo)} alt={`${formData.company_name || "Company"} logo`} />
+                  ) : (
+                    <ImagePlus size={28} />
+                  )}
+                </div>
+                <div className="company-logo-copy">
+                  <h3>Company Logo</h3>
+                  <p>Upload a separate logo for this company. It will be used in reports and emails.</p>
+                  {formData.email_logo ? <span>{formData.email_logo}</span> : null}
+                </div>
+                <div className="company-logo-actions">
+                  <ActionButton disabled={uploadingLogo || loading || fetchingCompany} variant="ghostPrimary" onClick={() => logoInputRef.current?.click()}>
+                    {uploadingLogo ? <Spinner /> : <Upload size={15} />}
+                    Upload Logo
+                  </ActionButton>
+                  {formData.email_logo ? (
+                    <button type="button" className="company-logo-remove" onClick={handleRemoveLogo} disabled={uploadingLogo || loading}>
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  className="sr-only"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  onChange={handleLogoUpload}
+                />
+              </section>
               <DynamicModuleForm
                 sections={companyMasterSchema.form.sections}
                 values={formData}

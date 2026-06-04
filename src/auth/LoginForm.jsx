@@ -8,6 +8,7 @@ import { fetchMenuList, fetchUserPermissions } from "./permissions";
 import { useAuth } from "./AuthProvider";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Spinner from '../components/ui/Spinner';
+import { encryptLoginPassword } from "./loginEncryption";
 
 function LoginForm() {
   const navigate = useNavigate();
@@ -34,11 +35,13 @@ function LoginForm() {
     e.preventDefault();
     try {
       setLoading(true);
+      const encryptedPassword = await encryptLoginPassword(form.password);
+      
       const res = await makeRequest("login", {
         method: "POST",
         body: {
           username: form.username,
-          password: form.password
+          encryptedPassword,
         }
       });
 
@@ -65,6 +68,8 @@ function LoginForm() {
       toast.success("Login success");
       navigate("/dashboard");
     } catch (error) {
+      console.log(error);
+
       toast.error(error.message);
     } finally {
       setLoading(false);

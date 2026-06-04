@@ -62,7 +62,7 @@ export const ticketsModuleSchema = {
       { key: "ticket_priority", label: "Priority", type: "tag", colorField: "priority_color" },
     ],
   },
-  defaultColumns: ["query_type", "ticket_status", "ticket_priority", "start_date", "due_date"],
+  defaultColumns: ["client_id","query_type", "ticket_status","assignee", "ticket_priority", "start_date", "due_date"],
   skipFields: [],
   columnMappings: [
     { "client_id": "Customer Name" }

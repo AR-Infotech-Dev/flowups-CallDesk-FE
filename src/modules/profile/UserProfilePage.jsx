@@ -1,9 +1,10 @@
-import { CalendarDays, KeyRound, Mail, MapPin, Phone, Save, UserRound } from "lucide-react";
+import { CalendarDays, Eye, EyeOff, KeyRound, Mail, MapPin, Phone, Save, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
 import { makeRequest } from "../../api/httpClient";
 import { useAuth } from "../../auth/AuthProvider";
+import { validatePasswordUpdate } from "../../utils/passwordValidation";
 
 const editableFields = new Set(["email", "whatsappNo", "address", "userName"]);
 
@@ -96,6 +97,32 @@ function ReadonlySegment({ label, value, options }) {
   );
 }
 
+function PasswordField({ label, value, placeholder, visible, disabled = false, onToggle, onChange }) {
+  return (
+    <label className="profile-form-field is-editable profile-password-field">
+      <span className="profile-form-label">{label} <b>*</b></span>
+      <span className="profile-password-input-wrap">
+        <input
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          className="profile-password-eye-button"
+          onClick={onToggle}
+          disabled={disabled}
+          aria-label={visible ? `Hide ${label}` : `Show ${label}`}
+        >
+          {visible ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      </span>
+    </label>
+  );
+}
+
 function UserProfilePage() {
   const { authSession, login } = useAuth();
   const [profile, setProfile] = useState(() => normalizeProfile(authSession?.user));
@@ -107,6 +134,11 @@ function UserProfilePage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
 
   const displayName = profile.name || "User";
 
@@ -183,19 +215,23 @@ function UserProfilePage() {
     }));
   };
 
+  const togglePasswordVisibility = (fieldName) => {
+    setVisiblePasswords((current) => ({
+      ...current,
+      [fieldName]: !current[fieldName],
+    }));
+  };
+
   const handleChangePassword = async () => {
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-      toast.error("Please fill all password fields.");
-      return;
-    }
+    const validationMessage = validatePasswordUpdate({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+      confirmPassword: passwordForm.confirmPassword,
+      requireCurrentPassword: true,
+    });
 
-    if (passwordForm.newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters.");
-      return;
-    }
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error("New password and confirm password must match.");
+    if (validationMessage) {
+      toast.error(validationMessage);
       return;
     }
 
@@ -299,33 +335,33 @@ function UserProfilePage() {
         </div>
 
         <div className="profile-password-grid">
-          <label className="profile-form-field is-editable">
-            <span className="profile-form-label">Current Password <b>*</b></span>
-            <input
-              type="password"
-              value={passwordForm.currentPassword}
-              onChange={(event) => handlePasswordChange("currentPassword", event.target.value)}
-              placeholder="Enter current password"
-            />
-          </label>
-          <label className="profile-form-field is-editable">
-            <span className="profile-form-label">New Password <b>*</b></span>
-            <input
-              type="password"
-              value={passwordForm.newPassword}
-              onChange={(event) => handlePasswordChange("newPassword", event.target.value)}
-              placeholder="Enter new password"
-            />
-          </label>
-          <label className="profile-form-field is-editable">
-            <span className="profile-form-label">Confirm Password <b>*</b></span>
-            <input
-              type="password"
-              value={passwordForm.confirmPassword}
-              onChange={(event) => handlePasswordChange("confirmPassword", event.target.value)}
-              placeholder="Re-enter new password"
-            />
-          </label>
+          <PasswordField
+            label="Current Password"
+            value={passwordForm.currentPassword}
+            placeholder="Enter current password"
+            visible={visiblePasswords.currentPassword}
+            disabled={changingPassword}
+            onToggle={() => togglePasswordVisibility("currentPassword")}
+            onChange={(event) => handlePasswordChange("currentPassword", event.target.value)}
+          />
+          <PasswordField
+            label="New Password"
+            value={passwordForm.newPassword}
+            placeholder="Enter new password"
+            visible={visiblePasswords.newPassword}
+            disabled={changingPassword}
+            onToggle={() => togglePasswordVisibility("newPassword")}
+            onChange={(event) => handlePasswordChange("newPassword", event.target.value)}
+          />
+          <PasswordField
+            label="Confirm Password"
+            value={passwordForm.confirmPassword}
+            placeholder="Re-enter new password"
+            visible={visiblePasswords.confirmPassword}
+            disabled={changingPassword}
+            onToggle={() => togglePasswordVisibility("confirmPassword")}
+            onChange={(event) => handlePasswordChange("confirmPassword", event.target.value)}
+          />
         </div>
 
         <div className="profile-password-actions">
