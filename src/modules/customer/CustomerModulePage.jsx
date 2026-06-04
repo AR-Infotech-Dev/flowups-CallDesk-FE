@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Upload } from "lucide-react";
 import { makeRequest } from "../../api/httpClient";
 import { useModuleFilters } from "../../store/hooks";
 import { defaultSortConfig, getNextSortConfig } from "../../utils/sorting";
@@ -19,12 +19,16 @@ import ModulePagination from "../shared/ModulePagination";
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
 import useMenuPermissions from "../../auth/useMenuPermissions";
-
+import ActionButton from "../../components/ui/ActionButton";
+import { useAuth } from "../../auth/AuthProvider";
 import CustomerForm from "./components/CustomerForm";
+import CustomerImportFlyout from "./components/CustomerImportFlyout";
 import { customerFallbackColumns, customerModuleSchema } from "./data/module.schema";
 
 function CustomerModulePage({ menu_id }) {
   const navigate = useNavigate();
+  const { authSession } = useAuth();
+  const role_slug = authSession?.user?.role_slug;
   const resolvedMenuID = menu_id || customerModuleSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
 
@@ -32,6 +36,7 @@ function CustomerModulePage({ menu_id }) {
   const [customerList, setCustomerList] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
+  const [isImportFlyoutOpen, setIsImportFlyoutOpen] = useState(false);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -241,7 +246,14 @@ function CustomerModulePage({ menu_id }) {
                 onClearFilters={clearFilters}
               />
             }
-          />
+          >
+            {(role_slug == "admin" || role_slug == "super_admin") && permissions.canAdd && (
+            <ActionButton onClick={() => setIsImportFlyoutOpen(true)}>
+              <Upload size={15} />
+              Import Data
+            </ActionButton>
+            )}
+          </ModuleControls>
         }
         table={
           <ResizableTable
@@ -294,6 +306,12 @@ function CustomerModulePage({ menu_id }) {
         selectedCustomer={selectedCustomer}
         onAfterSave={getCustomerList}
         menu_id={resolvedMenuID}
+      />
+
+      <CustomerImportFlyout
+        isOpen={isImportFlyoutOpen}
+        onClose={() => setIsImportFlyoutOpen(false)}
+        onImported={getCustomerList}
       />
     </>
   );

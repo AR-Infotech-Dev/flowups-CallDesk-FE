@@ -89,17 +89,25 @@ export const makeRequest = async (url, options = {}) => {
       body = null,
       params = null,
     } = options;
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+    const requestHeaders = {
+      ...getDefaultHeaders(),
+      ...headers,
+    };
+
+    if (isFormData) {
+      delete requestHeaders["Content-Type"];
+      delete requestHeaders["content-type"];
+    }
+
     const config = {
       url,
       baseURL: API_BASE_URL,
       method,
       timeout: 10000,
       withCredentials: true,
-      headers: {
-        ...getDefaultHeaders(),
-        ...headers,
-      },
-      data: stripCompanyIdForSuperAdmin(body, url, method),     // for POST, PUT
+      headers: requestHeaders,
+      data: isFormData ? body : stripCompanyIdForSuperAdmin(body, url, method),     // for POST, PUT
       params: stripCompanyIdForSuperAdmin(params, url, method), // for GET query params
     };
     const res = await axios(config);

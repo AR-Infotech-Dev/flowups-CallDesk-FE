@@ -135,6 +135,7 @@ function PerformanceReportPage({ menu_id }) {
       filters: appliedFilters,
       summary: report.summary,
       tickets: report.tickets,
+      user: report.user || selectedUser || {},
       fileName: `performance-report-${appliedFilters.user_id || "all"}`,
     });
     setExporting(false);

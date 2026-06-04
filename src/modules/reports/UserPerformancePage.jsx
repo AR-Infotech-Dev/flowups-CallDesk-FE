@@ -106,7 +106,7 @@ function UserPerformancePage({ menu_id }) {
               className="performance-button"
               disabled={ loading}
               // disabled={!canExport || loading}
-              onClick={() => exportPerformanceExcel({ filters, summary: report.summary, tickets: report.tickets, fileName: `performance-${userId}` })}
+              onClick={() => exportPerformanceExcel({ filters, summary: report.summary, tickets: report.tickets, user: report.user, fileName: `performance-${userId}` })}
             >
               <Download size={14} />
               Export Excel
@@ -164,4 +164,3 @@ function UserPerformancePage({ menu_id }) {
 }
 
 export default UserPerformancePage;
-

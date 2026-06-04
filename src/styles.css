@@ -4284,6 +4284,15 @@ table input[type="checkbox"]:focus-visible {
   height: 2px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .customer-report-page {
   display: flex;
   height: calc(100vh - 78px);
@@ -4645,6 +4654,156 @@ table input[type="checkbox"]:focus-visible {
   font-size: 11px;
 }
 
+.customer-import-shell {
+  display: grid;
+  gap: 14px;
+  padding: 4px 2px;
+}
+
+.customer-import-card,
+.customer-import-columns,
+.customer-import-result {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.customer-import-template-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.customer-import-icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.customer-import-card h3,
+.customer-import-columns h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.customer-import-card p,
+.customer-import-upload-head p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.customer-import-upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.customer-import-dropzone {
+  display: flex;
+  width: 100%;
+  min-height: 130px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  background: #f8fbff;
+  color: #31537a;
+  cursor: pointer;
+  padding: 18px;
+  text-align: center;
+}
+
+.customer-import-dropzone:hover {
+  border-color: #0f5ea8;
+  background: #eef6ff;
+}
+
+.customer-import-dropzone strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-import-dropzone span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.customer-import-columns div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.customer-import-columns span {
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.customer-import-columns span.required {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.customer-import-result {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.customer-import-result div {
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.customer-import-result span {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.customer-import-result strong {
+  display: block;
+  margin-top: 3px;
+  color: #0f172a;
+  font-size: 22px;
+}
+
+.customer-import-result ul {
+  grid-column: 1 / -1;
+  margin: 0;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 10px 12px 10px 26px;
+  font-size: 12px;
+}
+
 @media (max-width: 860px) {
   .customer-report-page {
     height: auto;
@@ -4668,5 +4827,10 @@ table input[type="checkbox"]:focus-visible {
   .customer-report-card {
     border-right: 0;
     border-bottom: 1px solid #e2e8f0;
+  }
+
+  .customer-import-template-card,
+  .customer-import-result {
+    grid-template-columns: 1fr;
   }
 }
