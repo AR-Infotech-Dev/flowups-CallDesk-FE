@@ -38,6 +38,28 @@ function normalizeCustomerData(customer = {}) {
 
 const EMPTY_INITIAL_VALUES = {};
 
+const normalizeAddOns = (value = [], { keepEmpty = false } = {}) => {
+  const finalize = (items) => keepEmpty ? items : items.filter(Boolean);
+
+  if (Array.isArray(value)) {
+    return finalize(value
+      .map((item) => {
+        if (typeof item === "object" && item !== null) {
+          return String(item.name || item.add_on_name || item.label || "").trim();
+        }
+
+        return String(item || "").trim();
+      }));
+  }
+
+  if (value === undefined || value === null) return [];
+
+  return finalize(String(value)
+    .split(",")
+    .map((item) => item.trim())
+  );
+};
+
 const normalizeCustomerProducts = (customer = {}) => {
   const rows = customer?.customer_products || customer?.products || [];
   if (!Array.isArray(rows)) return [];
@@ -46,7 +68,8 @@ const normalizeCustomerProducts = (customer = {}) => {
     product_id: row?.product_id || "",
     product_name: row?.product_name || "",
     serial_number: row?.serial_number || "",
-  })).filter((row) => row.product_id || row.product_name || row.serial_number);
+    add_ons: normalizeAddOns(row?.add_ons || row?.addons || row?.addOns),
+  })).filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length);
 };
 
 function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave, menu_id }) {
@@ -111,6 +134,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
             wherec: "product_name",
             status: false,
             list: "product_id,product_name",
+            isCompanyWise:true,
             curpage: 0,
           },
         });
@@ -157,7 +181,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
   const addProductRow = () => {
     setProductRows((current) => [
       ...current,
-      { product_id: "", product_name: "", serial_number: "" },
+      { product_id: "", product_name: "", serial_number: "", add_ons: [] },
     ]);
   };
 
@@ -178,6 +202,42 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
 
         return { ...row, [key]: value };
       })
+    );
+  };
+
+  const addProductAddon = (index) => {
+    setProductRows((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === index
+          ? { ...row, add_ons: [...normalizeAddOns(row.add_ons), ""] }
+          : row
+      )
+    );
+  };
+
+  const updateProductAddon = (productIndex, addonIndex, value) => {
+    setProductRows((current) =>
+      current.map((row, rowIndex) => {
+        if (rowIndex !== productIndex) return row;
+
+        const addOns = normalizeAddOns(row.add_ons, { keepEmpty: true });
+        addOns[addonIndex] = value;
+
+        return {
+          ...row,
+          add_ons: addOns,
+        };
+      })
+    );
+  };
+
+  const removeProductAddon = (productIndex, addonIndex) => {
+    setProductRows((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === productIndex
+          ? { ...row, add_ons: normalizeAddOns(row.add_ons).filter((_, index) => index !== addonIndex) }
+          : row
+      )
     );
   };
 
@@ -207,6 +267,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
           product_id: row.product_id,
           product_name: row.product_name || "",
           serial_number: row.serial_number || "",
+          add_ons: normalizeAddOns(row.add_ons),
         })),
     };
 
@@ -317,33 +378,71 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
                 )}
                 <div className="py-2">
                   {productRows.map((row, index) => (
-                    <div key={`customer-product-${index}`} className="grid grid-cols-12 gap-2 mb-2">
-                      <select
-                        value={row.product_id || ""}
-                        onChange={(event) => updateProductRow(index, "product_id", event.target.value)}
-                        className="col-span-12 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-6"
-                      >
-                        <option value="">{loadingProducts ? "Loading products..." : "Select product"}</option>
-                        {productOptions.map((product) => (
-                          <option key={product.product_id} value={product.product_id}>
-                            {product.product_name}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        value={row.serial_number || ""}
-                        onChange={(event) => updateProductRow(index, "serial_number", event.target.value)}
-                        placeholder="Serial number"
-                        className="col-span-10 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-5"
-                      />
-                      <button
-                        type="button"
-                        className="col-span-2 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-600 md:col-span-1"
-                        onClick={() => removeProductRow(index)}
-                        aria-label="Remove product"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    <div key={`customer-product-${index}`} className="mb-3 rounded-md border border-slate-100 bg-slate-50/60 p-2">
+                      <div className="grid grid-cols-12 gap-2">
+                        <select
+                          value={row.product_id || ""}
+                          onChange={(event) => updateProductRow(index, "product_id", event.target.value)}
+                          className="col-span-12 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-6"
+                        >
+                          <option value="">{loadingProducts ? "Loading products..." : "Select product"}</option>
+                          {productOptions.map((product) => (
+                            <option key={product.product_id} value={product.product_id}>
+                              {product.product_name}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          value={row.serial_number || ""}
+                          onChange={(event) => updateProductRow(index, "serial_number", event.target.value)}
+                          placeholder="Serial number"
+                          className="col-span-10 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-5"
+                        />
+                        <button
+                          type="button"
+                          className="col-span-2 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-600 md:col-span-1"
+                          onClick={() => removeProductRow(index)}
+                          aria-label="Remove product"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <div className="mt-2 rounded border border-dashed border-slate-200 bg-white px-2 py-2">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold text-slate-500">Add-ons</span>
+                          <button
+                            type="button"
+                            className="inline-flex h-6 items-center gap-1 rounded bg-slate-100 px-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"
+                            onClick={() => addProductAddon(index)}
+                          >
+                            <Plus size={12} /> Add-on
+                          </button>
+                        </div>
+                          {normalizeAddOns(row.add_ons, { keepEmpty: true }).length === 0 ? (
+                          <div className="text-[11px] text-slate-400">No add-ons added</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {normalizeAddOns(row.add_ons, { keepEmpty: true }).map((addon, addonIndex) => (
+                              <div key={`customer-product-${index}-addon-${addonIndex}`} className="grid grid-cols-12 gap-2">
+                                <input
+                                  value={addon}
+                                  onChange={(event) => updateProductAddon(index, addonIndex, event.target.value)}
+                                  placeholder="Add-on name"
+                                  className="col-span-10 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-11"
+                                />
+                                <button
+                                  type="button"
+                                  className="col-span-2 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-50 hover:text-red-600 md:col-span-1"
+                                  onClick={() => removeProductAddon(index, addonIndex)}
+                                  aria-label="Remove add-on"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

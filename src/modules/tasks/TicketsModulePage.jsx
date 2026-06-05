@@ -5,7 +5,7 @@ import { makeRequest } from "../../api/httpClient";
 import { useModuleFilters } from "../../store/hooks";
 import { useLocation } from "react-router-dom";
 import { Columns3, Table2 } from "lucide-react";
-import { saveViewMode , getViewMode} from "../../auth/authStorage"
+import { saveViewMode, getViewMode } from "../../auth/authStorage";
 import {
   defaultSortConfig,
   getNextSortConfig,
@@ -34,8 +34,37 @@ import {
   ticketsModuleSchema,
 } from "./data/module.schema";
 
+const VISIBILITY_META = {
+  assigned: { label: "Assigned", color: "status-blue" },
+  created: { label: "Created", color: "status-green" },
+  delegated: { label: "Delegated", color: "status-purple" },
+  reassigned: { label: "Reassigned", color: "status-amber" },
+  company: { label: "Company", color: "status-gray" },
+};
+
+const VISIBILITY_COLUMN = {
+  key: "ticket_visibility_label",
+  label: "View As",
+  width: 130,
+  minWidth: 110,
+  cellType: "badge",
+  colorField: "ticket_visibility_color",
+  isAlwaysVisible: true,
+};
+
+function normalizeTicketVisibility(ticket = {}) {
+  const reason = String(ticket.visibility_reason || ticket.delegation_flag || "").toLowerCase();
+  const meta = VISIBILITY_META[reason] || { label: "-", color: "status-gray" };
+
+  return {
+    ...ticket,
+    ticket_visibility_label: meta.label,
+    ticket_visibility_color: meta.color,
+  };
+}
+
 function TicketModulePage({ menu_id }) {
-  const location = useLocation();  
+  const location = useLocation();
   const { authSession } = useAuth();
   const role_slug = authSession?.user?.role_slug;
   // const role_slug = authSession.user.role_slug;
@@ -68,7 +97,7 @@ function TicketModulePage({ menu_id }) {
   }, [location.state]);
 
   useEffect(() => {
-    saveViewMode( resolvedMenuID, viewMode);
+    saveViewMode(resolvedMenuID, viewMode);
   }, [viewMode]);
 
   // ==================================================
@@ -91,8 +120,13 @@ function TicketModulePage({ menu_id }) {
   // ==================================================
   // TABLE COLUMNS
   // ==================================================
-  const resolvedColumns = useMemo(() => buildTableColumnsFromStructure(fields, ticketsFallbackColumns, columnOptions), [fields]);
-  const defaultVisibleColumnKeys = useMemo(() => ticketsFallbackColumns.map((column) => column.key), []);
+  const resolvedColumns = useMemo(() => {
+    const columns = buildTableColumnsFromStructure(fields, ticketsFallbackColumns, columnOptions);
+    const hasVisibilityColumn = columns.some((column) => column.key === VISIBILITY_COLUMN.key);
+
+    return hasVisibilityColumn ? columns : [...columns, VISIBILITY_COLUMN];
+  }, [fields]);
+  const defaultVisibleColumnKeys = useMemo(() => [...ticketsFallbackColumns.map((column) => column.key), VISIBILITY_COLUMN.key], []);
 
   // ==================================================
   // FILTER FIELDS
@@ -114,7 +148,7 @@ function TicketModulePage({ menu_id }) {
           filters: filterState.filters,
           order: filterState.order,
           order_by: filterState.order_by,
-          viewAll: viewAll ? 'Y' : 'N' ,
+          viewAll: viewAll ? "Y" : "N",
         },
       }
     );
@@ -122,7 +156,7 @@ function TicketModulePage({ menu_id }) {
     setLoading(false);
 
     if (res.success) {
-      setTicketList(res.data || []);
+      setTicketList((res.data || []).map(normalizeTicketVisibility));
       setPagination(res.pagination || {});
       setSelectedRowIds([]);
       return;
@@ -161,7 +195,7 @@ function TicketModulePage({ menu_id }) {
       }
 
       return {
-        rows: res.data || [],
+        rows: (res.data || []).map(normalizeTicketVisibility),
         pagination: res.pagination || {},
       };
     },
@@ -367,8 +401,8 @@ function TicketModulePage({ menu_id }) {
                   </button>
                 </div>
                 {
-                  (role_slug == "admin" || role_slug == "super_admin") && 
-                  <ActionButton variant={viewAll ? "ghostPrimary" : "ghost"} onClick={() => setViewAll((prev)=> !prev)}>All</ActionButton>
+                  (role_slug == "admin" || role_slug == "super_admin") &&
+                  <ActionButton variant={viewAll ? "ghostPrimary" : "ghost"} onClick={() => setViewAll((prev) => !prev)}>All</ActionButton>
                 }
               </div>
             </ModuleControls>

@@ -38,6 +38,7 @@ export const companyMasterSchema = {
     edit: "/companies",
     testMail: "/companies/mail-config/test",
     logoUpload: "/companies/logo",
+    logoRemove: "/companies/:id/logo/remove",
     definitions: "/system/getDefinations",
     definitionsFallback: "/system/getstructure",
   },

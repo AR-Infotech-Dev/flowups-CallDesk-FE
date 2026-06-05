@@ -67,7 +67,14 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
         return <RichTextEditor field={field} onChange={onChange} value={value} error={errors[field.name]} />;
         break;
       case "smartSelect":
-        return <SmartSelect field={field} value={value} onSelect={onChange} config={field.config} error={errors[field.name]} />
+        return <SmartSelect
+          field={field}
+          value={value}
+          onSelect={onChange}
+          onObjectSelect={(item) => onObjectSelect?.(field, item)}
+          config={field.config}
+          error={errors[field.name]}
+        />
         break;
       case "smartSelectInput":
         return <SmartSelectInput
@@ -97,6 +104,17 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
     <div className="space-y-5">
       {sections.map((section, sectionIndex) => {
         const Icon = section.icon; 
+        const visibleFields = section.fields.filter((field) => {
+          const isVisible = field.visibleWhen
+            ? field.visibleWhen(values, oldValues, mode)
+            : true;
+
+          if (!isVisible) return false;
+          return field.alwaysVisible || hasFieldVisiblePermission({ menuId, field, user });
+        });
+
+        if (!visibleFields.length) return null;
+
         return (
           <Fragment key={section.key || section.title || `section-${sectionIndex}`}>
             {section.title &&
@@ -106,7 +124,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
               </div>
             }
             <div key={`section-${sectionIndex}`} className={`mb-2 ${SECTION_COLUMN_CLASS[section.columns] || SECTION_COLUMN_CLASS[2]}`}>
-              {section.fields.map((field) => {
+              {visibleFields.map((field) => {
                 const isVisible = field.visibleWhen
                   ? field.visibleWhen(values, oldValues, mode)
                   : true;

@@ -143,7 +143,7 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
 
     try {
       setUploadingLogo(true);
-      const uploadUrl = companyId ? `${companyMasterSchema.api.edit}/${companyId}/logo`: companyMasterSchema.api.logoUpload;
+      const uploadUrl = companyId ? `${companyMasterSchema.api.edit}/${companyId}/logo` : companyMasterSchema.api.logoUpload;
       const res = await makeRequest(uploadUrl, {
         method: "POST",
         body: formData,
@@ -169,11 +169,29 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
     }
   };
 
-  const handleRemoveLogo = () => {
-    setFormData((current) => ({
-      ...current,
-      email_logo: "",
-    }));
+  const handleRemoveLogo = async () => {
+    try {
+      setUploadingLogo(true);
+      const removeUrl = `${companyMasterSchema.api.logoRemove.replace(':id',companyId)}`;
+      const res = await makeRequest(removeUrl, {
+        method: "DELETE",
+        body: {},
+      });
+
+      if (!res.success) {
+        toast.error(res.message || "Unable to remove company logo.");
+        return;
+      }
+      setFormData((current) => ({
+        ...current,
+        email_logo: null,
+      }));
+      toast.success(res.message || "Company logo removed successfully.");
+    } catch (error) {
+      toast.error(error.message || "Unable to upload company logo.");
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   const handleSave = async () => {
@@ -350,10 +368,12 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
                   {formData.email_logo ? <span>{formData.email_logo}</span> : null}
                 </div>
                 <div className="company-logo-actions">
-                  <ActionButton disabled={uploadingLogo || loading || fetchingCompany} variant="ghostPrimary" onClick={() => logoInputRef.current?.click()}>
-                    {uploadingLogo ? <Spinner /> : <Upload size={15} />}
-                    Upload Logo
-                  </ActionButton>
+                  {!formData.email_logo ? (
+                    <ActionButton disabled={uploadingLogo || loading || fetchingCompany} variant="ghostPrimary" onClick={() => logoInputRef.current?.click()}>
+                      {uploadingLogo ? <Spinner /> : <Upload size={15} />}
+                      Upload Logo
+                    </ActionButton>
+                  ) : null}
                   {formData.email_logo ? (
                     <button type="button" className="company-logo-remove" onClick={handleRemoveLogo} disabled={uploadingLogo || loading}>
                       Remove

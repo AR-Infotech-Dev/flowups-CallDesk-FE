@@ -377,8 +377,6 @@ function renderValueCell(column, row, index, selectionProps) {
   }
 
   switch (cellType) {
-
-
     case "person":
       return renderPersonCell(value, row, colorField, index);
 

@@ -74,9 +74,41 @@ function normalizeCustomerProducts(source = []) {
         product_id: row?.product_id || "",
         product_name: row?.product_name || "",
         serial_number: row?.serial_number || row?.product_serial_number || "",
+        add_ons: Array.isArray(row?.add_ons) ? row.add_ons.filter(Boolean) : [],
       }))
-      .filter((row) => row.product_id || row.product_name || row.serial_number)
+      .filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length)
     : [];
+}
+
+function normalizeTicketAddOns(source = []) {
+  if (typeof source === "string") {
+    try {
+      return normalizeTicketAddOns(JSON.parse(source));
+    } catch {
+      return source.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+  }
+
+  if (!Array.isArray(source)) return [];
+
+  return source
+    .map((item) => {
+      if (typeof item === "object" && item !== null) {
+        return String(item.name || item.add_on_name || item.label || item.value || "").trim();
+      }
+
+      return String(item || "").trim();
+    })
+    .filter(Boolean);
+}
+
+function normalizeTicketAddOn(source = "") {
+  return normalizeTicketAddOns(source)[0] || "";
+}
+
+function isCustomizationQueryName(value = "") {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "customization" || normalized === "customizations";
 }
 
 function safeParseJson(value, fallback) {
@@ -107,6 +139,7 @@ function normalizeTaskData(ticket = {}) {
     product_id: ticket?.product_id || null,
     product_name: ticket?.product_name || null,
     product_serial_number: ticket?.product_serial_number || ticket?.serial_number || null,
+    product_add_ons: normalizeTicketAddOn(ticket?.product_add_ons || ticket?.add_ons || ticket?.addons || ""),
     customer_products: normalizeCustomerProducts(ticket?.customer_products || ticket?.products || []),
     assignee: ticket?.assignee || null,
     status: ticket?.status || "active",
@@ -265,8 +298,12 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
           return {
             product_name: product?.product_name || null,
             product_serial_number: product?.serial_number || null,
+            product_add_ons: [],
           };
         })()
+        : {}),
+      ...(name === "query_type" && !isCustomizationQueryName(current.query_type_name)
+        ? { product_add_ons: [] }
         : {}),
       // title: name === "client_name" && !current.title ? value : current.title,
     }));
@@ -290,6 +327,16 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
   };
 
   const handleObjectSelect = async (field, item = {}) => {
+    if (field.name === "query_type") {
+      const queryTypeName = item?.categoryName || item?.label || item?.name || "";
+      setFormData((current) => ({
+        ...current,
+        query_type_name: queryTypeName,
+        ...(!isCustomizationQueryName(queryTypeName) ? { product_add_ons: [] } : {}),
+      }));
+      return;
+    }
+
     if (field.name !== "client_id") return;
     const customer = item?.original || item || {};
     const customerId = customer?.customer_id;
@@ -306,6 +353,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
           product_id: null,
           product_name: null,
           product_serial_number: null,
+          product_add_ons: [],
         }
         : {}),
       customer_products: customerProducts,
@@ -397,6 +445,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
         product_id: null,
         product_name: null,
         product_serial_number: null,
+        product_add_ons: [],
         customer_products: customerProducts,
       }));
     } catch (error) {
@@ -414,6 +463,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
     } = formData;
     const payload = {
       ...ticketPayload,
+      product_add_ons: normalizeTicketAddOn(formData.product_add_ons),
       title: formData.title || formData.client_name,
     };
 
@@ -442,7 +492,10 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
       const res = await makeRequest(saveUrl, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          product_add_ons: JSON.stringify(payload.product_add_ons ? [payload.product_add_ons] : []),
+        }),
       });
 
       if (res.success) {

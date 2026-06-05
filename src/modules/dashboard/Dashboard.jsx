@@ -4,7 +4,7 @@ import { Doughnut, Line } from "react-chartjs-2";
 import { useEffect, useMemo, useState } from "react";
 import { makeRequest } from "../../api/httpClient";
 import { useAuth } from "../../auth/AuthProvider";
-
+import { useNavigate } from "react-router-dom";
 ChartJS.register(ArcElement, CategoryScale, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip);
 ChartJS.defaults.font.family = "Inter, ui-sans-serif, system-ui, sans-serif";
 
@@ -54,10 +54,11 @@ function getInitials(name = "User") {
 }
 
 function StatCard({ stat }) {
+  const navigate = useNavigate();
   const Icon = stat.icon || statIconMap[stat.key] || Activity;
 
   return (
-    <article className={`dashboard-stat dashboard-tone-${stat.tone}`}>
+    <article className={`dashboard-stat dashboard-tone-${stat.tone}`} href={stat.redirectTo} onClick={() => navigate(stat.redirectTo)}>
       <div className="dashboard-stat-icon">
         <Icon size={18} />
       </div>
@@ -290,14 +291,14 @@ export function Dashboard() {
         <div className="dashboard-hero-actions">
           {loadingDashboard ? <span className="dashboard-state-chip">Loading</span> : null}
           {dashboardError ? <span className="dashboard-state-chip error">{dashboardError}</span> : null}
-          <button type="button" className="dashboard-filter-button">
+          {/* <button type="button" className="dashboard-filter-button">
             <CalendarDays size={15} />
             Today
-          </button>
-          <button type="button" className="dashboard-filter-button active">
+          </button> */}
+          {/* <button type="button" className="dashboard-filter-button active">
             <TrendingUp size={15} />
             This Month
-          </button>
+          </button> */}
         </div>
       </section>
 
@@ -308,7 +309,7 @@ export function Dashboard() {
       </section>
 
       <section className="dashboard-grid">
-        <article className="dashboard-panel dashboard-panel-wide">
+        <article className="dashboard-panel dashboard-panel-wide" onClick={() => navigate('/tickets')}>
           <div className="dashboard-panel-head">
             <div>
               <span className="dashboard-section-label">Trend</span>
@@ -319,7 +320,7 @@ export function Dashboard() {
           <TrendChart data={dashboard.trend} />
         </article>
 
-        <article className="dashboard-panel">
+        <article className="dashboard-panel" onClick={() => navigate('/tickets')}>
           <div className="dashboard-panel-head">
             <div>
               <span className="dashboard-section-label">Status</span>
@@ -329,7 +330,7 @@ export function Dashboard() {
           <DonutChart data={dashboard.ticketStatus} />
         </article>
 
-        <article className="dashboard-panel">
+        <article className="dashboard-panel" onClick={() => navigate('/tickets')}>
           <div className="dashboard-panel-head">
             <div>
               <span className="dashboard-section-label">Focus</span>

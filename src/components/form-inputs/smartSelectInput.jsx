@@ -29,6 +29,9 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     multi = false,
     getValue,
     getLabel,
+    apiUrl = "",
+    countKey = "",
+    countLabel = "",
     customURL = "",
     statusCheck = false,
     customParameters = {},
@@ -47,11 +50,19 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   const listRef = useRef(null);
 
   // Normalize fetched items
-  const normalizeOptions = (items = []) => items.map(item => ({
-    value: getValue ? getValue(item) : item.id,
-    label: getLabel ? getLabel(item) : item.name || 'Unnamed',
-    original: item,
-  }));
+  const normalizeOptions = (items = []) => items.map(item => {
+    const baseLabel = getLabel ? getLabel(item) : item.name || 'Unnamed';
+    const count = countKey ? Number(item[countKey] || 0) : null;
+    const label = countKey
+      ? `${baseLabel} (${count}${countLabel ? ` ${countLabel}` : ""})`
+      : baseLabel;
+
+    return {
+      value: getValue ? getValue(item) : item.id,
+      label,
+      original: item,
+    };
+  });
 
   // Fetch once, then always filter locally
   const fetchOptions = async (page) => {
@@ -68,7 +79,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
       data = customURL ? res?.data || [] : res.data[0]?.sublist || [];
     } else {
       // res = await fetchJson(`${API_BASE_URL}/searchList`, {
-      res = await makeRequest(`${API_BASE_URL}/system/searchList`, {
+      res = await makeRequest(apiUrl || `${API_BASE_URL}/system/searchList`, {
         method: 'POST', headers,
         body: JSON.stringify({
           text: '',
@@ -305,7 +316,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   };
 
   return (
-    <div className="flex min-w-0 flex-col gap-1 p-1">
+    <div className="flex min-w-0 flex-col gap-1">
       {(field.label || label) && (
         <DefaultLabel label={field.label || label} required={field.required} />
       )}
@@ -336,7 +347,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
                   onObjectSelect?.({});
                 }
               }}
-              className="min-w-[120px] flex-grow border-none bg-transparent text-sm outline-none focus:outline-none"
+              className="border-gray-50 text-gray-600 bg-gray-200 min-w-[120px] flex-grow border-none bg-transparent text-sm outline-none focus:outline-none"
               value={inputValue}
               onChange={(e) => !isLocked && setInputValue(e.target.value)}
               disabled={isLocked}
@@ -358,7 +369,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
               placeholder={placeholder}
               disabled={isLocked}
               readOnly={isLocked}
-              className={`w-full rounded border bg-gray-100 px-3 py-1.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-70 ${error ? "border-red-400 text-red-600" : "border-gray-50 text-gray-600"}`}
+              className={`w-full rounded border border-gray-50 text-gray-600 bg-gray-100 px-3 py-1.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-70 ${error ? "border-red-400 text-red-600" : "border-gray-50 text-gray-600"}`}
             />
             {internalValue && !isLocked && (
               <button type="button" onClick={handleClear}

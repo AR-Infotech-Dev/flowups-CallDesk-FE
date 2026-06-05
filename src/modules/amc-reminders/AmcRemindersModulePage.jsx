@@ -163,6 +163,10 @@ function ReminderConfirmModal({
               <span>Previous Reminders</span>
               <strong>{Number(customer.reminder_count || 0).toLocaleString("en-IN")}</strong>
             </div>
+            <div>
+              <span>Previous Reminder Date</span>
+              <strong>{formatDate(customer.last_reminder_sent_at)}</strong>
+            </div>
           </div>
 
           <label className="amc-report-toggle">

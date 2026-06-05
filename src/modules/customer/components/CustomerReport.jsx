@@ -66,8 +66,9 @@ function normalizeCustomerProducts(customer = {}) {
             product_id: row?.product_id || "",
             product_name: row?.product_name || "",
             serial_number: row?.serial_number || row?.product_serial_number || "",
+            add_ons: Array.isArray(row?.add_ons) ? row.add_ons.filter(Boolean) : [],
         }))
-        .filter((row) => row.product_id || row.product_name || row.serial_number);
+        .filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length);
 }
 
 function exportCustomerReportExcel({ customer = {}, summary = {}, products = [], tickets = [], fromDate = "" }) {
@@ -102,13 +103,14 @@ function exportCustomerReportExcel({ customer = {}, summary = {}, products = [],
 
         <h3>Products</h3>
         <table>
-          <tr><th>Product</th><th>Serial Number</th></tr>
+          <tr><th>Product</th><th>Serial Number</th><th>Add-ons</th></tr>
           ${products.length ? products.map((product) => `
             <tr>
               <td>${escapeHtml(product.product_name || "-")}</td>
               <td>${escapeHtml(product.serial_number || "-")}</td>
+              <td>${escapeHtml((product.add_ons || []).join(", ") || "-")}</td>
             </tr>
-          `).join("") : `<tr><td colspan="2">No products assigned.</td></tr>`}
+          `).join("") : `<tr><td colspan="3">No products assigned.</td></tr>`}
         </table>
 
         <h3>Summary</h3>
@@ -411,6 +413,7 @@ function CustomerReport({ customerId: providedCustomerId }) {
                                 <article key={`${product.product_id || index}-${product.serial_number || index}`}>
                                     <strong>{product.product_name || "Unnamed Product"}</strong>
                                     <span>Serial No: {product.serial_number || "-"}</span>
+                                    {product.add_ons?.length ? <span>Add-ons: {product.add_ons.join(", ")}</span> : null}
                                 </article>
                             ))
                         ) : (

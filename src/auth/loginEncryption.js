@@ -14,11 +14,9 @@ function base64ToArrayBuffer(base64 = "") {
 function arrayBufferToBase64(buffer) {
   const bytes = new Uint8Array(buffer);
   let binaryString = "";
-
   bytes.forEach((byte) => {
     binaryString += String.fromCharCode(byte);
   });
-
   return window.btoa(binaryString);
 }
 

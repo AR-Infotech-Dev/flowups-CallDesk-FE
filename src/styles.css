@@ -4013,6 +4013,142 @@ table input[type="checkbox"]:focus-visible {
   background: rgba(255, 255, 255, 0.8);
 }
 
+.kanban-column-skeleton {
+  pointer-events: none;
+}
+
+.kanban-skeleton-line,
+.kanban-skeleton-count,
+.kanban-skeleton-dot,
+.kanban-skeleton-pill,
+.kanban-skeleton-grip,
+.kanban-skeleton-icon,
+.kanban-skeleton-avatar {
+  display: inline-flex;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 48%, #e8eef6 100%);
+  background-size: 220% 100%;
+  animation: kanbanSkeletonPulse 1.2s ease-in-out infinite;
+}
+
+.kanban-skeleton-title {
+  width: 92px;
+  height: 12px;
+}
+
+.kanban-skeleton-meta {
+  width: 58px;
+  height: 8px;
+}
+
+.kanban-skeleton-count {
+  width: 18px;
+  height: 18px;
+}
+
+.kanban-skeleton-grip {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.kanban-card-skeleton {
+  cursor: default;
+  gap: 9px;
+  min-height: 126px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.kanban-skeleton-card-title {
+  width: 76%;
+  height: 12px;
+}
+
+.kanban-skeleton-card-date {
+  width: 68%;
+  height: 10px;
+}
+
+.kanban-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-skeleton-dot {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.kanban-skeleton-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.kanban-skeleton-label {
+  width: 46px;
+  height: 10px;
+}
+
+.kanban-skeleton-label.short {
+  width: 58px;
+}
+
+.kanban-skeleton-value {
+  width: 86px;
+  height: 10px;
+  margin-left: auto;
+}
+
+.kanban-skeleton-value.short {
+  width: 62px;
+}
+
+.kanban-skeleton-card-text {
+  width: 78%;
+  height: 10px;
+}
+
+.kanban-skeleton-card-text.short {
+  width: 56%;
+}
+
+.kanban-skeleton-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.kanban-skeleton-pill {
+  width: 64px;
+  height: 18px;
+  border-radius: 6px;
+}
+
+.kanban-skeleton-pill.short {
+  width: 44px;
+}
+
+.kanban-skeleton-avatar {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+@keyframes kanbanSkeletonPulse {
+  0% {
+    background-position: 220% 0;
+  }
+  100% {
+    background-position: -220% 0;
+  }
+}
+
 .kanban-card {
   display: flex;
   flex-direction: column;
