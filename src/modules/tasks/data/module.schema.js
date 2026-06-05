@@ -94,6 +94,7 @@ export const ticketsModuleSchema = {
       query_type: null,
       ticket_status: "205",
       ticket_priority: null,
+      expected_minutes: null,
       assignee: ASSIGNEE || null,
       start_date: new Date().toISOString().split("T")[0],
       due_date: null,
@@ -245,12 +246,25 @@ export const ticketsModuleSchema = {
             },
           },
           {
+            name: "expected_minutes",
+            label: "Expected Time (Minutes)",
+            type: "number",
+            placeholder: "Ex. 120",
+            gridSpan: 6,
+            readOnly: true,
+          },
+        ],
+      },
+      {
+        columns: 1,
+        fields: [
+          {
             name: "assignee",
             label: "Assigned To",
             type: "smartSelectInput",
             required: true,
             id: "assignee",
-            gridSpan: 6,
+            gridSpan: 12,
             config: {
               apiUrl: "/system/searchAssignee",
               type: "assignee",
@@ -334,6 +348,7 @@ export const ticketsModuleSchema = {
     due_date: z.coerce.date({ required_error: "Due date is Required!", invalid_type_error: "Due date is Required!", }),
     query_type: z.coerce.number().min(1, "Query type is Required!"),
     product_add_ons: z.string().nullable().optional().default(""),
+    expected_minutes: z.coerce.number().nullable().optional(),
     ticket_status: z.coerce.number().min(1, "Ticket status is Required!"),
     ticket_priority: z.coerce.number().min(1, "Ticket priority is Required!"),
     status: z.string().nullable().default("active"),

@@ -20,6 +20,7 @@ const CompanyMasterModulePage = lazy(() => import("../modules/company-master/Com
 const AccessControlModulePage = lazy(() => import("../modules/access-control/AccessControlModulePage"));
 const PerformanceReportPage = lazy(() => import("../modules/reports/PerformanceReportPage"));
 const UserPerformancePage = lazy(() => import("../modules/reports/UserPerformancePage"));
+const WorkReportModulePage = lazy(() => import("../modules/work-report/WorkReportModulePage"));
 const CustomerReport = lazy(() => import("../modules/customer/components/CustomerReport"));
 const UserMarkers = lazy(() => import("../modules/dashboard/UserMarkers"));
 const UserProfilePage = lazy(() => import("../modules/profile/UserProfilePage"));
@@ -48,6 +49,8 @@ const menuRouteComponents = {
   "/company-master": CompanyMasterModulePage,
   "/access-control": AccessControlModulePage,
   "/reports/performance": PerformanceReportPage,
+  "/work-report": WorkReportModulePage,
+  "/reports/work-report": WorkReportModulePage,
 };
 
 function DefaultMenuRedirect() {
@@ -164,6 +167,10 @@ function MainRoutes() {
     const reportMenu = flattenMenus(menus).find((menu) => normalizePath(getMenuLink(menu)) === "/reports/performance");
     return getMenuId(reportMenu);
   }, [menus]);
+  const workReportMenuId = useMemo(() => {
+    const reportMenu = flattenMenus(menus).find((menu) => ["/work-report", "/reports/work-report"].includes(normalizePath(getMenuLink(menu))));
+    return getMenuId(reportMenu);
+  }, [menus]);
 
   return (
     <Suspense fallback={<PageLoader />}>
@@ -187,6 +194,22 @@ function MainRoutes() {
                 performanceReportMenuId
                   ? withPermission(performanceReportMenuId, <UserPerformancePage menu_id={performanceReportMenuId} />)
                   : <UserPerformancePage menu_id={performanceReportMenuId} />
+              }
+            />
+            <Route
+              path="/work-report"
+              element={
+                workReportMenuId
+                  ? withPermission(workReportMenuId, <WorkReportModulePage menu_id={workReportMenuId} />)
+                  : <WorkReportModulePage menu_id={workReportMenuId} />
+              }
+            />
+            <Route
+              path="/reports/work-report"
+              element={
+                workReportMenuId
+                  ? withPermission(workReportMenuId, <WorkReportModulePage menu_id={workReportMenuId} />)
+                  : <WorkReportModulePage menu_id={workReportMenuId} />
               }
             />
             <Route path="/customer/report/:customerId" element={<CustomerReport />} />

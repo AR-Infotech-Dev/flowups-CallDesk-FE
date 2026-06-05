@@ -10,12 +10,14 @@ import DynamicModuleForm from "../../../components/ui/DynamicModuleForm";
 import ClientHistory from "./ClientHistory";
 import TicketHistory from "./TicketHistory";
 import Comments from "./Comments";
+import WorkLogs from "./WorkLogs";
 import CustomerForm from "../../customer/components/CustomerForm";
 import { customerModuleSchema } from "../../customer/data/module.schema";
 
 const TAB_ITEMS = [
   ["client", "Client History"],
   ["comments", "Comments"],
+  ["work_logs", "Work Log"],
   ["history", "Ticket History"],
 ];
 
@@ -586,6 +588,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
                       )}
                       {tab === "history" && mode === "edit" && <TicketHistory ticket_id={ticket_id} />}
                       {tab === "comments" && mode === "edit" && <Comments module="tickets" client={selectedCustomer} ticket_id={ticket_id} />}
+                      {tab === "work_logs" && mode === "edit" && <WorkLogs ticket={formData} ticket_id={ticket_id} />}
                     </div>
                   </div>
                 </div>
