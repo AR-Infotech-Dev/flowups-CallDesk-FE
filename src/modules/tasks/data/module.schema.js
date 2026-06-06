@@ -251,7 +251,7 @@ export const ticketsModuleSchema = {
             type: "number",
             placeholder: "Ex. 120",
             gridSpan: 6,
-            readOnly: true,
+            // readOnly: true,
           },
         ],
       },
