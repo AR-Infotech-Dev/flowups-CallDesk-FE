@@ -20,7 +20,7 @@ console.log('API_BASE_URL : ',API_BASE_URL);
 // export const API_SERVER_URL = import.meta.env.API_SERVER_URL || "http://192.168.1.23:3000" ;
 // export const API_BASE_URL = import.meta.env.API_BASE_URL || "http://192.168.1.23:3000/api/v1" ;
 
-export const APP_NAME = import.meta.env.APP_NAME || "flowupS" ;
+export const APP_NAME = import.meta.env.APP_NAME || "FlowupS CallDesk" ;
 
 export const DEFAULT_HEADERS = {
   "Content-Type": "application/json",

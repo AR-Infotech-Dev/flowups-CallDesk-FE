@@ -1,32 +1,45 @@
 import {
+  Building2,
   ChevronDown,
   LogOut,
-  Search,
   UserRound,
 } from "lucide-react";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "./ui/Spinner";
-import { APP_NAME } from "../api/config";
 import NotificationBell from "./ui/NotificationBell";
 import LoadingBar from "./LoadingBar";
+import { useAuth } from "../auth/AuthProvider";
+import { APP_NAME } from "../api/config";
+
+const getCompanyName = (user = {}) => user?.company_name || "";
 
 function TopBar({ onLogout }) {
   const navigate = useNavigate();
+  const { authSession } = useAuth() || {};
+
   const [isLoggingOut, setLoggingOut] = useState(false);
-  const [user, setUser] = useState(null);
+  const [storedUser, setStoredUser] = useState(null);
   const [isProfileOpen, setProfileOpen] = useState(false);
+
   const profileMenuRef = useRef(null);
+
+  const user = useMemo(
+    () => authSession?.user || storedUser || {},
+    [authSession?.user, storedUser]
+  );
+
+  const companyName = getCompanyName(user);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
       if (stored) {
-        setUser(JSON.parse(stored));
+        setStoredUser(JSON.parse(stored));
       }
-    } catch (e) {
-      console.error("User parse error");
+    } catch (error) {
+      console.error("User parse error", error);
     }
   }, []);
 
@@ -38,7 +51,10 @@ function TopBar({ onLogout }) {
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
   }, []);
 
   const getInitials = (name = "") =>
@@ -63,30 +79,44 @@ function TopBar({ onLogout }) {
     <div className="topbar-shell">
       <header className="topbar">
         <div className="topbar-left">
-          <h1>{APP_NAME}</h1>
-        </div>
-
-        <div className="topbar-center">
-          <div className="search-box">
-            <Search size={16} />
-            <input type="text" placeholder="Search" readOnly />
+          <div className="topbar-brand" title={APP_NAME}>
+            <img
+              src="/logo.png"
+              alt={APP_NAME}
+              className="topbar-logo"
+            />
+            <span className="topbar-brand-fallback">{APP_NAME}</span>
           </div>
         </div>
 
         <div className="topbar-right">
+          {companyName && (
+            <span className="topbar-company" title={companyName}>
+              <Building2 size={14} />
+              <span>{companyName}</span>
+            </span>
+          )}
+
           <NotificationBell />
 
           <div className="topbar-profile-menu" ref={profileMenuRef}>
             <button
               type="button"
               className="topbar-profile"
-              onClick={() => setProfileOpen((open) => !open)}
+              onClick={() => setProfileOpen((prev) => !prev)}
             >
               <span className="topbar-profile-ring">
                 {getInitials(user?.name)}
               </span>
-              <span className="topbar-profile-name">{user?.name || "User"}</span>
-              <ChevronDown size={13} className={isProfileOpen ? "is-open" : ""} />
+
+              <span className="topbar-profile-name">
+                {user?.name || "User"}
+              </span>
+
+              <ChevronDown
+                size={13}
+                className={isProfileOpen ? "is-open" : ""}
+              />
             </button>
 
             {isProfileOpen && (
@@ -95,9 +125,12 @@ function TopBar({ onLogout }) {
                   <span className="topbar-profile-ring">
                     {getInitials(user?.name)}
                   </span>
+
                   <div className="profile-dropdown-copy">
                     <span>{user?.name || "User"}</span>
-                    <small>{user?.role || user?.role_name || "Account"}</small>
+                    <small>
+                      {user?.role || user?.role_name || "Account"}
+                    </small>
                   </div>
                 </div>
 
@@ -119,15 +152,19 @@ function TopBar({ onLogout }) {
                   onClick={handleLogout}
                   disabled={isLoggingOut}
                 >
-                  {isLoggingOut ? <Spinner classNames="mx-1" /> : <LogOut size={14} />}
+                  {isLoggingOut ? (
+                    <Spinner classNames="mx-1" />
+                  ) : (
+                    <LogOut size={14} />
+                  )}
                   Logout
                 </button>
               </div>
             )}
           </div>
-
         </div>
       </header>
+
       <LoadingBar />
     </div>
   );

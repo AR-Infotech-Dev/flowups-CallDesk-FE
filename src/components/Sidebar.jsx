@@ -199,13 +199,13 @@ function Sidebar({ onSelectModule }) {
         </section>
       </div>
 
-      <div className="sync-card">
+      {/* <div className="sync-card">
         <div className="sync-ring" />
         <div>
           <div className="sync-title">CRM Connected</div>
           <div className="sync-subtitle">Permission menu loaded</div>
         </div>
-      </div>
+      </div> */}
     </aside>
   );
 }
