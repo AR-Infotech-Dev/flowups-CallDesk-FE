@@ -17,18 +17,18 @@ function normalizeCustomerData(customer = {}) {
   return {
     ...customerModuleSchema.form.initialValues,
     ...customer,
-    name: customer?.name || "",
-    email: customer?.email || "",
-    mobile_no: customer?.mobile_no || "",
-    wa_no: customer?.wa_no || "",
-    birth_date: customer?.birth_date ? new Date(customer.birth_date).toISOString().split("T")[0] : "",
-    address: customer?.address || "",
-    pan_number: customer?.pan_number || "",
-    company_name: customer?.company_name || "",
-    billing_name: customer?.billing_name || "",
-    billing_address: customer?.billing_address || "",
-    company_id: customer?.company_id || "",
-    mailing_address: customer?.mailing_address || "",
+    name: customer?.name || null,
+    email: customer?.email || null,
+    mobile_no: customer?.mobile_no || null,
+    wa_no: customer?.wa_no || null,
+    birth_date: customer?.birth_date ? new Date(customer.birth_date).toISOString().split("T")[0] : null,
+    address: customer?.address || null,
+    pan_number: customer?.pan_number || null,
+    company_name: customer?.company_name || null,
+    billing_name: customer?.billing_name || null,
+    billing_address: customer?.billing_address || null,
+    company_id: customer?.company_id || null,
+    mailing_address: customer?.mailing_address || null,
     is_amc: String(customer?.is_amc || "no").toLowerCase(),
     amc_term_period: customer?.amc_term_period || null,
     amc_start_date: customer?.amc_start_date ? new Date(customer.amc_start_date).toISOString().split("T")[0] : null,
@@ -165,7 +165,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
     setFormData((current) => {
       const nextState = {
         ...current,
-        [name]: value,
+        [name]: value == "" ? null : value,
       };
 
       if (name === "is_amc" && value !== "yes") {

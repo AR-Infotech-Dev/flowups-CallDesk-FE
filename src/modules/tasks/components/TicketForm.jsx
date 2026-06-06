@@ -13,6 +13,7 @@ import Comments from "./Comments";
 import WorkLogs from "./WorkLogs";
 import CustomerForm from "../../customer/components/CustomerForm";
 import { customerModuleSchema } from "../../customer/data/module.schema";
+import { findActiveWorkLog } from "../utils/workLogStatus";
 
 const TAB_ITEMS = [
   ["client", "Client History"],
@@ -483,6 +484,28 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
     try {
       setErrors({});
       setLoading(true);
+
+      const assigneeChanged =
+        mode === "edit" &&
+        String(payload.assignee || "") !== String(oldformData.assignee || "");
+
+      if (assigneeChanged) {
+        const workLogRes = await makeRequest("tickets/work-logs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticket_id }),
+        });
+
+        const activeWorkLog =
+          workLogRes?.summary?.active_work_log ||
+          findActiveWorkLog(workLogRes?.data || []);
+
+        if (activeWorkLog) {
+          toast.error("This ticket has already started work. End the active work before reassigning.");
+          setLoading(false);
+          return;
+        }
+      }
 
       const saveUrl =
         mode === "create"

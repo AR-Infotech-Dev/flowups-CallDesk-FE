@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlarmClock, Clock, Hourglass, Plus, Timer, X } from "lucide-react";
+import { AlarmClock, Clock, Hourglass, Play, Square, Timer, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { makeRequest } from "../../../api/httpClient";
 import FlyoutPanel from "../../../components/ui/FlyoutPanel";
 import ActionButton from "../../../components/ui/ActionButton";
 import Spinner from "../../../components/ui/Spinner";
+import { findActiveWorkLog, getWorkLogEnd, getWorkLogId, getWorkLogStart } from "../utils/workLogStatus";
 
 function formatMinutes(value = 0) {
   const minutes = Number(value || 0);
@@ -19,9 +20,21 @@ function toLocalDateTimeInputValue(date = new Date()) {
   return offsetDate.toISOString().slice(0, 16);
 }
 
+function toDateTimeInputValue(value = "") {
+  if (!value) return "";
+  return String(value).replace(" ", "T").slice(0, 16);
+}
+
 function toMysqlDateTime(value = "") {
   if (!value) return "";
   return value.replace("T", " ") + ":00";
+}
+
+function calculateSpentMinutes(startValue = "", endValue = "") {
+  const start = new Date(String(startValue).replace(" ", "T"));
+  const end = new Date(String(endValue).replace(" ", "T"));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
 }
 
 function WorkLogs({ ticket = {}, ticket_id }) {
@@ -29,14 +42,14 @@ function WorkLogs({ ticket = {}, ticket_id }) {
   const resolvedTicketId = ticket_id || ticket?.ticket_id;
   const [logs, setLogs] = useState([]);
   const [summary, setSummary] = useState({});
+  const [activeLog, setActiveLog] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    work_start_at: toLocalDateTimeInputValue(),
-    spent_minutes: "",
+    work_end_at: toLocalDateTimeInputValue(),
+    spent_minutes: 0,
     work_details: "",
-    work_status: "working",
   });
 
   const canAddLog = useMemo(() => {
@@ -56,16 +69,20 @@ function WorkLogs({ ticket = {}, ticket_id }) {
       });
 
       if (res?.success) {
-        setLogs(res?.data || []);
+        const nextLogs = res?.data || [];
+        setLogs(nextLogs);
         setSummary(res?.summary || {});
+        setActiveLog(res?.summary?.active_work_log || findActiveWorkLog(nextLogs));
         return;
       }
 
       setLogs([]);
       setSummary({});
+      setActiveLog(null);
     } catch {
       setLogs([]);
       setSummary({});
+      setActiveLog(null);
     } finally {
       setLoading(false);
     }
@@ -75,19 +92,10 @@ function WorkLogs({ ticket = {}, ticket_id }) {
     fetchLogs();
   }, [resolvedTicketId]);
 
-  const handleOpen = () => {
-    setFormData({
-      work_start_at: toLocalDateTimeInputValue(),
-      spent_minutes: "",
-      work_details: "",
-      work_status: "working",
-    });
-    setIsOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!formData.work_start_at || !Number(formData.spent_minutes || 0) || !formData.work_details.trim()) {
-      toast.error("Start time, spent time and work details required");
+  const handleStartWork = async () => {
+    if (!canAddLog || !resolvedTicketId) return;
+    if (activeLog) {
+      toast.error("Work already started. Please end current work first.");
       return;
     }
 
@@ -98,23 +106,90 @@ function WorkLogs({ ticket = {}, ticket_id }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ticket_id: resolvedTicketId,
-          work_start_at: toMysqlDateTime(formData.work_start_at),
-          spent_minutes: Number(formData.spent_minutes),
-          work_details: formData.work_details,
-          work_status: formData.work_status,
+          work_start_at: toMysqlDateTime(toLocalDateTimeInputValue()),
+          work_status: "working",
         }),
       });
 
       if (res?.success) {
-        toast.success("Work log added");
+        toast.success("Work started");
+        await fetchLogs();
+        return;
+      }
+
+      toast.error(res?.message || res?.msg || "Unable to start work");
+    } catch (error) {
+      toast.error(error.message || "Unable to start work");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenEndWork = () => {
+    if (!activeLog) {
+      toast.error("Please start work first");
+      return;
+    }
+
+    const nextEndAt = toLocalDateTimeInputValue();
+    setFormData({
+      work_end_at: nextEndAt,
+      spent_minutes: calculateSpentMinutes(getWorkLogStart(activeLog), nextEndAt),
+      work_details: activeLog?.work_details || "",
+    });
+    setIsOpen(true);
+  };
+
+  const handleEndAtChange = (value) => {
+    setFormData((current) => ({
+      ...current,
+      work_end_at: value,
+      spent_minutes: calculateSpentMinutes(getWorkLogStart(activeLog), value),
+    }));
+  };
+
+  const handleEndWork = async () => {
+    if (!activeLog) {
+      toast.error("No active work log found");
+      return;
+    }
+
+    if (!formData.work_end_at || !formData.work_details.trim()) {
+      toast.error("End time and work details required");
+      return;
+    }
+
+    const spentMinutes = calculateSpentMinutes(getWorkLogStart(activeLog), formData.work_end_at);
+    if (!spentMinutes) {
+      toast.error("End time must be after start time");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const res = await makeRequest("tickets/work-logs/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          work_log_id: getWorkLogId(activeLog),
+          ticket_id: resolvedTicketId,
+          work_end_at: toMysqlDateTime(formData.work_end_at),
+          spent_minutes: spentMinutes,
+          work_details: formData.work_details,
+          work_status: "completed",
+        }),
+      });
+
+      if (res?.success) {
+        toast.success("Work ended");
         setIsOpen(false);
         await fetchLogs();
         return;
       }
 
-      toast.error(res?.message || res?.msg || "Unable to add work log");
+      toast.error(res?.message || res?.msg || "Unable to end work");
     } catch (error) {
-      toast.error(error.message || "Unable to add work log");
+      toast.error(error.message || "Unable to end work");
     } finally {
       setSaving(false);
     }
@@ -132,16 +207,34 @@ function WorkLogs({ ticket = {}, ticket_id }) {
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-600">Work Logs ({logs.length})</h3>
-          <button
-            type="button"
-            onClick={handleOpen}
-            disabled={!canAddLog}
-            className="inline-flex items-center gap-1 rounded-md bg-blue-700 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            <Plus size={14} />
-            Add Work Log
-          </button>
+          {activeLog ? (
+            <button
+              type="button"
+              onClick={handleOpenEndWork}
+              disabled={!canAddLog || saving}
+              className="inline-flex items-center gap-1 rounded-md bg-rose-600 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              <Square size={13} />
+              End Work
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartWork}
+              disabled={!canAddLog || saving}
+              className="inline-flex items-center gap-1 rounded-md bg-blue-700 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              <Play size={13} />
+              Start Work
+            </button>
+          )}
         </div>
+
+        {activeLog ? (
+          <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">
+            Work started at {toDateTimeInputValue(getWorkLogStart(activeLog)).replace("T", " ") || "-"}
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="rounded-md border border-slate-200 bg-white p-4 text-center text-sm text-slate-500">Loading work logs...</div>
@@ -155,17 +248,19 @@ function WorkLogs({ ticket = {}, ticket_id }) {
 
         <div className="space-y-2">
           {logs.map((log) => (
-            <div key={log.work_log_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+            <div key={getWorkLogId(log)} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">{log.employee_name || "Employee"}</p>
-                  <p className="text-xs text-slate-400">{log.work_date} · {log.work_time}</p>
+                  <p className="text-xs text-slate-400">{log.work_date || "-"} · {log.work_time || "-"}</p>
                 </div>
                 <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                  {formatMinutes(log.spent_minutes)}
+                  {getWorkLogEnd(log) ? formatMinutes(log.spent_minutes) : "In progress"}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{log.work_details}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {log.work_details || "Work started. Details will be added when work is ended."}
+              </p>
             </div>
           ))}
         </div>
@@ -174,7 +269,7 @@ function WorkLogs({ ticket = {}, ticket_id }) {
       <FlyoutPanel
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Add Work Log"
+        title="End Work"
         closeButton={
           <button className="flyout-close" onClick={() => setIsOpen(false)} aria-label="Close panel">
             <X size={18} />
@@ -183,8 +278,8 @@ function WorkLogs({ ticket = {}, ticket_id }) {
         footer={
           <div className="flex w-full justify-end gap-3">
             <ActionButton variant="flyoutSecondary" onClick={() => setIsOpen(false)} disabled={saving}>Cancel</ActionButton>
-            <ActionButton variant="flyoutSecondary" onClick={handleSave} disabled={saving}>
-              {saving ? <Spinner /> : null} Save
+            <ActionButton variant="flyoutSecondary" onClick={handleEndWork} disabled={saving}>
+              {saving ? <Spinner /> : null} End Work
             </ActionButton>
           </div>
         }
@@ -194,18 +289,26 @@ function WorkLogs({ ticket = {}, ticket_id }) {
             <FieldWrap label="Start Date & Time" span={12}>
               <input
                 type="datetime-local"
-                value={formData.work_start_at}
-                onChange={(event) => setFormData((current) => ({ ...current, work_start_at: event.target.value }))}
+                value={toDateTimeInputValue(getWorkLogStart(activeLog))}
+                readOnly
                 className="w-full rounded bg-gray-100 px-3 py-2 text-sm text-slate-600 outline-none"
               />
             </FieldWrap>
-            <FieldWrap label="Spent Time (Minutes)" span={12}>
+            <FieldWrap label="End Date & Time" span={12}>
+              <input
+                type="datetime-local"
+                value={formData.work_end_at}
+                disabled={true}
+                onChange={(event) => handleEndAtChange(event.target.value)}
+                className="w-full rounded bg-gray-100 px-3 py-2 text-sm text-slate-600 outline-none"
+              />
+            </FieldWrap>
+            <FieldWrap label="Time Spent (Minutes)" span={12}>
               <input
                 type="number"
                 min="1"
                 value={formData.spent_minutes}
-                onChange={(event) => setFormData((current) => ({ ...current, spent_minutes: event.target.value }))}
-                placeholder="Ex. 45"
+                readOnly
                 className="w-full rounded bg-gray-100 px-3 py-2 text-sm text-slate-600 outline-none"
               />
             </FieldWrap>
