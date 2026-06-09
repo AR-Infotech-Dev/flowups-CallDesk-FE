@@ -136,7 +136,7 @@ function PerformanceReportPage({ menu_id }) {
       summary: report.summary,
       tickets: report.tickets,
       user: report.user || selectedUser || {},
-      fileName: `performance-report-${appliedFilters.user_id || "all"}`,
+      fileName: `${`${selectedUser.label}-(PR)` || "all"}`,
     });
     setExporting(false);
   };

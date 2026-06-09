@@ -106,7 +106,6 @@ function WorkLogs({ ticket = {}, ticket_id }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ticket_id: resolvedTicketId,
-          work_start_at: toMysqlDateTime(toLocalDateTimeInputValue()),
           work_status: "working",
         }),
       });
@@ -173,8 +172,6 @@ function WorkLogs({ ticket = {}, ticket_id }) {
         body: JSON.stringify({
           work_log_id: getWorkLogId(activeLog),
           ticket_id: resolvedTicketId,
-          work_end_at: toMysqlDateTime(formData.work_end_at),
-          spent_minutes: spentMinutes,
           work_details: formData.work_details,
           work_status: "completed",
         }),
@@ -286,32 +283,6 @@ function WorkLogs({ ticket = {}, ticket_id }) {
       >
         <div className="flyout-form-shell px-4 py-3">
           <div className="grid grid-cols-12 gap-4">
-            <FieldWrap label="Start Date & Time" span={12}>
-              <input
-                type="datetime-local"
-                value={toDateTimeInputValue(getWorkLogStart(activeLog))}
-                readOnly
-                className="w-full rounded bg-gray-100 px-3 py-2 text-sm text-slate-600 outline-none"
-              />
-            </FieldWrap>
-            <FieldWrap label="End Date & Time" span={12}>
-              <input
-                type="datetime-local"
-                value={formData.work_end_at}
-                disabled={true}
-                onChange={(event) => handleEndAtChange(event.target.value)}
-                className="w-full rounded bg-gray-100 px-3 py-2 text-sm text-slate-600 outline-none"
-              />
-            </FieldWrap>
-            <FieldWrap label="Time Spent (Minutes)" span={12}>
-              <input
-                type="number"
-                min="1"
-                value={formData.spent_minutes}
-                readOnly
-                className="w-full rounded bg-gray-100 px-3 py-2 text-sm text-slate-600 outline-none"
-              />
-            </FieldWrap>
             <FieldWrap label="Work Details" span={12}>
               <textarea
                 value={formData.work_details}

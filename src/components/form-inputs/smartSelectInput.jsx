@@ -1,17 +1,28 @@
-// export default SmartSelectInput;
 import React, { useState, useEffect, useRef } from 'react';
 import { FixedSizeList as List } from 'react-window';
-// import { fetchJson } from '@utils/fetchJson';
 import { makeRequest } from "../../api/httpClient";
-
+import { Circle } from "lucide-react";
 import { API_BASE_URL } from '../../api/config';
 import { Check } from 'lucide-react';
 import DefaultLabel from './DefaultLabel';
 import ValidationError from './ValidationError';
-// import DropdownPortal from './DropdownPortal';
-// import { useCategoryCreateStore } from '@plugin/categories/store/useCategoryCreateStore';
-// import { createEntityMap } from '@components/GlobalModals';
 const cacheStore = new Map();
+function StatusIndicator({ status }) {
+  return (
+    <div className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border ${status === "active" ? "border-green-400" : "border-red-400"}`} >
+      <div
+        className="w-2 h-2 rounded-full"
+        style={{
+          backgroundColor: status === "active" ? "#22c55e" : "#ef4444",
+          boxShadow:
+            status === "active"
+              ? "0 0 6px #22c55e, 0 0 12px #22c55e"
+              : "0 0 6px #ef4444, 0 0 12px #ef4444",
+        }}
+      />
+    </div>
+  );
+}
 const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, config = {}, error, addNewFunction }) => {
 
   const isLocked = Boolean(field.disabled || field.readOnly);
@@ -302,15 +313,19 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     const isSelected = multi
       ? internalValue.some(v => v.value === item.value)
       : internalValue?.value === item.value;
+    console.log('item : ', item);
 
     return (
       <div
         style={style}
         onClick={() => handleSelect(item)}
-        className="cursor-pointer px-4 py-2 hover:bg-gray-100 flex items-start justify-between text-sm"
+        className="cursor-pointer px-4 py-2 hover:bg-gray-100 flex items-start items-center justify-between text-sm"
       >
-        <span className="whitespace-normal break-words">{item.label}</span>
+        <span className="whitespace-normal break-words">
+          {item.label}
+        </span>
         {isSelected && <Check size={16} className="text-green-600 ml-2" />}
+        {item.original.status && item.original.status != "" && <StatusIndicator status={item.original.status} />}
       </div>
     );
   };
@@ -398,11 +413,11 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
                   + Add New {label}
                 </button>
               )} */}
-              {allowAddNew && typeof addNewFunction === "function" && (
+              {/* {allowAddNew && typeof addNewFunction === "function" && (
                 <button type="button" onClick={handleAddNew} className="hover:underline text-blue-600">
                   + Add New {label || field.label || "Item"}
                 </button>
-              )}
+              )} */}
             </div>
             {filteredOptions.length ? (
               <List ref={listRef} height={200} itemCount={filteredOptions.length} onScroll={handleScroll} itemSize={44} width="100%">{Row}</List>

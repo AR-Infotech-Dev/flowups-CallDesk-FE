@@ -68,8 +68,9 @@ const normalizeCustomerProducts = (customer = {}) => {
     product_id: row?.product_id || "",
     product_name: row?.product_name || "",
     serial_number: row?.serial_number || "",
+    expiry_date: row?.expiry_date || "",
     add_ons: normalizeAddOns(row?.add_ons || row?.addons || row?.addOns),
-  })).filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length);
+  })).filter((row) => row.product_id || row.product_name || row.serial_number || row.expiry_date || row.add_ons.length);
 };
 
 function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave, menu_id }) {
@@ -181,7 +182,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
   const addProductRow = () => {
     setProductRows((current) => [
       ...current,
-      { product_id: "", product_name: "", serial_number: "", add_ons: [] },
+      { product_id: "", product_name: "", serial_number: "",expiry_date: "", add_ons: [] },
     ]);
   };
 
@@ -251,6 +252,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
         amc_term_period: formData.amc_term_period || null,
         amc_start_date: formData.amc_start_date || null,
         amc_end_date: formData.amc_end_date || null,
+        
       }
       : {
         amc_term_period: null,
@@ -267,12 +269,11 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
           product_id: row.product_id,
           product_name: row.product_name || "",
           serial_number: row.serial_number || "",
+          expiry_date: row.expiry_date || "",
           add_ons: normalizeAddOns(row.add_ons),
         })),
     };
-
     const result = customerModuleSchema.validationSchema.safeParse(payload);
-
     if (!result.success) {
       const nextErrors = {};
       result.error.issues.forEach((issue) => {
@@ -383,7 +384,7 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
                         <select
                           value={row.product_id || ""}
                           onChange={(event) => updateProductRow(index, "product_id", event.target.value)}
-                          className="col-span-12 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-6"
+                          className="col-span-12 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-4"
                         >
                           <option value="">{loadingProducts ? "Loading products..." : "Select product"}</option>
                           {productOptions.map((product) => (
@@ -396,7 +397,14 @@ function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY
                           value={row.serial_number || ""}
                           onChange={(event) => updateProductRow(index, "serial_number", event.target.value)}
                           placeholder="Serial number"
-                          className="col-span-10 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-5"
+                          className="col-span-10 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-3"
+                        />
+                        <input
+                          type="date"
+                          value={row.expiry_date || ""}
+                          onChange={(event) => updateProductRow(index, "expiry_date", event.target.value)}
+                          placeholder="Expiry Date"
+                          className="col-span-10 rounded border border-gray-50 bg-gray-100 px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-100 md:col-span-3"
                         />
                         <button
                           type="button"

@@ -270,7 +270,7 @@ export const ticketsModuleSchema = {
               apiUrl: "/system/searchAssignee",
               type: "assignee",
               source: "admin",
-              list: "adminID,name",
+              list: "adminID,name,status",
               check: "name",
               getValue: (item) => item.adminID,
               getLabel: (item) => item.name || "Unnamed Assignee",

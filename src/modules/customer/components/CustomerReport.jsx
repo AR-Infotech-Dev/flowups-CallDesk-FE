@@ -3,51 +3,39 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Download, Send, FileBarChart, Search, Ticket, TriangleAlert } from "lucide-react";
 import { toast } from "react-toastify";
 import { makeRequest } from "../../../api/httpClient";
+import { toDateInputValue, stripHtml, buildBlankCells, buildExcelSummaryRows, buildSideBySideRows, buildSheetSpacerRow, escapeHtml, excelFormat } from "../../../utils/excel.utils"
+import { renderTemplate } from "../../../utils/templateMaker";
 const EMPTY_REPORT = {
     customer: {},
     summary: {},
     products: [],
     tickets: [],
 };
-
-const escapeHtml = (value) =>
-    String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-
-function stripHtml(value = "") {
-    return String(value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function toDateInputValue(value) {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toISOString().split("T")[0];
-}
-
 function formatDate(value) {
     if (!value) return "-";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return String(value);
     return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
+const isActiveAMC = (customer = {}) => {
+    const amcEndDate = customer?.amc_end_date
+        ? new Date(customer.amc_end_date)
+        : null;
 
-function getTicketDate(ticket = {}) {
-    return ticket.start_date || ticket.created_date || ticket.createdAt || ticket.assigned_date || ticket.due_date || "";
-}
-
+    return (
+        String(customer?.is_amc || "").toLowerCase() === "yes" &&
+        amcEndDate &&
+        amcEndDate >= new Date()
+    );
+};
+function getTicketDate(ticket = {}) { return ticket.start_date || ticket.created_date || ticket.createdAt || ticket.assigned_date || ticket.due_date || ""; }
 function getTicketStatus(ticket = {}) {
     return ticket.status_name || ticket.ticket_status_name || ticket.ticket_status || ticket.status || "-";
 }
-
 function isClosedTicket(ticket = {}) {
     const status = String(getTicketStatus(ticket)).toLowerCase();
     return status.includes("closed") || status.includes("resolved") || status === "208";
 }
-
 function isOverdueTicket(ticket = {}) {
     if (isClosedTicket(ticket)) return false;
     const dueDate = ticket.due_date ? new Date(ticket.due_date) : null;
@@ -57,7 +45,6 @@ function isOverdueTicket(ticket = {}) {
     today.setHours(0, 0, 0, 0);
     return dueDate < today;
 }
-
 function normalizeCustomerProducts(customer = {}) {
     const rows = customer.customer_products || customer.products || [];
     if (!Array.isArray(rows)) return [];
@@ -70,90 +57,53 @@ function normalizeCustomerProducts(customer = {}) {
         }))
         .filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length);
 }
-
-function exportCustomerReportExcel({ customer = {}, summary = {}, products = [], tickets = [], fromDate = "" }) {
-    const html = `
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { font-family: Arial, Helvetica, sans-serif; color: #172033; }
-          h2 { color: #003b7d; margin-bottom: 4px; }
-          h3 { color: #172033; margin-top: 18px; }
-          .muted { color: #64748b; font-size: 12px; margin-top: 0; }
-          table { border-collapse: collapse; width: 100%; margin-top: 8px; }
-          th { background: #003b7d; color: #ffffff; border: 1px solid #003b7d; padding: 8px; text-align: left; }
-          td { border: 1px solid #dbe3ef; padding: 8px; vertical-align: top; }
-          tr:nth-child(even) td { background: #f8fbff; }
-        </style>
-      </head>
-      <body>
-        <h2>Customer Ticket Report</h2>
-        <p class="muted">From ${escapeHtml(formatDate(fromDate))}</p>
-
-        <h3>Customer Details</h3>
-        <table>
-          <tr><th>Customer Name</th><td>${escapeHtml(customer.name || "-")}</td></tr>
-          <tr><th>Company</th><td>${escapeHtml(customer.company_name || customer.billing_name || "-")}</td></tr>
-          <tr><th>Email</th><td>${escapeHtml(customer.email || "-")}</td></tr>
-          <tr><th>Mobile</th><td>${escapeHtml(customer.mobile_no || "-")}</td></tr>
-          <tr><th>Contact Person</th><td>${escapeHtml(customer.contact_person || "-")}</td></tr>
-          <tr><th>AMC End Date</th><td>${escapeHtml(formatDate(customer.amc_end_date))}</td></tr>
-        </table>
-
-        <h3>Products</h3>
-        <table>
-          <tr><th>Product</th><th>Serial Number</th><th>Add-ons</th></tr>
-          ${products.length ? products.map((product) => `
-            <tr>
-              <td>${escapeHtml(product.product_name || "-")}</td>
-              <td>${escapeHtml(product.serial_number || "-")}</td>
-              <td>${escapeHtml((product.add_ons || []).join(", ") || "-")}</td>
-            </tr>
-          `).join("") : `<tr><td colspan="3">No products assigned.</td></tr>`}
-        </table>
-
-        <h3>Summary</h3>
-        <table>
-          <tr><th>Total Tickets</th><td>${escapeHtml(summary.total || 0)}</td></tr>
-          <tr><th>Resolved</th><td>${escapeHtml(summary.resolved || summary.closed || 0)}</td></tr>
-          <tr><th>Pending</th><td>${escapeHtml(summary.pending || 0)}</td></tr>
-          <tr><th>Overdue</th><td>${escapeHtml(summary.overdue || 0)}</td></tr>
-        </table>
-
-        <h3>Tickets</h3>
-        <table>
-          <tr>
-            <th>Ticket No</th>
-            <th>Description</th>
-            <th>Query Type</th>
-            <th>Status</th>
-            <th>Priority</th>
-            <th>Assignee</th>
-            <th>Product</th>
-            <th>Start Date</th>
-            <th>Due Date</th>
-            <th>Resolution Time</th>
-          </tr>
-          ${tickets.map((ticket) => `
-            <tr>
-              <td>${escapeHtml(ticket.ticket_no || ticket.ticket_id || "-")}</td>
-              <td>${escapeHtml(stripHtml(ticket.description || ticket.title || "-"))}</td>
-              <td>${escapeHtml(ticket.query_type || "-")}</td>
-              <td>${escapeHtml(getTicketStatus(ticket))}</td>
-              <td>${escapeHtml(ticket.priority_name || ticket.ticket_priority_name || ticket.ticket_priority || ticket.priority || "-")}</td>
-              <td>${escapeHtml(ticket.assignee_name || "-")}</td>
-              <td>${ticket?.product_name ? `${ticket.product_name}${ticket?.product_serial_number ? ` - ${ticket.product_serial_number}` : ""}` : "-"}</td >
-              <td>${escapeHtml(formatDate(ticket.start_date || ticket.created_date))}</td>
-              <td>${escapeHtml(formatDate(ticket.due_date))}</td>
-              <td>${escapeHtml(ticket.resolution_time !== "" && ticket.resolution_time !== undefined ? `${ticket.resolution_time} hrs` : "-")}</td>
-            </tr >
-    `).join("")}
-        </table>
-      </body>
-    </html>
-  `;
-
+const exportCustomerReportExcel = ({ customer = {}, summary = {}, products = [], tickets = [], fromDate = "" }) => {
+    // const temp = renderTemplate('customerReport.excel',);
+    const spreadsheetColumnCount = 10;
+    const activeAMC = isActiveAMC(customer)
+    const htmlBody = renderTemplate(
+        "customerReport.excel",
+        {
+            spreadsheetColumnCount,
+            reportTitle: activeAMC
+                ? "AMC Customer Support Report"
+                : "Customer Support Report",
+            spacerRow: buildSheetSpacerRow(18, spreadsheetColumnCount),
+            summarySection: buildSideBySideRows({
+                leftTitle: "Summary",
+                leftData: summary,
+                rightTitle: activeAMC
+                    ? "Report Details"
+                    : "",
+                rightData: activeAMC
+                    ? {
+                        customer: customer.name || "-",
+                        amc_start_date: formatDate(customer.amc_start_date),
+                        amc_expiry_date: formatDate(customer.amc_end_date),
+                        generated_on: formatDate(new Date()),
+                    }
+                    : null,
+                gapCols: 2,
+                labelColspan: 2,
+                valueColspan: 2,
+            }),
+            hasSupportRows: tickets.length > 0,
+            supportRows: tickets.map(
+                (row, index) => ({
+                    srNo: index + 1,
+                    ticket_no: row.ticket_no || "-",
+                    created_date: row.created_date || "-",
+                    due_date: row.due_date || "-",
+                    query_type: row.query_type || "-",
+                    ticket_status: row.ticket_status || "-",
+                    ticket_priority: row.ticket_priority || "-",
+                    assignee: row.assignee_name || "-",
+                    statusClass: "excel-status-open",
+                })
+            ),
+        }
+    );
+    const html = excelFormat(htmlBody);
     const fileCustomer = String(customer.name || customer.customer_id || "customer").replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "");
     const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

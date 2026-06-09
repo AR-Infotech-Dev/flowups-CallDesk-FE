@@ -68,6 +68,8 @@ export const customerModuleSchema = {
       amc_term_period: null,
       amc_start_date: null,
       amc_end_date: null,
+      responsible_person: null,
+      exp_call_count: null,
       created_by: null,
       created_date: null,
       modified_by: null,
@@ -90,7 +92,7 @@ export const customerModuleSchema = {
       {
         columns: 3,
         fields: [
-          { name: "email", label: "Email", type: "email", placeholder: "Enter email address", gridSpan: 4},
+          { name: "email", label: "Email", type: "email", placeholder: "Enter email address", gridSpan: 4 },
           { name: "wa_no", label: "WhatsApp No", type: "text", placeholder: "Enter WhatsApp number", gridSpan: 4 },
           { name: "gst_number", label: "GST Number", type: "text", placeholder: "Enter GST number", gridSpan: 4 },
         ],
@@ -150,6 +152,40 @@ export const customerModuleSchema = {
           },
         ],
       },
+      {
+        columns: 2,
+        fields: [
+          {
+            name: "responsible_person",
+            label: "Responsible Person",
+            type: "smartSelectInput",
+            required: true,
+            id: "responsible_person",
+            gridSpan: 6,
+            visibleWhen: (values) => values.is_amc === "yes",
+            config: {
+              apiUrl: "/system/searchAssignee",
+              type: "assignee",
+              source: "admin",
+              list: "adminID,name",
+              check: "name",
+              getValue: (item) => item.adminID,
+              getLabel: (item) => item.name || "Unnamed Assignee",
+              placeholder: "Select Responsible Person",
+              multi: false
+            }
+          },
+          {
+            name: "exp_call_count",
+            label: "Expected call count (per month)",
+            type: "number",
+            gridSpan: 6,
+            alwaysVisible: true,
+            alwaysEditable: true,
+            visibleWhen: (values) => values.is_amc === "yes",
+          },
+        ],
+      },
     ],
   },
   validationSchema: z.object({
@@ -161,6 +197,8 @@ export const customerModuleSchema = {
     amc_term_period: z.union([z.literal(null), z.enum(["4_month", "6_month", "yearly"])]).optional(),
     amc_start_date: z.union([z.literal(null), z.string()]).optional(),
     amc_end_date: z.union([z.literal(null), z.string()]).optional(),
+    responsible_person: z.union([z.literal(null), z.coerce.number()]).optional(),
+    exp_call_count: z.union([z.literal(null), z.coerce.number()]).optional(),
     addno: z.string().optional(),
     birress: z.string().optional(),
     pan_number: z.union([
@@ -169,6 +207,23 @@ export const customerModuleSchema = {
     ]).optional(),
   }).superRefine((data, ctx) => {
     if (data.is_amc !== "yes") return;
+    console.log('data : ', data);
+
+    if (!data.responsible_person) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["responsible_person"],
+        message: "Responsible Person is required",
+      });
+    }
+
+    if (!data.exp_call_count) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["exp_call_count"],
+        message: "Expected Call Count is required",
+      });
+    }
 
     if (!data.amc_term_period) {
       ctx.addIssue({
