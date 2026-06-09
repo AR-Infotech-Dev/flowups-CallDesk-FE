@@ -139,30 +139,22 @@ function WorkLogs({ ticket = {}, ticket_id }) {
     setIsOpen(true);
   };
 
-  const handleEndAtChange = (value) => {
-    setFormData((current) => ({
-      ...current,
-      work_end_at: value,
-      spent_minutes: calculateSpentMinutes(getWorkLogStart(activeLog), value),
-    }));
-  };
-
   const handleEndWork = async () => {
     if (!activeLog) {
       toast.error("No active work log found");
       return;
     }
 
-    if (!formData.work_end_at || !formData.work_details.trim()) {
+    if (!formData.work_details.trim()) {
       toast.error("End time and work details required");
       return;
     }
 
-    const spentMinutes = calculateSpentMinutes(getWorkLogStart(activeLog), formData.work_end_at);
-    if (!spentMinutes) {
-      toast.error("End time must be after start time");
-      return;
-    }
+    // const spentMinutes = calculateSpentMinutes(getWorkLogStart(activeLog), formData.work_end_at);
+    // if (!spentMinutes) {
+    //   toast.error("End time must be after start time");
+    //   return;
+    // }
 
     try {
       setSaving(true);

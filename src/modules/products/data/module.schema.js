@@ -32,8 +32,8 @@ export const productsModuleSchema = {
   defaultColumns: ["product_name", "product_type", "product_description"],
   skipFields: ["company_id", "created_by", "created_date", "modified_by", "modified_date"],
   columnMappings: [
-    { product_name: "Product Name" },
-    { product_type: "Product Type" },
+    { product_name: "Product/Service Name" },
+    { product_type: "Product/Service Type" },
     { product_description: "Description" },
   ],
   savedFilters: [],
@@ -49,8 +49,8 @@ export const productsModuleSchema = {
       {
         columns: 2,
         fields: [
-          { name: "product_name", label: "Product Name", type: "text", required: true, placeholder: "Enter product name", gridSpan: 6 },
-          { name: "product_type", label: "Product Type", type: "text", required: true, placeholder: "Enter product type", gridSpan: 6 },
+          { name: "product_name", label: "Product/Service Name", type: "text", required: true, placeholder: "Enter product name", gridSpan: 6 },
+          { name: "product_type", label: "Product/Service Type", type: "text", required: true, placeholder: "Enter product type", gridSpan: 6 },
         ],
       },
       {
@@ -62,7 +62,7 @@ export const productsModuleSchema = {
     ],
   },
   validationSchema: z.object({
-    product_name: z.string().trim().min(1, "Product name is required"),
+    product_name: z.string().trim().min(1, "Product/Service name is required"),
     product_type: z.any().optional(),
     product_description: z.union([z.literal(null), z.string()]).optional(),
     company_id: z.any().optional(),
