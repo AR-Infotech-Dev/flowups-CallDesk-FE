@@ -337,7 +337,7 @@ function ActivityList({ rows = [], emptyText, render }) {
   return <div className="amc-activity-list">{rows.map(render)}</div>;
 }
 
-function ActivityModal({ customer, activity, activeTab, onTabChange, onClose }) {
+function ActivityModal({ customer, activity, activeTab, onTabChange, onClose, onRefresh }) {
   if (!customer) return null;
 
   const tabs = [
@@ -352,16 +352,14 @@ function ActivityModal({ customer, activity, activeTab, onTabChange, onClose }) 
       toast.error("Visit details should`nt empty!");
       return;
     }
-
     try {
-      const res = markVisited({ visit });
+      const res = await markVisited({ visit });
       if (res?.success) {
         toast.success(res?.message || "Visit marked as visited");
-        await getReminderList();
+        await onRefresh();
         return;
       }
       toast.error(res?.message || res?.msg || "Unable to update visit");
-
     } catch (error) {
       toast.error(error.message || "Unable to update visit");
     }
@@ -667,7 +665,6 @@ function AmcRemindersModulePage({ menu_id }) {
 
     toast.error(response?.message || response?.msg || "Unable to schedule AMC visit.");
   };
-
   const handleOpenActivity = async (customer) => {
     const customerId = customer?.customer_id;
     if (!customerId) {
@@ -687,6 +684,27 @@ function AmcRemindersModulePage({ menu_id }) {
     }
 
     toast.error(response?.message || "Unable to fetch AMC activity.");
+  };
+
+  const refreshActivity = async () => {
+    const customerId = activityCustomer?.customer_id;
+    if (!customerId) return;
+
+    const response = await fetchAmcActivity({ customerId });
+
+    if (response?.success) {
+      setActivityData(response.data || {});
+      await getReminderList();
+      return;
+    }
+
+    toast.error(response?.message || "Unable to refresh AMC activity.");
+  };
+
+  const closeActivityModal = () => {
+    setActivityCustomer(null);
+    setActivityData(null);
+    setActivityTab("calls");
   };
 
   useEffect(() => {
@@ -793,11 +811,12 @@ function AmcRemindersModulePage({ menu_id }) {
         onConfirm={handleScheduleVisit}
       />
       <ActivityModal
+        onRefresh={refreshActivity}
         customer={activityCustomer}
         activity={activityData}
         activeTab={activityTab}
         onTabChange={setActivityTab}
-        onClose={() => setActivityCustomer(null)}
+        onClose={closeActivityModal}
       />
     </>
   );
