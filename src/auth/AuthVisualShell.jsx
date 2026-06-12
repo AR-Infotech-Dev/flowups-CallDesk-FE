@@ -1,7 +1,7 @@
 function AuthVisualShell({ title, subtitle, children }) {
   return (
     <main className="min-h-screen bg-white">
-      <div className="grid min-h-screen lg:grid-cols-[1.12fr_1fr]">
+      <div className="grid min-h-screen lg:grid-cols-[1.67fr_1fr]">
         <section className="relative hidden overflow-hidden bg-[#071b3d] text-white lg:block">
           <img
             src="/images/screen.png"
@@ -16,7 +16,7 @@ function AuthVisualShell({ title, subtitle, children }) {
             {/* <span className="text-xs font-semibold">FlowupS CallDesk</span> */}
           </div>
           <div className="relative z-10 flex min-h-screen flex-col justify-center px-6 py-6 xl:px-16">
-            <div className="max-w-md pb-14">
+            <div className="max-w-md ">
               <h1 className="font-manrope text-[32px] font-bold leading-[40px] tracking-[-0.64px]">
                 Simplify support. Strengthen customer relationships.
               </h1>
