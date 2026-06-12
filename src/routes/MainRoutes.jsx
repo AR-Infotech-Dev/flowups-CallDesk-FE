@@ -112,7 +112,7 @@ function MainRoutes() {
 
   useEffect(() => {
     const loadMenus = async () => {
-      if (location.pathname === "/login" || location.pathname.startsWith("/feedback/")) {
+      if (location.pathname === "/login" || location.pathname.startsWith("/feedback/") || location.pathname.startsWith("/mark_visit/")) {
         setLoadingMenus(false);
         return;
       }

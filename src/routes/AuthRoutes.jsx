@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import Login from "../auth/Login";
 import Feedback from "../public/Feedback";
+import MarkVisit from "../public/MarkVisit";
 import ForgotPasswordPage from "../auth/ForgotPasswordPage";
 import VerificationPage from "../auth/VerificationPage";
 import { makeRequest } from "../api/httpClient";
@@ -165,6 +166,7 @@ export function getAuthRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordRoute />} />
       <Route path="/verify-reset" element={<VerificationRoute />} />
       <Route path="/feedback/:ticket_id/:token" element={<Feedback />} />
+      <Route path="/mark_visit/:visit_id/:token" element={<MarkVisit />} />
     </>
   );
 }
