@@ -9,8 +9,7 @@ import {
   buildTableColumnsFromStructure,
   getDefinitions,
 } from "../../utils/moduleStructure";
-import { useNavigate } from "react-router-dom";
-
+import { useLocation,useNavigate } from "react-router-dom";
 
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
@@ -36,6 +35,7 @@ function CustomerModulePage({ menu_id }) {
   const [customerList, setCustomerList] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
+  const [getBackTo, setGetBackTo] = useState(null);
   const [isImportFlyoutOpen, setIsImportFlyoutOpen] = useState(false);
   const [pagination, setPagination] = useState({});
   const [page, setPage] = useState(1);
@@ -200,6 +200,21 @@ function CustomerModulePage({ menu_id }) {
     toast.error(res?.message || "Error while deleting customer");
   };
 
+  const location = useLocation();
+
+  useEffect(() => {
+    const customer = location.state?.openCustomer;
+    console.log(customer);
+    
+    if (customer?.customer_id) {
+      setSelectedCustomer(customer);
+      setIsFlyoutOpen(true);
+    }
+    if (customer?.getBackTo) {
+      setGetBackTo(customer.getBackTo);
+    }
+  }, [location.state]);
+
   useEffect(() => {
     getColumnList();
   }, [resolvedMenuID]);
@@ -248,10 +263,10 @@ function CustomerModulePage({ menu_id }) {
             }
           >
             {(role_slug == "admin" || role_slug == "super_admin") && permissions.canAdd && (
-            <ActionButton onClick={() => setIsImportFlyoutOpen(true)}>
-              <Upload size={15} />
-              Import Data
-            </ActionButton>
+              <ActionButton onClick={() => setIsImportFlyoutOpen(true)}>
+                <Upload size={15} />
+                Import Data
+              </ActionButton>
             )}
           </ModuleControls>
         }
@@ -302,6 +317,9 @@ function CustomerModulePage({ menu_id }) {
         onClose={() => {
           setIsFlyoutOpen(false);
           setSelectedCustomer(null);
+          console.log('getBackTo :',getBackTo);
+          
+          getBackTo ? navigate(getBackTo) : null ;
         }}
         selectedCustomer={selectedCustomer}
         onAfterSave={getCustomerList}

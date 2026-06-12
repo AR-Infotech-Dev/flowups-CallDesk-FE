@@ -633,7 +633,7 @@ function ResizableTable({
         .map((key) => columns.find((column) => column.key === key))
         .filter(Boolean)
         .filter((column) => allowSelection || !column.checkbox)
-        .filter((column) => column.checkbox || column.className === "icon-col" || hasFieldVisiblePermission({ menuId, field: column, user }))
+        .filter((column) => column.checkbox || column.className === "icon-col" || column.isAlwaysVisible || hasFieldVisiblePermission({ menuId, field: column, user }))
         .map((column) => ({
           ...column,
           currentWidth: Math.max(column.minWidth || 40, columnWidths[column.key] || column.width || 800),

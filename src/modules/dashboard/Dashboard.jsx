@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 ChartJS.register(ArcElement, CategoryScale, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip);
 ChartJS.defaults.font.family = "Inter, ui-sans-serif, system-ui, sans-serif";
 
+
 const emptyDashboardData = {
   role: "user",
   scope: "user",
@@ -214,7 +215,97 @@ function ActivityList({ items }) {
   );
 }
 
+function AmcAlerts({ items = [], onRenew }) {
+  return (
+    <div className="space-y-2">
+      {(items.length
+        ? items.slice(0, 5)
+        : [
+          {
+            customer: "No AMC Alerts",
+            daysLeft: 0,
+            tone: "green",
+          },
+        ]
+      ).map((item) => (
+        <div
+          key={item.customer}
+          className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-slate-900">
+              {item.customer}
+            </p>
+
+            <p className={`text-xs font-medium ${item.daysLeft < 0 ? "text-red-500" : "text-amber-500"} `}>
+              {item.daysLeft < 0
+                ? `Expired ${Math.abs(item.daysLeft)} days ago`
+                : `Expires in ${item.daysLeft} days`}
+            </p>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-amber-900">
+              RP : {item.responsible_person}
+            </p>
+          </div>
+
+          {item.customer !== "No AMC Alerts" && (
+            <>
+              <button
+                className="rounded-md bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
+                onClick={() => onRenew?.(item)}
+              >
+                Renew
+              </button>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProductExpiryAlerts({ items = [], onUpdate }) {
+  return (
+    <div className="space-y-2">
+      {items.length ? (
+        items.slice(0, 5).map((item) => (
+          <div
+            key={`${item.customer_id}-${item.serial_number}`}
+            className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-slate-900">
+                {item.customer_name}
+              </p>
+
+              <p className="truncate text-xs text-slate-500">
+                <span>{item.product_name}</span>
+              </p>
+            </div>
+
+            <div className="mx-3 text-xs font-medium text-red-600">
+              {item.days_left < 0 ? <span className="text-xs font-medium text-red-600">Expired {Math.abs(item.days_left)} days ago</span> : <span className="text-xs font-medium text-amber-600">Expires in {item.days_left} days</span>}
+            </div>
+
+            <button
+              className="rounded-md bg-blue-600 px-2 py-1 text-xs text-white"
+              onClick={() => onUpdate(item)}
+            >
+              Update
+            </button>
+          </div>
+        ))
+      ) : (
+        <div className="py-4 text-center text-sm text-slate-500">
+          No expiring products 🎉
+        </div>
+      )}
+    </div>
+  );
+}
 export function Dashboard() {
+  const navigate = useNavigate();
   const { authSession } = useAuth();
   const user = authSession?.user || {};
   const roleSlug = user?.role_slug || "user";
@@ -269,6 +360,9 @@ export function Dashboard() {
       trend: dashboardData.charts?.ticketTrend || [],
       bars: dashboardData.charts?.workload || [],
       activity: dashboardData.recentActivity || [],
+      amcHealth: dashboardData.charts?.amcHealth || [],
+      amcAlerts: dashboardData.amcAlerts || [],
+      productExpiryAlerts: dashboardData.productExpiryAlerts || [],
       title: adminView ? "Operations Dashboard" : "My Dashboard",
       subtitle: adminView ? "Live CRM workload, team performance, and SLA health." : "Your assigned work, follow-ups, and ticket progress.",
     }),
@@ -309,6 +403,15 @@ export function Dashboard() {
       </section>
 
       <section className="dashboard-grid">
+        <article className="dashboard-panel" onClick={() => navigate('/tickets')}>
+          <div className="dashboard-panel-head">
+            <div>
+              <span className="dashboard-section-label">Status</span>
+              <h2>{adminView ? "All tickets" : "My tickets"}</h2>
+            </div>
+          </div>
+          <DonutChart data={dashboard.ticketStatus} />
+        </article>
         <article className="dashboard-panel dashboard-panel-wide" onClick={() => navigate('/tickets')}>
           <div className="dashboard-panel-head">
             <div>
@@ -319,17 +422,6 @@ export function Dashboard() {
           </div>
           <TrendChart data={dashboard.trend} />
         </article>
-
-        <article className="dashboard-panel" onClick={() => navigate('/tickets')}>
-          <div className="dashboard-panel-head">
-            <div>
-              <span className="dashboard-section-label">Status</span>
-              <h2>{adminView ? "All tickets" : "My tickets"}</h2>
-            </div>
-          </div>
-          <DonutChart data={dashboard.ticketStatus} />
-        </article>
-
         <article className="dashboard-panel" onClick={() => navigate('/tickets')}>
           <div className="dashboard-panel-head">
             <div>
@@ -338,6 +430,65 @@ export function Dashboard() {
             </div>
           </div>
           <BarChart data={dashboard.bars} />
+        </article>
+        <article className="dashboard-panel">
+          <div className="dashboard-panel-head">
+            <div>
+              <span className="dashboard-section-label">AMC</span>
+              <h2>AMC Health</h2>
+            </div>
+          </div>
+
+          <DonutChart data={dashboard.amcHealth} />
+        </article>
+
+        <article className="dashboard-panel">
+          <div className="dashboard-panel-head">
+            <div>
+              <span className="dashboard-section-label">AMC</span>
+              <h2>Upcoming Renewals</h2>
+            </div>
+          </div>
+
+          <AmcAlerts items={dashboard.amcAlerts} onRenew={(amc) => {
+            navigate("/customers", {
+              state: {
+                openCustomer: {
+                  customer_id: amc.id,
+                  getBackTo: '/dashboard',
+                  action: "amc_expiry",
+                },
+              },
+            });
+          }} />
+        </article>
+        <article className="dashboard-panel">
+          <div className="dashboard-panel-head">
+            <div>
+              <span className="dashboard-section-label">
+                Products
+              </span>
+
+              <h2>Expiry Alerts</h2>
+            </div>
+
+            <AlertTriangle size={18} />
+          </div>
+
+          <ProductExpiryAlerts
+            items={dashboard.productExpiryAlerts}
+            onUpdate={(product) => {
+              navigate("/customers", {
+                state: {
+                  openCustomer: {
+                    customer_id: product.customer_id,
+                    getBackTo: '/dashboard',
+                    action: "product_expiry",
+                  },
+                },
+              });
+            }}
+          />
         </article>
 
         <article className="dashboard-panel dashboard-panel-tall">

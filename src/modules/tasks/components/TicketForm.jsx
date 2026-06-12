@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, PhoneCall, PhoneOutgoing, CheckCheck } from "lucide-react";
+import { BriefcaseBusiness, CheckCheck, Clock3, History, MessageSquareText, PhoneCall, PhoneOutgoing, Route, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { makeRequest } from "../../../api/httpClient";
 import { ticketsModuleSchema } from "../data/module.schema";
@@ -11,58 +11,17 @@ import ClientHistory from "./ClientHistory";
 import TicketHistory from "./TicketHistory";
 import Comments from "./Comments";
 import WorkLogs from "./WorkLogs";
+import Visits from "./Visits";
 import CustomerForm from "../../customer/components/CustomerForm";
 import { customerModuleSchema } from "../../customer/data/module.schema";
 import { findActiveWorkLog } from "../utils/workLogStatus";
 
 const TAB_ITEMS = [
-  ["client", "Client History"],
-  ["comments", "Comments"],
-  ["work_logs", "Work Log"],
-  ["history", "Ticket History"],
-];
-
-
-const CALL_HISTORY_ITEMS = [
-  {
-    key: "inbound-1",
-    type: "Inbound Call",
-    meta: "Today, 11:20 AM",
-    agent: "Jordan Sterling",
-    queryType: "Technical Issue",
-    text: "Client reported recurring timeout. Escalated to L2 support.",
-    tone: "info",
-    icon: PhoneCall,
-  },
-  {
-    key: "outbound-1",
-    type: "Outbound Follow-up",
-    meta: "Oct 24, 3:45 PM",
-    agent: "Sarah Chen",
-    queryType: "Billing Query",
-    text: "Attempted contact, no answer. Left voicemail regarding invoice #882.",
-    tone: "neutral",
-    icon: PhoneOutgoing,
-  },
-  {
-    key: "inbound-2",
-    type: "Inbound Call",
-    meta: "Oct 22, 10:15 AM",
-    agent: "Alex Rivers",
-    queryType: "General Inquiry",
-    text: "Resolved billing query. Client confirmed access to portal.",
-    tone: "success",
-    icon: CheckCheck,
-  },
-];
-
-const CLIENT_HISTORY_ITEMS = [
-  { key: "TKT-1244", status: "In Progress", subject: "Payment Gateway Timeout" },
-  { key: "TKT-1239", status: "Resolved", subject: "Monthly Usage Report Export" },
-  { key: "TKT-1221", status: "Pending", subject: "API Access Key Rotation" },
-  { key: "TKT-1211", status: "Pending", subject: "API Access Key Rotation" },
-  { key: "TKT-1241", status: "Pending", subject: "API Access Key Rotation" },
-  { key: "TKT-1271", status: "Pending", subject: "API Access Key Rotation" },
+  ["client", "Client History", BriefcaseBusiness],
+  ["comments", "Comments", MessageSquareText],
+  ["work_logs", "Work Log", Clock3],
+  ["visits", "Visits", Route],
+  ["history", "Ticket History", History],
 ];
 
 function getTicketIdentifier(ticket = {}) {
@@ -219,7 +178,16 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
   const [tab, setTab] = useState("client");
   const mode = selectedTicket ? "edit" : "create";
   const ticket_id = getTicketIdentifier(selectedTicket);
-  const visibleTabs = mode === "edit" ? TAB_ITEMS : TAB_ITEMS.filter(([key]) => key === "client");
+  // const visibleTabs = mode === "edit" ? TAB_ITEMS : TAB_ITEMS.filter(([key]) => key === "client");
+  const visibleTabs =
+    mode === "edit"
+      ? TAB_ITEMS.filter(([key]) => {
+        if (key === "visits") {
+          return formData.visit_required === "y";
+        }
+        return true;
+      })
+      : TAB_ITEMS.filter(([key]) => key === "client");
 
   useEffect(() => {
     if (mode !== "edit" && tab !== "client") {
@@ -595,23 +563,20 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
                   </div>
                   <div className="col-span-12 flex min-h-60 min-w-0 flex-col overflow-hidden bg-slate-50 lg:col-span-6 xl:col-span-5">
                     <div className="border-b border-slate-200 bg-white px-4 py-2">
-                      <div className="ticket-scroll-pane flex items-center gap-6 overflow-x-auto">
-                        {visibleTabs.map(([key, label]) => (
-                          <button key={key} onClick={() => setTab(key)} className={`whitespace-nowrap border-b-2 text-xs font-semibold ${tab === key ? "border-b-blue-500 text-blue-600" : "border-transparent text-slate-500"}`}>{label}</button>
+                      <div className="flex items-center gap-4 overflow-visible">
+                        {visibleTabs.map(([key, label, Icon]) => (
+                          <button key={key} type="button" onClick={() => setTab(key)} className={`ticket-tab-icon-button ${tab === key ? "active" : ""}`} aria-label={label} data-tooltip={label} >
+                            <Icon size={17} />
+                          </button>
                         ))}
                       </div>
                     </div>
                     <div className={`min-h-0 flex-1 min-w-0 ${tab === "client" ? "overflow-hidden" : "ticket-scroll-pane overflow-y-auto p-2"}`}>
-                      {tab === "client" && (
-                        <div className="flex h-full min-h-0 flex-col overflow-hidden">
-                          <div className="min-h-0 flex-1 overflow-hidden">
-                            <ClientHistory openedTiket={ticket_id} client={selectedCustomer} />
-                          </div>
-                        </div>
-                      )}
+                      {tab === "client" && (<div className="flex h-full min-h-0 flex-col overflow-hidden"> <div className="min-h-0 flex-1 overflow-hidden"> <ClientHistory openedTiket={ticket_id} client={selectedCustomer} /> </div> </div>)}
                       {tab === "history" && mode === "edit" && <TicketHistory ticket_id={ticket_id} />}
                       {tab === "comments" && mode === "edit" && <Comments module="tickets" client={selectedCustomer} ticket_id={ticket_id} />}
                       {tab === "work_logs" && mode === "edit" && <WorkLogs ticket={formData} ticket_id={ticket_id} />}
+                      {tab === "visits" && mode === "edit" && formData.visit_required === "y" && <Visits ticket={formData} ticket_id={ticket_id} />}
                     </div>
                   </div>
                 </div>

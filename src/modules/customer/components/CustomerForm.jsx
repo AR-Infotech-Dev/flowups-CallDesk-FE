@@ -9,6 +9,7 @@ import Spinner from "../../../components/ui/Spinner";
 import DynamicModuleForm from "../../../components/ui/DynamicModuleForm";
 import { customerModuleSchema } from "../data/module.schema";
 
+
 function getCustomerIdentifier(customer = {}) {
   return customer?.customer_id;
 }
@@ -73,7 +74,8 @@ const normalizeCustomerProducts = (customer = {}) => {
   })).filter((row) => row.product_id || row.product_name || row.serial_number || row.expiry_date || row.add_ons.length);
 };
 
-function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave, menu_id }) {
+function CustomerForm({ isOpen,  onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave, menu_id }) {
+  
   const [loading, setLoading] = useState(false);
   const [fetchingCustomer, setFetchingCustomer] = useState(false);
   const [formData, setFormData] = useState(customerModuleSchema.form.initialValues);

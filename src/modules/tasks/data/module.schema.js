@@ -99,6 +99,7 @@ export const ticketsModuleSchema = {
       assignee: ASSIGNEE || null,
       start_date: new Date().toISOString().split("T")[0],
       due_date: null,
+      visit_required: 'n',
       company_id: null,
       created_by: null,
       modified_by: null,
@@ -107,7 +108,7 @@ export const ticketsModuleSchema = {
     // Two-column layout matching the screenshot
     sections: [
       {
-        columns: 1,
+        columns: 2,
         fields: [
           {
             name: "client_id",
@@ -115,7 +116,7 @@ export const ticketsModuleSchema = {
             type: "smartSelectInput",
             required: true,
             id: "client_id",
-            gridSpan: 12,
+            gridSpan: 8,
             readOnlyWhen: (values) => Boolean(values.ticket_id),
             config: {
               type: "customer",
@@ -144,6 +145,16 @@ export const ticketsModuleSchema = {
                   : (item.name || "Unnamed Client");
               }
             },
+          },
+          {
+            name: "visit_required",
+            label: "Is visit required?",
+            type: "radio",
+            gridSpan: 4,
+            options: [
+              { value: "y", label: "Yes" },
+              { value: "n", label: "No" },
+            ],
           },
         ],
       },
