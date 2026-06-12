@@ -1,5 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 @import "tailwindcss";
-
 :root {
   --topbar-height: 42px;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -32,6 +32,9 @@
   --color-success: #10B981;
   --color-error: #EF4444;
   --color-warning: #F59E0B;
+}
+@theme{
+  --font-manrope: "Manrope", sans-serif;
 }
 
 /* src/styles/colors.css */

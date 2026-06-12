@@ -183,7 +183,9 @@ function Visits({ ticket = {}, ticket_id }) {
           {visits.map((visit) => {
             const isVisited = String(visit.visit_status || "").toLowerCase() === "visited";
             const canMarkVisited = isPastScheduledTime(visit.visit_scheduled_at);
-
+            const visit_details_array = (visit.visit_details).split('\n');
+            // console.log('visit_details_array');
+            
             return (
               <div key={visit.visit_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
