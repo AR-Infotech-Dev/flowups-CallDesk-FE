@@ -416,7 +416,7 @@ function ActivityModal({ customer, activity, activeTab, onTabChange, onClose, on
                   <strong>{row.ticket_no || `Ticket #${row.ticket_id}`} | {row.visit_status || "scheduled"}</strong>
                   <span>Scheduled: {formatDateTime(row.visit_scheduled_at)} | Visited: {formatDateTime(row.visited_at)}</span>
                   <p>{row.visit_details || "-"}</p>
-                  { row.visit_status !== "visited" &&
+                  {/* { row.visit_status !== "visited" &&
                     <div className="flex justify-end absolute right-1.5 bottom-1.5">
                       <button
                         type="button"
@@ -429,7 +429,7 @@ function ActivityModal({ customer, activity, activeTab, onTabChange, onClose, on
                         Mark Visited
                       </button>
                     </div>
-                  }
+                  } */}
                 </div>
               )}
             />

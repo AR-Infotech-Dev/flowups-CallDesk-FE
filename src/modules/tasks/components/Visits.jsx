@@ -211,7 +211,7 @@ function Visits({ ticket = {}, ticket_id }) {
                   <span>{visit.visit_details || "Visit scheduled. Details not added yet."}</span>
                 </p>
 
-                {!isVisited ? (
+                {/* {!isVisited ? (
                   <div className="mt-3 flex justify-end">
                     <button
                       type="button"
@@ -224,7 +224,7 @@ function Visits({ ticket = {}, ticket_id }) {
                       Mark Visited
                     </button>
                   </div>
-                ) : null}
+                ) : null} */}
               </div>
             );
           })}
