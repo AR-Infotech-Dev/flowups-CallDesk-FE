@@ -127,11 +127,11 @@ function LoginForm() {
         {loading ? <Spinner /> : <>Sign In <FiArrowRight size={13} /></>}
       </button>
 
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
         <span className="h-px flex-1 bg-slate-200" />
         <span className="text-[10px] text-slate-500">Or continue with</span>
         <span className="h-px flex-1 bg-slate-200" />
-      </div>
+      </div> */}
 
       {/* <div className="grid grid-cols-2 gap-2.5">
         <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-md border border-slate-400 bg-white text-xs font-medium text-slate-700 transition hover:bg-slate-50">

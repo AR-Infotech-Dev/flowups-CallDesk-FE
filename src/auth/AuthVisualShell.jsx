@@ -5,7 +5,7 @@ function AuthVisualShell({ title, subtitle, children }) {
         <section className="relative hidden overflow-hidden bg-[#071b3d] text-white lg:block">
           <img
             src="/images/screen.png"
-            alt="CRM analytics dashboard"
+            alt="FlowupS CallDesk"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#07152f]/95 via-[#0b254c]/78 to-[#0b254c]/30" />
