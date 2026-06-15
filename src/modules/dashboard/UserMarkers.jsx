@@ -423,65 +423,61 @@ export function UserMarkers() {
                                 }}
                             />
                         </div>
+                        {filter.employee_id && 
+                        <>
+                            <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                                <input
+                                    name="showVisits"
+                                    type="checkbox"
+                                    checked={filter.showVisits}
+                                    onChange={() => {
+                                        setFilter((current) => ({
+                                            ...current,
+                                            ['showVisits']: !filter.showVisits,
+                                        }));
+                                    }}
+                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                Show Visits
+                            </label>
 
-                        <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
-                            <input
-                                name="showVisits"
-                                type="checkbox"
-                                checked={filter.showVisits}
-                                onChange={() => {
-                                    setFilter((current) => ({
-                                        ...current,
-                                        ['showVisits']: !filter.showVisits,
-                                    }));
-                                }}
-                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            Show Visits
-                        </label>
+                            <label className="block">
+                                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                    From Date
+                                </span>
+                                <input
+                                    type="date"
+                                    value={filter.from_date}
+                                    onChange={(event) => {
+                                        setFilter((current) => ({
+                                            ...current,
+                                            ['from_date']:event.target.value,
+                                        }));
+                                    }}
+                                    className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                            </label>
 
-                        <label className="block">
-                            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                From Date
-                            </span>
-                            <input
-                                type="date"
-                                value={filter.from_date}
-                                onChange={(event) => {
-                                    setFilter((current) => ({
-                                        ...current,
-                                        ['from_date']:event.target.value,
-                                    }));
-                                }}
-                                className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            />
-                        </label>
+                            <label className="block">
+                                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                    To Date
+                                </span>
+                                <input
+                                    type="date"
+                                    value={filter.to_date}
+                                    onChange={(event) => {
+                                        setFilter((current) => ({
+                                            ...current,
+                                            ['to_date']:event.target.value,
+                                        }));
+                                    }}
+                                    className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                            </label>
+                        </>
+                        }
 
-                        <label className="block">
-                            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                To Date
-                            </span>
-                            <input
-                                type="date"
-                                value={filter.to_date}
-                                onChange={(event) => {
-                                    setFilter((current) => ({
-                                        ...current,
-                                        ['to_date']:event.target.value,
-                                    }));
-                                }}
-                                className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            />
-                        </label>
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setFilter(default_filter);
-                                setSelectedVisitKey("");
-                            }}
-                            className="h-8 w-full rounded-md border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        >
+                        <button type="button" onClick={() => { setFilter(default_filter); setSelectedVisitKey(""); }} className="h-8 w-full rounded-md border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50" >
                             Reset Filters
                         </button>
                     </div>
@@ -528,11 +524,10 @@ export function UserMarkers() {
                                         type="button"
                                         key={getVisitKey(visit, index)}
                                         onClick={() => setSelectedVisitKey((current) => current === getVisitKey(visit, index) ? "" : getVisitKey(visit, index))}
-                                        className={`w-full rounded-md border p-2 text-left text-xs shadow-sm transition ${
-                                            selectedVisitKey === getVisitKey(visit, index)
+                                        className={`w-full rounded-md border p-2 text-left text-xs shadow-sm transition ${selectedVisitKey === getVisitKey(visit, index)
                                                 ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
                                                 : "border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50"
-                                        }`}
+                                            }`}
                                     >
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="font-semibold text-slate-900">

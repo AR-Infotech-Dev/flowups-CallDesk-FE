@@ -11,7 +11,7 @@ import Spinner from "./ui/Spinner";
 import NotificationBell from "./ui/NotificationBell";
 import LoadingBar from "./LoadingBar";
 import { useAuth } from "../auth/AuthProvider";
-import { APP_NAME } from "../api/config";
+import Clock from "../components/ui/Clock"
 
 const getCompanyName = (user = {}) => user?.company_name || "";
 
@@ -57,18 +57,10 @@ function TopBar({ onLogout }) {
     };
   }, []);
 
-  const getInitials = (name = "") =>
-    name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-
+  const getInitials = (name = "") => name.split(" ").map((n) => n[0]).join("").toUpperCase();
   const handleLogout = async () => {
     if (isLoggingOut) return;
-
     setLoggingOut(true);
-
     setTimeout(async () => {
       await onLogout?.();
       setLoggingOut(false);
@@ -79,19 +71,19 @@ function TopBar({ onLogout }) {
     <div className="topbar-shell">
       <header className="topbar">
         <div className="topbar-left">
-          <div className="topbar-brand" title={APP_NAME}>
-            <img
-              src="/logo.png"
-              alt={APP_NAME}
-              className="topbar-logo"
-            />
-            <span className="topbar-brand-fallback">{APP_NAME}</span>
+          <div className="p-2">
+            <h5 className="relative text-slate-600 font-bold text-sm">Welcome back, {user?.name || "User"}
+              <span className="ml-1 absolute animate-bounce">👋</span>
+            </h5>
+            <h5 className="capitalize relative text-xs">
+               {user?.role_slug || "User"}
+            </h5>
           </div>
         </div>
-
         <div className="topbar-right">
           {companyName && (
             <span className="topbar-company" title={companyName}>
+              
               <Building2 size={14} />
               <span>{companyName}</span>
             </span>
@@ -162,6 +154,8 @@ function TopBar({ onLogout }) {
               </div>
             )}
           </div>
+          <Clock />
+
         </div>
       </header>
 

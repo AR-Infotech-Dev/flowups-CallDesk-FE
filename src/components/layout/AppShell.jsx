@@ -4,13 +4,15 @@ function AppShell({ topbar, sidebar, toolbar, children, overlay }) {
   return (
     <div className="app-shell">
       <LinearProgress />
-      {topbar}
       <div className="app-frame">
         {sidebar}
-        <main className="content-area">
-          {toolbar}
-          {children}
-        </main>
+        <div className="main-frame">
+          {topbar}
+          <main className="content-area">
+            {toolbar}
+            {children}
+          </main>
+        </div>
         {overlay}
       </div>
     </div>

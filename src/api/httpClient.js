@@ -88,6 +88,8 @@ export const makeRequest = async (url, options = {}) => {
       headers = {},
       body = null,
       params = null,
+      onUploadProgress = null,
+      timeout = 10000,
     } = options;
     const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
     const requestHeaders = {
@@ -104,11 +106,12 @@ export const makeRequest = async (url, options = {}) => {
       url,
       baseURL: API_BASE_URL,
       method,
-      timeout: 10000,
+      timeout,
       withCredentials: true,
       headers: requestHeaders,
       data: isFormData ? body : stripCompanyIdForSuperAdmin(body, url, method),     // for POST, PUT
       params: stripCompanyIdForSuperAdmin(params, url, method), // for GET query params
+      onUploadProgress,
     };
     const res = await axios(config);
 

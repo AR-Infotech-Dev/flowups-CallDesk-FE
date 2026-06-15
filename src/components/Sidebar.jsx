@@ -22,6 +22,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthProvider";
+import { APP_NAME } from "../api/config";
 import { getStoredMenuList, getStoredPermissions } from "../auth/authStorage";
 import {
   buildAllowedMenuTree,
@@ -116,6 +117,16 @@ function Sidebar({ onSelectModule }) {
 
   return (
     <aside className="sidebar">
+      <div className="sidebar-brand" title={APP_NAME}>
+        <img
+          // src="/logo 1.png"
+          src="/logo 1 (1).png"
+          alt={APP_NAME}
+          className="sidebar-logo"
+        />
+        <span className="sidebar-brand-fallback">{APP_NAME}</span>
+      </div>
+
       <div className="sidebar-sections">
         <section className="sidebar-group">
           <div className="sidebar-group-title px-2">Main Menu</div>

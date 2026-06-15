@@ -24,7 +24,9 @@ const templateColumns = [
   { label: "AMC Start Date", key: "amc_start_date", sample: "2026-04-02" },
   { label: "AMC End Date", key: "amc_end_date", sample: "2027-04-01" },
   { label: "Product IDs", key: "product_ids", sample: "1,2" },
+  { label: "Product Names", key: "product_names", sample: "CRM Basic,CRM Premium" },
   { label: "Serial Numbers", key: "serial_numbers", sample: "SR-001,SR-002" },
+  { label: "Product Expiry Dates", key: "product_expiry_dates", sample: "2027-04-01,2028-04-01" },
 ];
 
 const escapeHtml = (value) =>
@@ -83,6 +85,8 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [importStage, setImportStage] = useState("");
   const [result, setResult] = useState(null);
 
   const fileName = useMemo(() => file?.name || "No file selected", [file]);
@@ -90,6 +94,8 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
   const handleClose = () => {
     if (importing) return;
     setFile(null);
+    setUploadProgress(0);
+    setImportStage("");
     setResult(null);
     onClose?.();
   };
@@ -104,17 +110,31 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
     formData.append("file", file);
 
     setImporting(true);
+    setUploadProgress(0);
+    setImportStage("Uploading file...");
     const res = await makeRequest("/customers/import", {
       method: "POST",
       body: formData,
+      timeout: 300000,
+      onUploadProgress: (progressEvent) => {
+        if (!progressEvent.total) return;
+        const nextProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadProgress(Math.min(nextProgress, 100));
+        if (nextProgress >= 100) {
+          setImportStage("Processing file...");
+        }
+      },
     });
     setImporting(false);
 
     if (!res.success) {
+      setImportStage("");
       toast.error(res.message || "Unable to import customers.");
       return;
     }
 
+    setUploadProgress(100);
+    setImportStage("Import complete");
     setResult(res);
     toast.success(res.message || "Customers imported successfully.");
     onImported?.();
@@ -179,10 +199,24 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
             accept=".xlsx,.xls,.csv"
             onChange={(event) => {
               setFile(event.target.files?.[0] || null);
+              setUploadProgress(0);
+              setImportStage("");
               setResult(null);
             }}
           />
         </section>
+
+        {(importing || uploadProgress > 0) && (
+          <section className="customer-import-progress" aria-live="polite">
+            <div className="customer-import-progress-head">
+              <span>{importStage || "Preparing import..."}</span>
+              <strong>{uploadProgress}%</strong>
+            </div>
+            <div className="customer-import-progress-track">
+              <span style={{ width: `${uploadProgress}%` }} />
+            </div>
+          </section>
+        )}
 
         <section className="customer-import-columns">
           <h3>Template Columns</h3>

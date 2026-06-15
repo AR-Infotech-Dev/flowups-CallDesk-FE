@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
@@ -15,6 +16,9 @@ function KanbanColumn({
   onLoadMore,
 }) {
   const { config } = useKanbanContext();
+  const bodyRef = useRef(null);
+  const sentinelRef = useRef(null);
+  const loadRequestedRef = useRef(false);
 
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -24,22 +28,63 @@ function KanbanColumn({
     },
   });
 
-  // Loads the next column page when the user scrolls close to the bottom.
-  const handleColumnScroll = (event) => {
-    if (!hasMore || loadingMore || !onLoadMore) {
+  const setBodyNode = useCallback((node) => {
+    bodyRef.current = node;
+    setNodeRef(node);
+  }, [setNodeRef]);
+
+  useEffect(() => {
+    if (!loadingMore) {
+      loadRequestedRef.current = false;
+    }
+  }, [loadingMore]);
+
+  const requestNextPage = useCallback(() => {
+    if (!hasMore || loadingMore || !onLoadMore || loadRequestedRef.current) {
       return;
     }
 
-    const target = event.currentTarget;
-    const bottomGap = target.scrollHeight - target.scrollTop - target.clientHeight;
+    loadRequestedRef.current = true;
+    onLoadMore();
+  }, [hasMore, loadingMore, onLoadMore]);
 
-    if (bottomGap < 80) {
-      onLoadMore();
+  const handleScroll = (event) => {
+    const el = event.currentTarget;
+    const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 120;
+
+    if (nearBottom) {
+      requestNextPage();
     }
   };
-  
+
+  useEffect(() => {
+    const root = bodyRef.current;
+    const sentinel = sentinelRef.current;
+
+    if (!root || !sentinel || !hasMore || !onLoadMore) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          requestNextPage();
+        }
+      },
+      {
+        root,
+        rootMargin: "140px 0px",
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [hasMore, onLoadMore, requestNextPage]);
+
   const resolvedTotal = Number.isFinite(Number(totalCount)) ? Number(totalCount) : items.length;
-  
+
   return (
     <div className="block">
       <div className="kanban-column-top" style={{ backgroundColor: column.color || "var(--primary-100)" }}>&nbsp;</div>
@@ -65,9 +110,9 @@ function KanbanColumn({
         </header>
 
         <div
-          ref={setNodeRef}
+          ref={setBodyNode}
           className={`kanban-column-body ${isOver ? "is-over" : ""}`}
-          onScroll={handleColumnScroll}
+          onScroll={handleScroll}
         >
           <SortableContext items={items.map((item) => item._kanbanId)} strategy={verticalListSortingStrategy}>
             {items.length ? (
@@ -84,6 +129,7 @@ function KanbanColumn({
             )}
           </SortableContext>
           {loadingMore ? <div className="kanban-column-loader">Loading more...</div> : null}
+          <div ref={sentinelRef} className="kanban-scroll-sentinel" aria-hidden="true" />
           {hasMore && !loadingMore ? (
             <button type="button" className="kanban-load-more" onClick={onLoadMore}>
               Load more

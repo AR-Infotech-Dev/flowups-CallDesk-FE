@@ -20,12 +20,44 @@ function getLogoUrl(logo = "") {
   return `${API_SERVER_URL}${String(logo).startsWith("/") ? logo : `/${logo}`}`;
 }
 
+function getLogoPathFromResponse(response = {}) {
+  return (
+    response?.data?.email_logo ||
+    response?.data?.data?.email_logo ||
+    response?.data?.logo ||
+    response?.data?.data?.logo ||
+    response?.data?.path ||
+    response?.data?.data?.path ||
+    response?.data?.url ||
+    response?.data?.data?.url ||
+    response?.email_logo ||
+    response?.logo ||
+    response?.path ||
+    response?.url ||
+    ""
+  );
+}
+
 const MAIL_PROVIDER_DEFAULTS = {
   gmail: { smtp_host: "smtp.gmail.com", smtp_port: "587", smtp_encryption: "tls", smtp_username: "" },
   yahoo: { smtp_host: "smtp.mail.yahoo.com", smtp_port: "587", smtp_encryption: "tls", smtp_username: "" },
   outlook: { smtp_host: "smtp.office365.com", smtp_port: "587", smtp_encryption: "tls", smtp_username: "" },
   custom: { smtp_host: "", smtp_port: "587", smtp_encryption: "tls", smtp_username: "" },
 };
+
+function buildMailConfigPayload(formData = {}) {
+  const providerDefaults = MAIL_PROVIDER_DEFAULTS[formData.mail_provider] || MAIL_PROVIDER_DEFAULTS.gmail;
+  const smtpUsername = formData.mail_provider === "custom"
+    ? formData.smtp_username
+    : formData.smtp_username || formData.sender_email;
+
+  return {
+    smtp_host: formData.smtp_host || providerDefaults.smtp_host,
+    smtp_port: formData.smtp_port || providerDefaults.smtp_port,
+    smtp_encryption: formData.smtp_encryption || providerDefaults.smtp_encryption,
+    smtp_username: smtpUsername,
+  };
+}
 
 function normalizeCompanyData(company = {}) {
   const provider = company?.mail_provider || "gmail";
@@ -135,18 +167,17 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
       return;
     }
 
-    const formData = new FormData();
-    formData.append("logo", file);
-    if (companyId) {
-      formData.append("company_id", companyId);
-    }
-
     try {
       setUploadingLogo(true);
       const uploadUrl = companyId ? `${companyMasterSchema.api.edit}/${companyId}/logo` : companyMasterSchema.api.logoUpload;
+      const uploadFormData = new FormData();
+      uploadFormData.append("logo", file);
+      if (companyId) {
+        uploadFormData.append("company_id", companyId);
+      }
       const res = await makeRequest(uploadUrl, {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       });
 
       if (!res.success) {
@@ -154,7 +185,7 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
         return;
       }
 
-      const logoPath = res?.data?.email_logo || res?.email_logo;
+      const logoPath = getLogoPathFromResponse(res);
       setFormData((current) => ({
         ...current,
         email_logo: logoPath || current.email_logo,
@@ -195,7 +226,7 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
   };
 
   const handleSave = async () => {
-    const payload = { ...formData };
+    const payload = { ...formData, ...buildMailConfigPayload(formData) };
     const result = companyMasterSchema.validationSchema.safeParse(payload);
 
     if (!result.success) {
@@ -277,10 +308,7 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
           sender_name: formData.sender_name,
           sender_email: formData.sender_email,
           mail_provider: formData.mail_provider,
-          smtp_host: formData.smtp_host,
-          smtp_port: formData.smtp_port,
-          smtp_encryption: formData.smtp_encryption,
-          smtp_username: formData.smtp_username,
+          ...buildMailConfigPayload(formData),
           email_app_password: formData.email_app_password,
         }),
       });

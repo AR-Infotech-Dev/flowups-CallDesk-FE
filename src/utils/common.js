@@ -1,16 +1,3 @@
-// export const formatDate = (date, options = {}) => {
-//   if (!date) return "";
-
-//   const defaultOptions = {
-//     day: "2-digit",
-//     month: "short",
-//     year: "numeric",
-//     ...options,
-//   };
-
-//   return new Date(date).toLocaleDateString("en-IN", defaultOptions);
-// };
-
 export const formatDate = (dateString, type = "full") => {
   if (!dateString) return "";
 

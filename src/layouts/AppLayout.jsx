@@ -8,8 +8,9 @@ function AppLayout() {
   const { logout } = useAuth();
 
   return (
-    <AppShell topbar={
-      <TopBar onLogout={logout} />} sidebar={<Sidebar />}>
+    <AppShell 
+      topbar={<TopBar onLogout={logout} />} 
+      sidebar={<Sidebar />}>
       <Outlet />
     </AppShell>
   );

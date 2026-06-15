@@ -149,7 +149,7 @@ export default function MarkVisit() {
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-gray-700">Location Proof</p>
+                <p className="text-sm font-semibold text-gray-700">Location</p>
                 <p className="mt-1 text-xs text-gray-500">
                   Location is required to confirm this visit.
                 </p>

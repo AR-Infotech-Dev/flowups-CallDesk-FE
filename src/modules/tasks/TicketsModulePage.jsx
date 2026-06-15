@@ -84,6 +84,8 @@ function TicketModulePage({ menu_id }) {
   const [deleting, setDeleting] = useState(false);
   const [viewMode, setViewMode] = useState(getViewMode(resolvedMenuID) || "table");
   const [viewAll, setViewAll] = useState(false);
+  const [kanbanReloadVersion, setKanbanReloadVersion] = useState(0);
+  const isKanbanView = viewMode === "kanban";
   // ==================================================
   // FILTERS
   // ==================================================
@@ -132,6 +134,7 @@ function TicketModulePage({ menu_id }) {
   // FILTER FIELDS
   // ==================================================
   const resolvedFilterFields = useMemo(() => buildFilterFieldsFromStructure(fields, ticketsModuleSchema.defaultColumns.map((key) => ({ label: ticketsFallbackColumns.find((column) => column.key === key)?.label || key, value: key, type: "text", })), columnOptions), [fields]);
+  const kanbanRows = useMemo(() => [], []);
 
   // ==================================================
   // GET LIST
@@ -167,12 +170,9 @@ function TicketModulePage({ menu_id }) {
   // Kanban fetches every status column independently so each column can lazy-load its own pages.
   const getKanbanColumnPage = useCallback(
     async ({ columnId, page: columnPage }) => {
-      const statusFilter = {
-        field: ticketsModuleSchema.kanban.statusField,
-        condition: "equal_to",
-        value: String(columnId),
-        type: "select",
-      };
+      const kanbanFilters = (filterState.filters || []).filter(
+        (filter) => filter?.field !== ticketsModuleSchema.kanban.statusField
+      );
 
       const res = await makeRequest(ticketsModuleSchema.api.list, {
         method: "POST",
@@ -180,12 +180,10 @@ function TicketModulePage({ menu_id }) {
           status: "active",
           page: columnPage,
           searchText: filterState.searchText,
-          filters: [
-            ...(filterState.filters || []),
-            statusFilter,
-          ],
+          filters: kanbanFilters,
           order: filterState.order,
           order_by: filterState.order_by,
+          viewAll: viewAll ? "Y" : "N",
           [ticketsModuleSchema.kanban.statusField]: columnId,
         },
       });
@@ -204,6 +202,7 @@ function TicketModulePage({ menu_id }) {
       filterState.order,
       filterState.order_by,
       JSON.stringify(filterState.filters),
+      viewAll,
     ]
   );
 
@@ -272,7 +271,8 @@ function TicketModulePage({ menu_id }) {
 
     if (res.success) {
       toast.success(res?.message || "Tickets deleted successfully.");
-      await getTicketList();
+      setSelectedRowIds([]);
+      refreshCurrentView();
       return;
     }
 
@@ -302,11 +302,29 @@ function TicketModulePage({ menu_id }) {
 
     if (res.success) {
       toast.success(res?.message || "Ticket deleted successfully.");
-      await getTicketList();
+      refreshCurrentView();
       return;
     }
 
     toast.error(res?.message || "Error while deleting ticket");
+  };
+
+  const refreshCurrentView = () => {
+    if (isKanbanView) {
+      setKanbanReloadVersion((current) => current + 1);
+      return;
+    }
+
+    getTicketList();
+  };
+
+  const handleAfterTicketSave = () => {
+    if (isKanbanView) {
+      setKanbanReloadVersion((current) => current + 1);
+      return;
+    }
+
+    getTicketList();
   };
 
   // ==================================================
@@ -317,8 +335,16 @@ function TicketModulePage({ menu_id }) {
   }, [resolvedMenuID]);
 
   useEffect(() => {
+    if (isKanbanView) {
+      setTicketList([]);
+      setPagination({});
+      setSelectedRowIds([]);
+      return;
+    }
+
     getTicketList();
   }, [
+    isKanbanView,
     page,
     filterState.searchText,
     filterState.order,
@@ -332,6 +358,7 @@ function TicketModulePage({ menu_id }) {
   useEffect(() => {
     if (page !== 1) { setPage(1); }
   }, [
+    isKanbanView,
     filterState.searchText,
     filterState.order,
     filterState.order_by,
@@ -356,7 +383,7 @@ function TicketModulePage({ menu_id }) {
               canCreate={permissions.canAdd}
               canDelete={permissions.canDelete}
               loading={loading}
-              onRefresh={getTicketList}
+              onRefresh={refreshCurrentView}
               onCreate={() => {
                 setSelectedTicket(null);
                 setIsFlyoutOpen(true);
@@ -438,16 +465,18 @@ function TicketModulePage({ menu_id }) {
           />
         ) : (
           <KanbanBoard
-            rows={ticketList}
+            rows={kanbanRows}
             menuId={resolvedMenuID}
             config={ticketsModuleSchema.kanban}
-            loading={loading}
+            loading={false}
             lazyLoad
             reloadKey={JSON.stringify({
               searchText: filterState.searchText,
               filters: filterState.filters,
               order: filterState.order,
               order_by: filterState.order_by,
+              viewAll,
+              kanbanReloadVersion,
             })}
             onLoadColumnPage={getKanbanColumnPage}
             editRow={permissions.canEdit ? (ticket) => {
@@ -455,7 +484,7 @@ function TicketModulePage({ menu_id }) {
               setIsFlyoutOpen(true);
             } : undefined}
             allowUpdate={permissions.canEdit}
-            onAfterUpdate={getTicketList}
+            onAfterUpdate={() => setKanbanReloadVersion((current) => current + 1)}
           />
         )
         }
@@ -472,7 +501,7 @@ function TicketModulePage({ menu_id }) {
           setSelectedTicket(null);
         }}
         selectedTicket={selectedTicket}
-        onAfterSave={getTicketList}
+        onAfterSave={handleAfterTicketSave}
         menu_id={resolvedMenuID}
       />
     </>
