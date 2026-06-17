@@ -1,19 +1,24 @@
 .flyout-overlay {
   position: absolute;
-  inset: 0;
+  right: 0;
+  bottom: 0px;
+  left: 0;
   z-index: 20;
   display: flex;
   justify-content: flex-end;
-  background: rgba(10, 16, 34, 0.12);
+  background: #0a10221f;
 }
-.flyout-panel.open{
+
+.flyout-panel.open {
   /* animation: slideOutRight 2s ease forwards; */
   animation: slideInRight .2s ease forwards;
 }
-.flyout-panel.close{
+
+.flyout-panel.close {
   /* animation: slideInRight 2s ease forwards; */
   animation: slideOutRight .2s ease forwards;
 }
+
 .flyout-panel {
   display: flex;
   flex-direction: column;
@@ -26,7 +31,7 @@
   overflow: hidden;
 }
 
-.flyout-close{
+.flyout-close {
   animation: fadeIn .6s ease forwards;
 }
 
@@ -35,6 +40,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -44,6 +50,7 @@
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -62,6 +69,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(100%);
   }

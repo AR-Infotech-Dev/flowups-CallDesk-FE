@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { readonly, z } from "zod";
 import { buildFallbackColumnsFromKeys } from "../../../utils/moduleStructure";
 
 // const auth_id = window.localStorage.getItem('auth_id')
@@ -263,7 +263,7 @@ export const ticketsModuleSchema = {
             type: "number",
             placeholder: "Ex. 120",
             gridSpan: 6,
-            readOnly: true,
+            readOnlyWhen:(values) => Boolean(!values.ticket_status || values.ticket_status !== 205),
           },
         ],
       },

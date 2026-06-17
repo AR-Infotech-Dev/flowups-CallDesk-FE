@@ -93,46 +93,56 @@ export default function NotificationBell() {
     /* ===================================================
        GET LIST
     =================================================== */
-    const getNotifications =
-        useCallback(async () => {
-            try {
-                const res = await makeRequest("/notifications",
-                    {
-                        method: "POST",
-                        body: { page: 1 }
-                    }
-                );
-                if (res.success) {
-                    setList(res.data || []);
+    const getNotifications = useCallback(async () => {
+        try {
+            const res = await makeRequest("/notifications",
+                {
+                    method: "POST",
+                    body: { page: 1 }
                 }
-            } catch (error) {
-                console.error(error);
+            );
+            if (res.success) {
+                setList(res.data || []);
             }
-        }, []);
+        } catch (error) {
+            console.error(error);
+        }
+    }, []);
 
     /* ===================================================
        MARK READ
     =================================================== */
-    const readNotification =
-        async (notification_id) => {
-            try {
-                const res = await makeRequest(`/notifications/read/${notification_id}`,
-                    { method: "GET" }
-                );
-                if (!res.success) return;
-                setList((prev) =>
-                    prev.map((item) => item.notification_id === notification_id
-                        ? { ...item, is_read: "y" }
-                        : item
-                    )
-                );
+    const readNotification = async (notification_id) => {
+        try {
+            const res = await makeRequest(`/notifications/read/${notification_id}`,
+                { method: "GET" }
+            );
+            if (!res.success) return;
+            setList((prev) =>
+                prev.map((item) => item.notification_id === notification_id
+                    ? { ...item, is_read: "y" }
+                    : item
+                )
+            );
 
-                setCount((prev) => prev > 0 ? prev - 1 : 0);
+            setCount((prev) => prev > 0 ? prev - 1 : 0);
 
-            } catch (error) {
-                console.error(error);
-            }
-        };
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const readAllNotification = async () => {
+        try {
+            const res = await makeRequest(`/notifications/read-all`,
+                { method: "GET" }
+            );
+            if (!res.success) return;
+            getCount();
+            getNotifications();
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     /* ===================================================
        KEEP OPEN REF UPDATED
@@ -249,13 +259,13 @@ export default function NotificationBell() {
             });
         }
     };
+    const handleMarkAllClick = async () => {
+        await readAllNotification();
+    };
 
     return (
         <div className="relative">
-            <button
-                onClick={openBell}
-                className="topbar-utility topbar-utility-bell"
-            >
+            <button onClick={openBell} className="topbar-utility topbar-utility-bell" >
                 <Bell size={15} />
 
                 {count > 0 && (
@@ -266,35 +276,36 @@ export default function NotificationBell() {
             </button>
 
             {open && (
-                <div
-                    ref={boxRef}
-                    className="absolute right-0 top-9 w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden"
-                >
+                <div ref={boxRef} className="absolute right-0 top-9 w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden" >
                     <div className="flex items-center justify-between px-3 py-2 border-b bg-slate-50">
                         <h3 className="text-xs font-semibold text-slate-800">
                             Notifications
                         </h3>
+                        
+                        <h3>
+
+                        {!!count &&
+                            <span className="text-xs mr-1 font-light text-blue-800 hover:text-blue-400" onClick={handleMarkAllClick}>
+                                Mark all read
+                            </span>
+                        }
 
                         {!!count && (
                             <span className="text-[11px] text-slate-500">
                                 {count} unread
                             </span>
                         )}
+                        </h3>
                     </div>
 
                     <div className="max-h-80 overflow-y-auto notification-list-scroll">
                         {list.length ? (
                             list.map((item) => (
-                                <div
-                                    key={item.notification_id || Math.random()}
+                                <div key={item.notification_id || Math.random()}
                                     onClick={() =>
                                         handleNotificationClick(item)
                                     }
-                                    className={`px-3 py-2 border-b border-slate-100 cursor-pointer hover:bg-slate-50 ${item.is_read === "n"
-                                        ? "bg-blue-50"
-                                        : ""
-                                        }`}
-                                >
+                                    className={`px-3 py-2 border-b border-slate-100 cursor-pointer hover:bg-slate-50 ${item.is_read === "n" ? "bg-blue-50" : ""}`} >
                                     <h4 className="text-xs font-semibold text-slate-800 leading-4">
                                         {item.title}
                                     </h4>
@@ -315,7 +326,8 @@ export default function NotificationBell() {
                         )}
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }

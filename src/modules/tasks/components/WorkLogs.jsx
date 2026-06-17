@@ -187,11 +187,11 @@ function WorkLogs({ ticket = {}, ticket_id }) {
   return (
     <>
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <SummaryCard icon={Clock} label="Expected" value={formatMinutes(summary.expected_minutes || ticket.expected_minutes)} />
           <SummaryCard icon={Timer} label="Logged" value={formatMinutes(summary.logged_minutes)} />
           <SummaryCard icon={Hourglass} label="Remaining" value={formatMinutes(summary.remaining_minutes)} tone="slate" />
-          <SummaryCard icon={AlarmClock} label="Over Time" value={formatMinutes(summary.overtime_minutes)} tone={Number(summary.overtime_minutes || 0) > 0 ? "warning" : "slate"} />
+          {/* <SummaryCard icon={AlarmClock} label="Over Time" value={formatMinutes(summary.overtime_minutes)} tone={Number(summary.overtime_minutes || 0) > 0 ? "warning" : "slate"} /> */}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -307,7 +307,7 @@ function SummaryCard({ icon: Icon, label, value, tone = "slate" }) {
 
   return (
     <div className={`min-h-[58px] min-w-0 rounded-md border px-2.5 py-2 shadow-sm ${styles.card}`}>
-      <div className="flex min-w-0 items-center justify-between gap-2">
+      <div className="flex min-w-0 items-center justify-between gap-1">
         <div className="min-w-0">
           <p className="truncate text-[10px] font-semibold text-slate-500">{label}</p>
           <p className={`mt-1 break-words text-[15px] font-bold leading-none ${styles.value}`}>{value}</p>

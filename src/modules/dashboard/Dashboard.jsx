@@ -1,10 +1,13 @@
-import { Activity, AlertTriangle, Building2, CalendarDays, CheckCircle2, Ticket, TrendingUp, UserCheck, Users, } from "lucide-react";
+import { Activity, AlertTriangle, Building2, CalendarDays, CheckCircle2, X, Ticket, TrendingUp, UserCheck, Users, RefreshCw } from "lucide-react";
 import { ArcElement, CategoryScale, Chart as ChartJS, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip, } from "chart.js";
 import { Doughnut, Line } from "react-chartjs-2";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { makeRequest } from "../../api/httpClient";
 import { useAuth } from "../../auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import Input from "../../components/form-inputs/Input";
+
 ChartJS.register(ArcElement, CategoryScale, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip);
 ChartJS.defaults.font.family = "Inter, ui-sans-serif, system-ui, sans-serif";
 
@@ -304,44 +307,240 @@ function ProductExpiryAlerts({ items = [], onUpdate }) {
     </div>
   );
 }
+
+const parseCustomerProducts = (value) => {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const productMatchesAlert = (product = {}, alert = {}) => {
+  const sameSerial = product.serial_number && alert.serial_number && String(product.serial_number) === String(alert.serial_number);
+  const sameProductName = product.product_name && alert.product_name && String(product.product_name) === String(alert.product_name);
+  const sameExpiry = product.expiry_date && alert.expiry_date && String(product.expiry_date).slice(0, 10) === String(alert.expiry_date).slice(0, 10);
+
+  return sameSerial || (sameProductName && sameExpiry);
+};
+
+const getTodayDateInputValue = () => {
+  const today = new Date();
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+};
+
+const getDateInputMinValue = (currentExpiry = "") => {
+  const todayValue = getTodayDateInputValue();
+  if (!currentExpiry) return todayValue;
+
+  const currentExpiryValue = String(currentExpiry).slice(0, 10);
+  const currentExpiryDate = new Date(`${currentExpiryValue}T00:00:00`);
+  const todayDate = new Date(`${todayValue}T00:00:00`);
+
+  if (Number.isNaN(currentExpiryDate.getTime()) || currentExpiryDate < todayDate) {
+    return todayValue;
+  }
+
+  return currentExpiryValue;
+};
+
+function ProductExpiryUpdateModal({ alert, loading, saving, expiryDate, error, onExpiryDateChange, onClose, onSave }) {
+  if (!alert) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+      <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
+        <div className="border-b border-slate-200 px-4 py-3">
+          <h3 className="text-sm font-semibold text-slate-900">Update Product Expiry</h3>
+          <p className="mt-1 text-xs text-slate-500">{alert.customer_name} - {alert.product_name || "Product"}</p>
+        </div>
+        <div className="space-y-3 px-4 py-4">
+          <div className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            <div><strong>Product:</strong> {alert.product_name || "-"}</div>
+            <div><strong>Serial:</strong> {alert.serial_number || "-"}</div>
+            <div><strong>Current expiry:</strong> {alert.expiry_date || "-"}</div>
+          </div>
+          <label className="block text-xs font-semibold text-slate-600">
+            New Expiry Date
+            <input
+              type="date"
+              min={getDateInputMinValue(alert.expiry_date)}
+              value={expiryDate}
+              onChange={(event) => onExpiryDateChange(event.target.value)}
+              className="mt-1 h-9 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-blue-500"
+              disabled={loading || saving}
+            />
+            {error ? <span className="mt-1 block text-xs font-medium text-red-600">{error}</span> : null}
+          </label>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
+          <button type="button" className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600" onClick={onClose} disabled={saving}>
+            Cancel
+          </button>
+          <button type="button" className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60" onClick={onSave} disabled={loading || saving || !expiryDate}>
+            {saving ? "Saving..." : "Update"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 export function Dashboard() {
   const navigate = useNavigate();
   const { authSession } = useAuth();
   const user = authSession?.user || {};
   const roleSlug = user?.role_slug || "user";
   const [dashboardData, setDashboardData] = useState(emptyDashboardData);
+  const [dashboardFilter, setDashboardFilter] = useState({
+    from_date: null,
+    to_date: null
+  });
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [dashboardError, setDashboardError] = useState("");
+  const [expiryModal, setExpiryModal] = useState({
+    alert: null,
+    customer: null,
+    expiryDate: "",
+    error: "",
+    loading: false,
+    saving: false,
+  });
+
+  const loadDashboard = useCallback(async () => {
+    setLoadingDashboard(true);
+    setDashboardError("");
+
+    const res = await makeRequest("/dashboard", {
+      method: "POST",
+      body: dashboardFilter
+    });
+
+    if (res?.success) {
+      setDashboardData(res.data || emptyDashboardData);
+    } else {
+      setDashboardData(emptyDashboardData);
+      setDashboardError(res?.message || "Unable to load dashboard");
+    }
+
+    setLoadingDashboard(false);
+  }, [dashboardFilter]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const loadDashboard = async () => {
-      setLoadingDashboard(true);
-      setDashboardError("");
-
-      const res = await makeRequest("/dashboard", {
-        method: "GET",
-      });
-
-      if (!isMounted) return;
-
-      if (res?.success) {
-        setDashboardData(res.data || emptyDashboardData);
-      } else {
-        setDashboardData(emptyDashboardData);
-        setDashboardError(res?.message || "Unable to load dashboard");
-      }
-
-      setLoadingDashboard(false);
-    };
-
     loadDashboard();
+  }, [loadDashboard]);
 
-    return () => {
-      isMounted = false;
+  const openProductExpiryModal = async (alert) => {
+    setExpiryModal({
+      alert,
+      customer: null,
+      expiryDate: String(alert.expiry_date || "").slice(0, 10),
+      error: "",
+      loading: true,
+      saving: false,
+    });
+
+    const res = await makeRequest(`/customers/${alert.customer_id}`, {
+      method: "GET",
+    });
+
+    if (!res?.success) {
+      toast.error(res?.message || "Unable to load customer products");
+      setExpiryModal((current) => ({ ...current, loading: false }));
+      return;
+    }
+
+    setExpiryModal((current) => ({
+      ...current,
+      customer: res.data || {},
+      loading: false,
+    }));
+  };
+
+  const closeProductExpiryModal = () => {
+    setExpiryModal({
+      alert: null,
+      customer: null,
+      expiryDate: "",
+      error: "",
+      loading: false,
+      saving: false,
+    });
+  };
+
+  const validateExpiryDate = (expiryDate, currentExpiry = "") => {
+    if (!expiryDate) return "Expiry date is required";
+
+    const selectedDate = new Date(`${expiryDate}T00:00:00`);
+    if (Number.isNaN(selectedDate.getTime())) return "Select a valid expiry date";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate < today) return "Expiry date cannot be in the past";
+
+    const currentExpiryValue = String(currentExpiry || "").slice(0, 10);
+    const currentExpiryDate = currentExpiryValue ? new Date(`${currentExpiryValue}T00:00:00`) : null;
+    if (currentExpiryDate && !Number.isNaN(currentExpiryDate.getTime()) && currentExpiryDate >= today && selectedDate < currentExpiryDate) {
+      return "New expiry date cannot be before current expiry date";
+    }
+
+    return "";
+  };
+
+  const saveProductExpiry = async () => {
+    const { alert, customer, expiryDate } = expiryModal;
+    if (!alert?.customer_id || !customer || !expiryDate) return;
+
+    const validationError = validateExpiryDate(expiryDate, alert.expiry_date);
+    if (validationError) {
+      setExpiryModal((current) => ({ ...current, error: validationError }));
+      toast.error(validationError);
+      return;
+    }
+
+    const products = parseCustomerProducts(customer.customer_products || customer.products);
+    const matchedIndex = products.findIndex((product) => productMatchesAlert(product, alert));
+
+    if (matchedIndex < 0) {
+      toast.error("Product not found in customer products");
+      return;
+    }
+
+    const customerProducts = products.map((product, index) => (
+      index === matchedIndex
+        ? { ...product, expiry_date: expiryDate }
+        : product
+    ));
+
+    setExpiryModal((current) => ({ ...current, saving: true }));
+
+    const payload = {
+      ...customer,
+      customer_products: customerProducts,
     };
-  }, []);
+    delete payload.products;
+    delete payload.product_ids;
+
+    const res = await makeRequest(`/customers/${alert.customer_id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res?.success) {
+      toast.error(res?.message || "Unable to update product expiry");
+      setExpiryModal((current) => ({ ...current, saving: false }));
+      return;
+    }
+
+    toast.success("Product expiry updated");
+    closeProductExpiryModal();
+    loadDashboard();
+  };
 
   const resolvedRoleSlug = dashboardData?.role || roleSlug;
   const adminView = dashboardData?.scope ? dashboardData.scope === "admin" : isAdminRole(roleSlug);
@@ -373,26 +572,36 @@ export function Dashboard() {
 
   return (
     <main className="dashboard-page">
-      <section className="dashboard-hero">
+      <section className="dashboard-hero relative">
         <div className="dashboard-hero-copy">
-          <div className="dashboard-profile-mark">{getInitials(displayName)}</div>
           <div>
-            <span className="dashboard-eyebrow">{dashboard.roleLabel}</span>
-            <h1>{dashboard.title}</h1>
+            <h1>Dashboard Overview</h1>
             <p>{dashboard.subtitle}</p>
           </div>
         </div>
-        <div className="dashboard-hero-actions">
+        <div className="dashboard-hero-actions absolute right-1 bottom-1">
           {loadingDashboard ? <span className="dashboard-state-chip">Loading</span> : null}
           {dashboardError ? <span className="dashboard-state-chip error">{dashboardError}</span> : null}
-          {/* <button type="button" className="dashboard-filter-button">
-            <CalendarDays size={15} />
-            Today
-          </button> */}
-          {/* <button type="button" className="dashboard-filter-button active">
-            <TrendingUp size={15} />
-            This Month
-          </button> */}
+          <div className="flex items-baseline-last gap-2 relative">
+            <label className="text-xs relative w-30.75">
+              <span className="absolute -top-3 z-50">
+                From date
+              </span>
+              <Input className="bg-white border border-slate-200" field={{ "type": "date", placeholder: 'From Date' }} onChange={(event) => setDashboardFilter((prev) => ({ ...prev, from_date: event.target.value }))} value={dashboardFilter.from_date} />
+            </label>
+            <label className="text-xs relative w-30.75">
+              <span className="absolute -top-3 z-50">
+                To date
+              </span>
+              <Input className="bg-white border border-slate-200" field={{ "type": "date" }} onChange={(event) => setDashboardFilter((prev) => ({ ...prev, to_date: event.target.value }))} value={dashboardFilter.to_date} />
+            </label>
+            <button onClick={() => setDashboardFilter((prev) => ({ from_date: null, to_date: null }))} className={` flex items-center justify-center h-7 w-7 rounded-lg bg-white text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200`} title="Clear Filter" >
+              <X size={16} />
+            </button>
+            <button onClick={() => loadDashboard()} className={`flex items-center justify-center h-7 w-7 rounded-lg border border-slate-00 bg-white text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 `} title="Refresh Dashboard" >
+              <RefreshCw className={`${loadingDashboard ? "animate-spin" : ""}`} size={16} />
+            </button>
+          </div>
         </div>
       </section>
 
@@ -472,22 +681,16 @@ export function Dashboard() {
               <h2>Expiry Alerts</h2>
             </div>
 
-            <AlertTriangle size={18} />
+            <button className="text-sm font-medium text-blue-600 hover:text-blue-700" onClick={() => {
+              navigate("/dashboard/product-expiry");
+            }}  >
+              view all
+            </button>
           </div>
 
           <ProductExpiryAlerts
             items={dashboard.productExpiryAlerts}
-            onUpdate={(product) => {
-              navigate("/customers", {
-                state: {
-                  openCustomer: {
-                    customer_id: product.customer_id,
-                    getBackTo: '/dashboard',
-                    action: "product_expiry",
-                  },
-                },
-              });
-            }}
+            onUpdate={openProductExpiryModal}
           />
         </article>
 
@@ -501,6 +704,16 @@ export function Dashboard() {
           <ActivityList items={dashboard.activity} />
         </article>
       </section>
+      <ProductExpiryUpdateModal
+        alert={expiryModal.alert}
+        loading={expiryModal.loading}
+        saving={expiryModal.saving}
+        expiryDate={expiryModal.expiryDate}
+        error={expiryModal.error}
+        onExpiryDateChange={(value) => setExpiryModal((current) => ({ ...current, expiryDate: value, error: validateExpiryDate(value, current.alert?.expiry_date) }))}
+        onClose={closeProductExpiryModal}
+        onSave={saveProductExpiry}
+      />
     </main>
   );
 }
