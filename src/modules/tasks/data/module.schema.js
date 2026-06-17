@@ -263,7 +263,7 @@ export const ticketsModuleSchema = {
             type: "number",
             placeholder: "Ex. 120",
             gridSpan: 6,
-            readOnlyWhen:(values) => Boolean(!values.ticket_status || values.ticket_status !== 205),
+            readOnlyWhen:(values) => Boolean(!values.ticket_id || values.ticket_status !== 205),
           },
         ],
       },
