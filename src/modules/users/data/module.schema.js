@@ -92,7 +92,7 @@ export const usersModuleSchema = {
       dateOfBirth: null,
       created_by: null,
       modified_by: null,
-      status: "active",
+      status: "inactive",
     },
     sections: [
       // `columns` decides the grid and each field controls label/type/required state.

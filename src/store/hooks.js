@@ -33,14 +33,10 @@ export function useModuleFilters(moduleKey, rows = []) {
   return {
     filterState,
     filteredRows,
-    setSearchText: (searchText) =>
-      dispatch(setModuleSearchText({ moduleKey, searchText })),
-    setFilters: ({ filters = [], selectedFilterId = "" }) =>
-      dispatch(setModuleFilters({ moduleKey, filters, selectedFilterId })),
-    applyFilterPayload: ({ filters = [], selectedFilterId = "", searchText }) =>
-      dispatch(setModuleFilters({ moduleKey, filters, selectedFilterId, searchText })),
-    setSort: ({ order_by, order }) =>
-      dispatch(setModuleSort({ moduleKey, order_by, order })),
+    setSearchText: (searchText) => dispatch(setModuleSearchText({ moduleKey, searchText })),
+    setFilters: ({ filters = [], selectedFilterId = "" }) => dispatch(setModuleFilters({ moduleKey, filters, selectedFilterId })),
+    applyFilterPayload: ({ filters = [], selectedFilterId = "", searchText }) => dispatch(setModuleFilters({ moduleKey, filters, selectedFilterId, searchText })),
+    setSort: ({ order_by, order }) => dispatch(setModuleSort({ moduleKey, order_by, order })),
     clearFilters: () => dispatch(clearModuleFilters(moduleKey)),
   };
 }

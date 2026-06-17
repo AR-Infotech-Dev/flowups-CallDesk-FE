@@ -83,7 +83,7 @@ const exportCustomerReportExcel = ({ customer = {}, summary = {}, products = [],
                         generated_on: formatDate(new Date()),
                     }
                     : null,
-                gapCols: 2,
+                gapCols:2,
                 labelColspan: 2,
                 valueColspan: 2,
             }),
@@ -96,6 +96,7 @@ const exportCustomerReportExcel = ({ customer = {}, summary = {}, products = [],
                     due_date: row.due_date || "-",
                     query_type: row.query_type || "-",
                     ticket_status: row.ticket_status || "-",
+                    resolver: row.resolver_name || "-",
                     ticket_priority: row.ticket_priority || "-",
                     assignee: row.assignee_name || "-",
                     statusClass: "excel-status-open",
@@ -314,6 +315,7 @@ function CustomerReport({ customerId: providedCustomerId }) {
                                     <th>Ticket No</th>
                                     <th>Description</th>
                                     <th>Status</th>
+                                    <th>Resolver</th>
                                     <th>Priority</th>
                                     <th>Product</th>
                                     <th>Start Date</th>
@@ -327,6 +329,7 @@ function CustomerReport({ customerId: providedCustomerId }) {
                                             <td>{ticket.ticket_no || ticket.ticket_id || "-"}</td>
                                             <td>{stripHtml(ticket.description || ticket.title || "-")}</td>
                                             <td>{getTicketStatus(ticket)}</td>
+                                            <td>{ticket.resolver_name || '-'}</td>
                                             <td>{ticket.priority_name || ticket.ticket_priority_name || ticket.ticket_priority || ticket.priority || "-"}</td>
                                             {/* <td>{`${ticket.priority_name ? ticket.priority_name + '-' + ticket.priority_name : '-'}`}</td> */}
                                             <td> {ticket?.product_name ? `${ticket.product_name}${ticket?.product_serial_number ? ` - ${ticket.product_serial_number}` : ""}` : "-"}</td>

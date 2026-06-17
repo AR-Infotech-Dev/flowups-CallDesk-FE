@@ -52,6 +52,42 @@ const VISIBILITY_COLUMN = {
   isAlwaysVisible: true,
 };
 
+const toDateInputValue = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const QUICK_FILTERS = [
+  { label: "Open", value: "open", filters: [{ field: "ticket_status", condition: "equal_to", value: "Open", type: "select" }] },
+  { label: "In Progress", value: "in_progress", filters: [{ field: "ticket_status", condition: "equal_to", value: "In Progress", type: "select" }] },
+  { label: "Pending", value: "pending", filters: [{ field: "ticket_status", condition: "equal_to", value: "Pending", type: "select" }] },
+  { label: "Closed", value: "closed", filters: [{ field: "ticket_status", condition: "equal_to", value: "Closed", type: "select" }] },
+  { label: "Due Today", value: "due_today", filters: [{ field: "due_date", condition: "today", value: "", type: "date" }] },
+  {
+    label: "Overdue",
+    value: "overdue",
+    getFilters: () => [
+      { field: "due_date", condition: "less_than", value: toDateInputValue(), type: "date" },
+      { field: "ticket_status", condition: "not_equal_to", value: "Closed", type: "select" },
+    ],
+  },
+  { label: "This Week", value: "this_week", filters: [{ field: "due_date", condition: "this_week", value: "", type: "date" }] },
+  { label: "High Priority", value: "high_priority", filters: [{ field: "ticket_priority", condition: "equal_to", value: "High", type: "select" }] },
+  { label: "Visit Required", value: "visit_required", filters: [{ field: "visit_required", condition: "equal_to", value: "y", type: "select" }] },
+  { label: "Unassigned", value: "unassigned", filters: [{ field: "assignee", condition: "is_empty", value: "", type: "select" }] },
+];
+
+function getQuickFilters(value = "") {
+  const quickFilter = QUICK_FILTERS.find((item) => item.value === value);
+  if (!quickFilter) return [];
+
+  return typeof quickFilter.getFilters === "function"
+    ? quickFilter.getFilters()
+    : quickFilter.filters || [];
+}
+
 function normalizeTicketVisibility(ticket = {}) {
   const reason = String(ticket.visibility_reason || ticket.delegation_flag || "").toLowerCase();
   const meta = VISIBILITY_META[reason] || { label: "-", color: "status-gray" };
@@ -84,12 +120,22 @@ function TicketModulePage({ menu_id }) {
   const [deleting, setDeleting] = useState(false);
   const [viewMode, setViewMode] = useState(getViewMode(resolvedMenuID) || "table");
   const [viewAll, setViewAll] = useState(false);
+  const [quickFilter, setQuickFilter] = useState("");
   const [kanbanReloadVersion, setKanbanReloadVersion] = useState(0);
   const isKanbanView = viewMode === "kanban";
   // ==================================================
   // FILTERS
   // ==================================================
   const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters, } = useModuleFilters("tickets", ticketList);
+  const activeQuickFilters = useMemo(() => getQuickFilters(quickFilter), [quickFilter]);
+  const combinedFilters = useMemo(
+    () => [
+      ...(Array.isArray(filterState.filters) ? filterState.filters : []),
+      ...activeQuickFilters,
+    ],
+    [filterState.filters, activeQuickFilters]
+  );
+
   useEffect(() => {
     const ticket = location.state?.openTicket;
     if (ticket?.ticket_id) {
@@ -148,7 +194,7 @@ function TicketModulePage({ menu_id }) {
           status: "active",
           page,
           searchText: filterState.searchText,
-          filters: filterState.filters,
+          filters: combinedFilters,
           order: filterState.order,
           order_by: filterState.order_by,
           viewAll: viewAll ? "Y" : "N",
@@ -173,6 +219,9 @@ function TicketModulePage({ menu_id }) {
       const kanbanFilters = (filterState.filters || []).filter(
         (filter) => filter?.field !== ticketsModuleSchema.kanban.statusField
       );
+      const quickKanbanFilters = activeQuickFilters.filter(
+        (filter) => filter?.field !== ticketsModuleSchema.kanban.statusField
+      );
 
       const res = await makeRequest(ticketsModuleSchema.api.list, {
         method: "POST",
@@ -180,7 +229,7 @@ function TicketModulePage({ menu_id }) {
           status: "active",
           page: columnPage,
           searchText: filterState.searchText,
-          filters: kanbanFilters,
+          filters: [...kanbanFilters, ...quickKanbanFilters],
           order: filterState.order,
           order_by: filterState.order_by,
           viewAll: viewAll ? "Y" : "N",
@@ -202,6 +251,7 @@ function TicketModulePage({ menu_id }) {
       filterState.order,
       filterState.order_by,
       JSON.stringify(filterState.filters),
+      JSON.stringify(activeQuickFilters),
       viewAll,
     ]
   );
@@ -350,7 +400,7 @@ function TicketModulePage({ menu_id }) {
     filterState.order,
     filterState.order_by,
     JSON.stringify(
-      filterState.filters
+      combinedFilters
     ),
     viewAll
   ]);
@@ -362,6 +412,7 @@ function TicketModulePage({ menu_id }) {
     filterState.searchText,
     filterState.order,
     filterState.order_by,
+    quickFilter,
     JSON.stringify(
       filterState.filters
     ),
@@ -404,11 +455,28 @@ function TicketModulePage({ menu_id }) {
                   onSaveFilter={() => { }}
                   onDeleteFilter={() => { }}
                   onSelectSavedFilter={() => { }}
-                  onClearFilters={clearFilters}
+                  onClearFilters={()=>{clearFilters(); setQuickFilter('')}}
+                  onlySearchText={true}
                 />
               }
             >
+              <div className="flex items-center gap-2">
+              </div>
               <div className="flex items-center justify-end gap-2">
+                <select className="h-7 min-w-[140px] rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 hover:border-slate-300 focus:ring-2 focus:ring-blue-100" value={quickFilter}
+                  onChange={(event) => {
+                    setQuickFilter(event.target.value);
+                    if (page !== 1) setPage(1);
+                  }}
+                >
+                  <option value="">Quick Filter</option>
+                  {QUICK_FILTERS.map((filter) => (
+                    <option key={filter.value} value={filter.value}>
+                      {filter.label}
+                    </option>
+                  ))}
+                </select>
+
                 <div className="view-switch" data-view={viewMode} aria-label="Ticket view mode">
                   <button
                     type="button"
@@ -473,6 +541,7 @@ function TicketModulePage({ menu_id }) {
             reloadKey={JSON.stringify({
               searchText: filterState.searchText,
               filters: filterState.filters,
+              quickFilter,
               order: filterState.order,
               order_by: filterState.order_by,
               viewAll,
