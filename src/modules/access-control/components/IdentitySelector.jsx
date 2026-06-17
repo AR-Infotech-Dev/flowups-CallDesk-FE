@@ -13,7 +13,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
   const fetchUsers = async (text = "") => {
     try {
       setLoading(true);
-      const res = await makeRequest('get-users', {
+      const res = await makeRequest('users', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: {
