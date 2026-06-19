@@ -29,7 +29,7 @@ const normalizeOption = (item = {}, valueKeys, labelKeys) => ({
   label: String(pick(item, labelKeys) || "Unnamed"),
 });
 
-export async function fetchExpiryReport(filters = {}, options = {}) {
+export async function getProductExpiryReport(filters = {}, options = {}) {
   const page = options.page || 1;
   const limit = options.limit || 10;
   const response = await makeRequest("/reports/product-expiry", {
@@ -45,7 +45,8 @@ export async function fetchExpiryReport(filters = {}, options = {}) {
     },
   });
 
-  const pagination = response?.pagination || {};
+  const responseData = response?.data;
+  const pagination = response?.pagination || responseData?.pagination || {};
   const currentPage = Number(pagination.page || page);
   const currentLimit = Number(pagination.limit || limit);
   const total = Number(pagination.total || 0);
@@ -53,9 +54,9 @@ export async function fetchExpiryReport(filters = {}, options = {}) {
   return {
     success: response?.success !== false,
     message: response?.message || "",
-    data: asArray(response?.data),
-    summary: response?.summary || {},
-    filters: response?.filters || {},
+    data: asArray(responseData),
+    summary: response?.summary || responseData?.summary || {},
+    filters: response?.filters || responseData?.filters || {},
     pagination: {
       ...pagination,
       page: currentPage,
@@ -67,6 +68,10 @@ export async function fetchExpiryReport(filters = {}, options = {}) {
     },
   };
 }
+
+export async function fetchExpiryReport(filters = {}, options = {}) {
+  return getProductExpiryReport(filters, options);
+}
 export async function sendAlertToCustomer({customer_id = null , product = {}}) {
   const response = await makeRequest("/reports/product-expiry/sendAlert", {
     method: "POST",
@@ -77,4 +82,39 @@ export async function sendAlertToCustomer({customer_id = null , product = {}}) {
   });
 
   return response;
+}
+export async function makeToCustomer({customer_id = null , product = {}}) {
+  const response = await makeRequest("/reports/product-expiry/makeCall", {
+    method: "POST",
+    body: {
+      product,
+      customer_id
+    },
+  });
+
+  return response;
+}
+
+export async function fetchProductActivity({ customer_id = null, product = {} }) {
+  const response = await makeRequest("/reports/product-expiry/activity", {
+    method: "POST",
+    body: {
+      customer_id,
+      product,
+    },
+  });
+
+  if (!response?.success) return response;
+
+  const activityData = response.data || {};
+
+  return {
+    ...response,
+    data: {
+      customer: activityData.customer || null,
+      calls: activityData.calls || [],
+      reminders: activityData.reminders || [],
+      counts: activityData.counts || {},
+    },
+  };
 }

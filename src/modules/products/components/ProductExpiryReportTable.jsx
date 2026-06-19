@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
-import { sendAlertToCustomer } from "../data/product.report.service"
+import { sendAlertToCustomer, makeToCustomer } from "../data/product.report.service"
+import { Phone, Send, MailCheck, History } from "lucide-react"
 
 const statusLabels = {
   expired: "Expired",
@@ -19,13 +20,13 @@ const headers = [
   ["action", "Action"],
 ];
 
-function ProductExpiryReportTable({ rows, loading, sortConfig, onSort }) {
+function ProductExpiryReportTable({ rows, loading, sortConfig, onSort, refreshList, onOpenActivity, activityLoadingRowKey }) {
   if (loading) {
     return <div className="product-expiry-empty">Loading product expiry report...</div>;
   }
-  const handelAlertSend = async (row) => {
-    try {
-      const product = {
+  const getDetails = (row) => {
+    return {
+      product: {
         "product_id": row.product_id || null,
         "product_name": row.product_name || null,
         "serial_number": row.serial_number || null,
@@ -33,12 +34,36 @@ function ProductExpiryReportTable({ rows, loading, sortConfig, onSort }) {
         "days_left": row.days_left || null,
         "expiry_status": row.expiry_status || null,
         "add_ons": row.add_ons || null
-      };
-      const customer_id = row.customer_id || null
+      },
+      customer_id: row.customer_id || null
+    }
+  }
+  const handelAlertSend = async (row) => {
+    try {
+      const { product, customer_id } = getDetails(row);
+
       if (!customer_id) {
         toast.error("Customer not found !");
       }
       const res = await sendAlertToCustomer({ customer_id, product });
+      if (res.success) {
+        refreshList();
+        toast.success(res?.message || `Alert sent successfully`);
+        return;
+      }
+      toast.error(res?.msg || res?.message || "Something went wrong");
+    } catch (error) {
+      toast.error(error.message || "Server error");
+    }
+  }
+  const handelExpiryRelatedCall = async (row) => {
+    try {
+      const { product, customer_id } = getDetails(row);
+
+      if (!customer_id) {
+        toast.error("Customer not found !");
+      }
+      const res = await makeToCustomer({ customer_id, product });
       if (res.success) {
         toast.success(res?.message || `Alert sent successfully`);
         return;
@@ -48,6 +73,7 @@ function ProductExpiryReportTable({ rows, loading, sortConfig, onSort }) {
       toast.error(error.message || "Server error");
     }
   }
+
   return (
     <div className="product-expiry-table-panel">
       <div className="product-expiry-table-scroll">
@@ -70,7 +96,14 @@ function ProductExpiryReportTable({ rows, loading, sortConfig, onSort }) {
                 <td colSpan={headers.length} className="product-expiry-empty-cell">No product expiry records found</td>
               </tr>
             ) : rows.map((row) => (
-              <ProductExpiryReportRow key={`${row.customer_id}-${row.product_id}-${row.serial_number}-${row.expiry_date}`} row={row} handelAlertSend={handelAlertSend} />
+              <ProductExpiryReportRow
+                key={`${row.customer_id}-${row.product_id}-${row.serial_number}-${row.expiry_date}`}
+                row={row}
+                handelExpiryRelatedCall={handelExpiryRelatedCall}
+                handelAlertSend={handelAlertSend}
+                onOpenActivity={onOpenActivity}
+                activityLoadingRowKey={activityLoadingRowKey}
+              />
             ))}
           </tbody>
         </table>
@@ -79,7 +112,11 @@ function ProductExpiryReportTable({ rows, loading, sortConfig, onSort }) {
   );
 }
 
-function ProductExpiryReportRow({ row, handelAlertSend }) {
+function ProductExpiryReportRow({ row, handelAlertSend, handelExpiryRelatedCall, onOpenActivity, activityLoadingRowKey }) {
+  const sentToday = Boolean(Number(row?.sent_today || 0));
+  const rowKey = `${row.customer_id}-${row.serial_number || row.product_id || ""}`;
+  const isActivityLoading = activityLoadingRowKey === rowKey;
+
   return (
     <tr>
       <td><strong>{row.expiry_date || "-"}</strong></td>
@@ -90,9 +127,19 @@ function ProductExpiryReportRow({ row, handelAlertSend }) {
       <td>{row.serial_number || "-"}</td>
       <td>{row.company_name || "-"}</td>
       <td>{row.mobile_no || "-"}</td>
-      <td>
+      <td className="items-center w-fit">
         {row.expiry_status !== "valid" &&
-          <button type="button" className="product-expiry-button primary" onClick={() => handelAlertSend(row)}>Send Alert</button>
+          <div className="flex items-center h-full gap-2" >
+            <button title="Make Call" type="button" className="product-expiry-button primary" onClick={() => handelExpiryRelatedCall(row)}><Phone size={14} /></button>
+            <button title="History" type="button" className="product-expiry-button primary" onClick={() => onOpenActivity(row)} disabled={isActivityLoading}>
+              <History size={14} />
+            </button>
+            {!sentToday ?
+              <button title="Send Reminder" type="button" className="product-expiry-button primary" onClick={() => handelAlertSend(row)}><Send size={14} /></button>
+              :
+              <button title="Reminder sent today" type="button" className=" primary"><MailCheck size={26} color="green" /> </button>
+            }
+          </div>
         }
       </td>
     </tr>

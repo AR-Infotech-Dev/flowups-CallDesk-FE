@@ -5,15 +5,27 @@ import ModulePagination from "../shared/ModulePagination";
 import ProductExpiryReportFilters from "./components/ProductExpiryReportFilters";
 import ProductExpiryReportSummary from "./components/ProductExpiryReportSummary";
 import ProductExpiryReportTable from "./components/ProductExpiryReportTable";
-import { defaultProductExpiryFilters, fetchExpiryReport } from "./data/product.report.service";
+import ProductActivityModal from "./components/ProductActivityModal";
+import { defaultProductExpiryFilters, fetchProductActivity, getProductExpiryReport } from "./data/product.report.service";
 import "./product-expiry-report.css";
 
 const defaultSort = { key: "expiry_date", direction: "ASC" };
+
+const getProductActivityPayload = (row = {}) => ({
+  product_id: row.product_id || null,
+  product_name: row.product_name || "",
+  serial_number: row.serial_number || "",
+  expiry_date: row.expiry_date || null,
+  days_left: row.days_left || null,
+  expiry_status: row.expiry_status || null,
+  add_ons: row.add_ons || [],
+});
 
 function ProductExpiryReport() {
   const [filters, setFilters] = useState(defaultProductExpiryFilters);
   const [appliedFilters, setAppliedFilters] = useState(defaultProductExpiryFilters);
   const [rows, setRows] = useState([]);
+  const [refresh, setRefresh] = useState(0);
   const [summary, setSummary] = useState({});
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(false);
@@ -21,15 +33,22 @@ function ProductExpiryReport() {
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
   const [sortConfig, setSortConfig] = useState(defaultSort);
+  const [activityCustomer, setActivityCustomer] = useState(null);
+  const [activityProduct, setActivityProduct] = useState(null);
+  const [activityData, setActivityData] = useState(null);
+  const [activityTab, setActivityTab] = useState("calls");
+  const [activityLoadingRowKey, setActivityLoadingRowKey] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchText(searchText), 350);
     return () => clearTimeout(timer);
   }, [searchText]);
-
+  const refreshList = () => {
+    setRefresh((prev => prev + 1))
+  };
   const loadReport = useCallback(async () => {
     setLoading(true);
-    const response = await fetchExpiryReport(appliedFilters, {
+    const response = await getProductExpiryReport(appliedFilters, {
       page,
       limit: 20,
       searchText: debouncedSearchText,
@@ -46,7 +65,7 @@ function ProductExpiryReport() {
     setRows(response.data || []);
     setSummary(response.summary || {});
     setPagination(response.pagination || {});
-  }, [appliedFilters, debouncedSearchText, page, sortConfig]);
+  }, [appliedFilters, debouncedSearchText, page, sortConfig, refresh]);
 
   useEffect(() => {
     loadReport();
@@ -63,6 +82,44 @@ function ProductExpiryReport() {
     setSearchText("");
     setPage(1);
     setSortConfig(defaultSort);
+  };
+
+  const handleOpenActivity = async (row) => {
+    const customerId = row?.customer_id;
+    if (!customerId) {
+      toast.error("Customer id is missing.");
+      return;
+    }
+
+    const product = getProductActivityPayload(row);
+    const rowKey = `${customerId}-${product.serial_number || product.product_id || ""}`;
+    setActivityLoadingRowKey(rowKey);
+    const response = await fetchProductActivity({ customer_id: customerId, product });
+    setActivityLoadingRowKey(null);
+
+    if (response?.success) {
+      setActivityCustomer({
+        customer_id: row.customer_id,
+        name: row.customer_name,
+        email: row.email,
+        mobile_no: row.mobile_no,
+      });
+      console.log(response);
+      
+      setActivityProduct(product);
+      setActivityData(response.data || {});
+      setActivityTab("calls");
+      return;
+    }
+
+    toast.error(response?.message || "Unable to fetch product activity.");
+  };
+
+  const closeActivityModal = () => {
+    setActivityCustomer(null);
+    setActivityProduct(null);
+    setActivityData(null);
+    setActivityTab("calls");
   };
 
   const handleSort = (key) => {
@@ -91,8 +148,24 @@ function ProductExpiryReport() {
             onFilterChange={(key, value) => setFilters((current) => ({ ...current, [key]: value }))}
           />
           <ProductExpiryReportSummary summary={summary} />
-          <ProductExpiryReportTable rows={rows} loading={loading} sortConfig={sortConfig} onSort={handleSort} />
+          <ProductExpiryReportTable
+            rows={rows}
+            loading={loading}
+            sortConfig={sortConfig}
+            refreshList={refreshList}
+            onSort={handleSort}
+            onOpenActivity={handleOpenActivity}
+            activityLoadingRowKey={activityLoadingRowKey}
+          />
           <ModulePagination pagination={pagination} onPageChange={setPage} />
+          <ProductActivityModal
+            customer={activityCustomer}
+            product={activityProduct}
+            activity={activityData}
+            activeTab={activityTab}
+            onTabChange={setActivityTab}
+            onClose={closeActivityModal}
+          />
         </div>
       }
     />

@@ -90,7 +90,7 @@
 }
 
 .product-expiry-button {
-  height: 28px;
+  height: 24px;
   border: 1px solid #dbe3ef;
   border-radius: 6px;
   background: #ffffff;
@@ -101,8 +101,8 @@
 }
 
 .product-expiry-button.primary {
-  border-color: #0f766e;
-  background: #0f766e;
+  border-color: var(--primary);
+  background: var(--primary);
   color: #ffffff;
 }
 

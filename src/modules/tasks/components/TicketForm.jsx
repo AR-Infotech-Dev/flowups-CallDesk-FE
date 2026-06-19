@@ -515,6 +515,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
         isOpen={isOpen}
         onClose={handleClose}
         title={selectedTicket ? "Edit Ticket" : "Create Ticket"}
+        subtitle={ formData.ticket_no && <p className="text-[14px] text-slate-500 w-full text-end " ><span className="bg-gray-50 p-1">#{formData.ticket_no}</span></p>}
         closeButton={
           <button className="flyout-close" onClick={handleClose} aria-label="Close panel">
             <X size={18} />
@@ -546,7 +547,6 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
               : (
                 <div className="ticket-drawer-layout grid grid-cols-12 overflow-hidden rounded-xl bg-white">
                   <div className="ticket-scroll-pane col-span-12 min-w-0 overflow-y-auto border-r border-slate-200 px-4 py-2 lg:col-span-6 xl:col-span-7">
-                    {mode === "edit" && <p className="text-[14px] text-slate-500 w-full text-end " ><span className="bg-gray-50 p-1">Ticket No : {formData.ticket_no}</span></p>}
                     <DynamicModuleForm
                       sections={ticketsModuleSchema.form.sections}
                       values={formData}
