@@ -96,6 +96,10 @@ export const companyMasterSchema = {
       created_date: null,
       modified_by: null,
       modified_date: null,
+      ticket_prefix:null,
+      ticket_include_year:'y',
+      ticket_prefix_padding: 3,
+      ticket_no_reset: 'yearly',
       status: "active",
     },
     sections: [
@@ -157,12 +161,48 @@ export const companyMasterSchema = {
           { name: "time_format", label: "Time Format", type: "select", gridSpan: 4, options: DATE_FORMAT_OPTIONS },
         ],
       },
-      // {
-      //   columns: 2,
-      //   fields: [
-      //     { name: "email_logo", label: "Email Logo", type: "text", placeholder: "Enter logo URL/path", gridSpan: 6 },
-      //   ],
-      // },
+      {
+        title: "Ticket Settings",
+        columns: 2,
+        fields: [
+          {
+            name: "ticket_prefix",
+            label: "Ticket Prefix",
+            type: "text",
+            placeholder: "TKT",
+            required:true,
+            gridSpan: 3,
+          },
+          {
+            name: "ticket_prefix_padding",
+            label: "Padding",
+            type: "text",
+            placeholder: "TKT",
+            gridSpan: 3,
+          },
+          {
+            name: "ticket_include_year",
+            label: "Include Date",
+            type: "radio",
+            options: [
+              { label: "Yes", value: "y" },
+              { label: "No", value: "n" },
+            ],
+            gridSpan: 3,
+          },
+          {
+            name: "ticket_no_reset",
+            label: "Reset preference",
+            type: "radio",
+            options: [
+              { label: "Daily", value: "daily" },
+              { label: "Monthly", value: "monthly" },
+              { label: "Yearly", value: "yearly" },
+            ],
+            gridSpan: 3,
+          },
+        ],
+      },
       {
         columns: 2,
         fields: [
@@ -183,6 +223,7 @@ export const companyMasterSchema = {
   },
   validationSchema: z.object({
     company_name: z.string().trim().min(1, "Company name is required"),
+    ticket_prefix: z.string().trim().min(1, "Ticket Prefix is required"),
     cc_email: z.union([z.literal(""), z.string().trim().email("Invalid CC email address")]).optional(),
     sender_email: z.string().trim().email("Invalid from email address"),
     sender_name: z.string().optional(),

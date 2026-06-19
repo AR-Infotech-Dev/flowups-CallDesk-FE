@@ -194,6 +194,7 @@ button {
   padding: 4px 8px 8px;
   overflow: hidden;
 }
+
 .sidebar-logo {
   display: block;
   max-width: 170px;
@@ -2694,17 +2695,19 @@ tbody tr.table-row-amc-active:hover td {
 .ticket-tab-icon-button::after {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + -58px);
   z-index: 40;
   max-width: 150px;
   padding: 5px 8px;
   border-radius: 6px;
   color: #ffffff;
-  background: #0f172a;
+  /* background: #1F2937; */
+  background: rgba(17,24,39,0.95);
+  backdrop-filter: blur(8px);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
   content: attr(data-tooltip);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 300;
   line-height: 1;
   opacity: 0;
   pointer-events: none;
@@ -2716,11 +2719,13 @@ tbody tr.table-row-amc-active:hover td {
 .ticket-tab-icon-button::before {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 3px);
+  bottom: calc(100% + -44px);
   z-index: 41;
   width: 8px;
   height: 8px;
-  background: #0f172a;
+  /* background: #1F2937; */
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(8px);
   content: "";
   opacity: 0;
   pointer-events: none;
