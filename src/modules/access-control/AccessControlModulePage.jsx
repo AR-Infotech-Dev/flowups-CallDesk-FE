@@ -365,18 +365,13 @@ function AccessControlModulePage() {
       toast.error("Please select a user first");
       return;
     }
-    console.log({
-        user_id: selectedIdentity.id,
-        company_id: selectedIdentity.company_id,
-        permissions,
-      },);
-    
+
     const res = await makeRequest(`/permissions/save/${selectedIdentity?.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: {
-        user_id: selectedIdentity.id,
-        company_id: selectedIdentity.company_id,
+        user_id: parseInt(selectedIdentity.id),
+        company_id: parseInt(selectedIdentity.company_id),
         permissions,
       },
     });

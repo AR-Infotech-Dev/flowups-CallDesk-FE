@@ -13,7 +13,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
   const fetchUsers = async (text = "") => {
     try {
       setLoading(true);
-      const res = await makeRequest('users', {
+      const res = await makeRequest('get-users', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: {
@@ -123,7 +123,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-700">
                   {identity.badge}
                 </span>
-                <span className="max-w-[72px] truncate text-[10px] text-slate-400">{identity.companyLabel}</span>
+                {/* <span className="max-w-[72px] truncate text-[10px] text-slate-400">{identity.companyLabel}</span> */}
               </span>
             </button>
           ))}
