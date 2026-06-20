@@ -4,8 +4,8 @@ import { toast } from "react-toastify";
 // import { CalendarPlus, CheckCircle2, Clock, MapPin, X } from "lucide-react";
 
 
-import { fetchAmcActivity, fetchAmcReminderCustomers, makeAmcCallTicket, scheduleAmcVisit, markVisited, sendAmcReminder } from "../../api/amcReminderController";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import { fetchAmcActivity, fetchAmcReminderCustomers, makeAmcCallTicket, scheduleAmcVisit, markVisited, sendAmcReminder } from "./data/amcReminderController";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 import ActionButton from "../../components/ui/ActionButton";
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";

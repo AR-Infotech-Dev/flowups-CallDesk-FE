@@ -5,9 +5,9 @@ import TableHeader from "./TableHeader";
 import TableSkeleton from "./TableSkeleton";
 import NoTableData from "./NoTableData";
 import ColumnArranger from "./ColumnArranger";
-import { useAuth } from "../../auth/AuthProvider";
-import { hasFieldVisiblePermission } from "../../auth/permissions";
-import { isAmcActive } from "../../utils/amc";
+import { useAuth } from "@auth/components/AuthProvider";
+import { hasFieldVisiblePermission } from "@auth/utils/permissions";
+import { isAmcActive } from "@utils/amc";
 
 window.TIMEFORMAT = "Do MMMM YYYY"
 

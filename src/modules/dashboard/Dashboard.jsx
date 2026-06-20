@@ -2,7 +2,7 @@ import { Activity, AlertTriangle, Building2, CalendarDays, CheckCircle2, X, Tick
 import { ArcElement, CategoryScale, Chart as ChartJS, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip, } from "chart.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { makeRequest } from "../../api/httpClient";
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "@auth/components/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ProductExpiryUpdateModal } from "./components/ProductExpiryUpdateModal";

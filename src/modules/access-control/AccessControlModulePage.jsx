@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { makeRequest } from "../../api/httpClient";
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "@auth/components/AuthProvider";
 import ModulePageLayout from "../shared/ModulePageLayout";
 import IdentitySelector from "./components/IdentitySelector";
 import PermissionsMatrix from "./components/PermissionsMatrix";
 import { accessModules, accessPermissionColumns } from "./data/accessControlData";
 import { flattenMenuModules } from "./data/helper";
-import { getStoredPermissions } from "../../auth/authStorage";
+import { getStoredPermissions } from "@auth/utils/authStorage";
 import ConfigureFeilds from "./components/ConfigureFeilds";
 
 const buildDefaultModules = (rows = accessModules) =>

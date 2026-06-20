@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getCurrentSession, logoutFromLocalAuth } from "./authStorage";
+import { getCurrentSession, logoutFromLocalAuth } from "@auth/utils/authStorage";
 import { useNavigate } from "react-router-dom";
 const AuthContext = createContext(null);
 

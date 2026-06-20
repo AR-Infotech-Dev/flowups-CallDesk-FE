@@ -1,10 +1,9 @@
 import { BrowserRouter } from "react-router-dom";
-import { HashRouter } from "react-router-dom";
-import AuthProvider from "./auth/AuthProvider";
-import MainRoutes from "./routes/MainRoutes";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { LoaderProvider } from "./context/LoaderContext";
+import AuthProvider from "@auth/components/AuthProvider";
+import { LoaderProvider } from "@context/LoaderContext";
+import MainRoutes from "@routes/MainRoutes";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 
 function App() {

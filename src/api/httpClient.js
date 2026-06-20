@@ -1,7 +1,7 @@
-import { API_BASE_URL, DEFAULT_HEADERS, getDefaultHeaders } from "./config";
 import axios from 'axios';
-import { clearAuthSession, getCurrentSession } from "../auth/authStorage";
-import { hideGlobalLoader, showGlobalLoader } from "../context/loaderStore";
+import { API_BASE_URL, DEFAULT_HEADERS, getDefaultHeaders } from "./config";
+import { clearAuthSession, getCurrentSession } from "@auth/utils/authStorage";
+import { hideGlobalLoader, showGlobalLoader } from "@context/loaderStore";
 
 const isSuperAdminSession = () => getCurrentSession()?.user?.role_slug === "super_admin";
 
@@ -18,34 +18,9 @@ const shouldBypassCompanyIdFilter = (url = "", method = "GET") => {
 
   if (normalizedMethod === "GET") return true;
 
-  if (
-    normalizedMethod === "POST" &&
-    [
-      "/users",
-      "/customers",
-      "/products",
-      "/tickets",
-      "/categories",
-      "/companies",
-      "/menus",
-      "/comments",
-    ].includes(normalizedPath)
-  ) {
-    return true;
-  }
+  if (normalizedMethod === "POST" && ["/users", "/customers", "/products", "/tickets", "/categories", "/companies", "/menus", "/comments",].includes(normalizedPath)) { return true; }
 
-  return [
-    "/list",
-    "searchlist",
-    "searchsluglist",
-    "getdefinations",
-    "get-menus",
-    "get-permissions",
-    "permissions/",
-    "/dashboard",
-    "get-markers",
-    "/notifications",
-  ].some((segment) => normalizedUrl.includes(segment));
+  return ["/list", "searchlist", "searchsluglist", "getdefinations", "get-menus", "get-permissions", "permissions/", "/dashboard", "get-markers", "/notifications",].some((segment) => normalizedUrl.includes(segment));
 };
 
 const stripCompanyIdFilterRows = (value) => {
@@ -122,12 +97,11 @@ export const makeRequest = async (url, options = {}) => {
   } catch (error) {
     console.error("Axios Error:", error.response);
     if (error.response) {
-      // AUTO LOGOUT ON 401
-      if (error.response.status === 401) {
+      if (error.response.status === 401 && [2006, 2007, 2009].includes(error?.response?.data?.code)) {
         clearAuthSession();
-        setTimeout(()=>{
+        setTimeout(() => {
           window.location.href = "/login";
-        },2000)
+        }, 2000)
       }
       return {
         ...error.response.data,
@@ -146,7 +120,7 @@ export const makeRequest = async (url, options = {}) => {
         message: error.message,
       };
     }
-  } finally{
+  } finally {
     hideGlobalLoader();
   }
 };
@@ -171,61 +145,3 @@ async function parseResponse(response) {
   return payload;
 }
 
-
-export async function apiRequest(path, options = {}) {
-  const { headers, ...restOptions } = options;
-
-  try {
-    showGlobalLoader();
-
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      ...restOptions,
-      headers: {
-        ...DEFAULT_HEADERS,
-        ...headers,
-      },
-    });
-
-    return parseResponse(response);
-  } finally {
-    hideGlobalLoader();
-  }
-}
-
-export function get(path, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "GET",
-  });
-}
-
-export function post(path, body, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export function put(path, body, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "PUT",
-    body: JSON.stringify(body),
-  });
-}
-
-export function patch(path, body, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "PATCH",
-    body: JSON.stringify(body),
-  });
-}
-
-export function remove(path, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "DELETE",
-  });
-}

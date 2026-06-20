@@ -1,4 +1,4 @@
-import LoginForm from "../auth/LoginForm";
+import LoginForm from "./forms/LoginForm";
 import AuthVisualShell from "./AuthVisualShell";
 
 const Login = () => {

@@ -1,4 +1,4 @@
-import { makeRequest } from "./httpClient";
+import { makeRequest } from "../../../api/httpClient";
 
 const LIST_ENDPOINT = "/amc-reminders";
 const SEND_ENDPOINT = "/amc-reminders/send";

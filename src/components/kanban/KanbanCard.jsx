@@ -2,8 +2,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, GripVertical, UserRound } from "lucide-react";
 
-import { useAuth } from "../../auth/AuthProvider";
-import { hasFieldVisiblePermission } from "../../auth/permissions";
+import { useAuth } from "@auth/components/AuthProvider";
+import { hasFieldVisiblePermission } from "@auth/utils/permissions";
 import { useKanbanContext } from "./KanbanContext";
 import { isInlineColorValue, resolveCardValue } from "./kanbanUtils";
 import { isAmcActive } from "../../utils/amc";

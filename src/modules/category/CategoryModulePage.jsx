@@ -16,7 +16,7 @@ import ModulePagination from "../shared/ModulePagination";
 
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 
 import CategoryForm from "./components/CategoryForm";
 import { categoryFallbackColumns, categoryModuleSchema } from "./data/module.schema";

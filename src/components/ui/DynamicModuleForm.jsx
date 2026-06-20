@@ -1,15 +1,15 @@
 import { Fragment } from "react";
-import Input from "../form-inputs/Input";
-import Radio from "../form-inputs/Radio";
-import Select from "../form-inputs/Select";
-import TextArea from "../form-inputs/TextArea";
-import RichTextEditor from "../form-inputs/RichTextEditor";
-import SmartSelect from "../form-inputs/smartSelect";
-import SmartSelectInput from "../form-inputs/smartSelectInput";
-import ColorSwatches from "../form-inputs/ColorSwatches";
-import IconPicker from "../form-inputs/IconPicker";
-import { useAuth } from "../../auth/AuthProvider";
-import { hasFieldEditablePermission, hasFieldVisiblePermission } from "../../auth/permissions";
+import Input from "@formInputs/Input";
+import Radio from "@formInputs/Radio";
+import Select from "@formInputs/Select";
+import TextArea from "@formInputs/TextArea";
+import RichTextEditor from "@formInputs/RichTextEditor";
+import SmartSelect from "@formInputs/smartSelect";
+import SmartSelectInput from "@formInputs/smartSelectInput";
+import ColorSwatches from "@formInputs/ColorSwatches";
+import IconPicker from "@formInputs/IconPicker";
+import { useAuth } from "@auth/components/AuthProvider";
+import { hasFieldEditablePermission, hasFieldVisiblePermission } from "@auth/utils/permissions";
 
 const SECTION_COLUMN_CLASS = {
   1: "grid grid-cols-12 gap-x-4 gap-y-5",

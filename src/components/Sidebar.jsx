@@ -1,36 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import {
-  Accessibility,
-  BriefcaseBusiness,
-  Building2,
-  ChevronDown,
-  ContactRound,
-  FileText,
-  Folder,
-  Gauge,
-  LayoutGrid,
-  Mail,
-  Map,
-  MenuSquare,
-  NotepadText,
-  Package,
-  ShieldCheck,
-  Sparkles,
-  Ticket,
-  Users,
-  Workflow,
-} from "lucide-react";
-import { useAuth } from "../auth/AuthProvider";
-import { APP_NAME } from "../api/config";
-import { getStoredMenuList, getStoredPermissions } from "../auth/authStorage";
-import {
-  buildAllowedMenuTree,
-  getMenuId,
-  getMenuLabel,
-  getMenuLink,
-  normalizePath,
-} from "../auth/permissions";
+import { Accessibility, BriefcaseBusiness, Building2, ChevronDown, ContactRound, FileText, Folder, Gauge, LayoutGrid, Mail, Map, MenuSquare, NotepadText, Package, ShieldCheck, Sparkles, Ticket, Users, Workflow, } from "lucide-react";
+import { useAuth } from "@auth/components/AuthProvider";
+import { APP_NAME } from "@api/config";
+import { getStoredMenuList, getStoredPermissions } from "@auth/utils/authStorage";
+import { buildAllowedMenuTree, getMenuId, getMenuLabel, getMenuLink, normalizePath, } from "@auth/utils/permissions";
 
 const iconMap = {
   Accessibility,

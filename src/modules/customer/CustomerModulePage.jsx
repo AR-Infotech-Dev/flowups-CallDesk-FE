@@ -17,9 +17,9 @@ import ModulePagination from "../shared/ModulePagination";
 
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 import ActionButton from "../../components/ui/ActionButton";
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "@auth/components/AuthProvider";
 import CustomerForm from "./components/CustomerForm";
 import CustomerImportFlyout from "./components/CustomerImportFlyout";
 import { customerFallbackColumns, customerModuleSchema } from "./data/module.schema";

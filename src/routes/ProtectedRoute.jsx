@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { getCurrentSession } from "../auth/authStorage";
+import { getCurrentSession } from "@auth/utils/authStorage";
 
 function ProtectedRoute() {
   const location = useLocation();

@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider";
-import { getFirstAllowedPath, hasMenuViewPermission } from "../auth/permissions";
+import { useAuth } from "@auth/components/AuthProvider";
+import { getFirstAllowedPath, hasMenuViewPermission } from "@auth/utils/permissions";
 
 function PermissionRoute({ menuId, children }) {
   const location = useLocation();

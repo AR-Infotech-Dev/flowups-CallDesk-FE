@@ -1,17 +1,11 @@
-import {
-  Building2,
-  ChevronDown,
-  LogOut,
-  UserRound,
-} from "lucide-react";
-
+import { Building2, ChevronDown, LogOut, UserRound, } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "./ui/Spinner";
 import NotificationBell from "./ui/NotificationBell";
 import LoadingBar from "./LoadingBar";
-import { useAuth } from "../auth/AuthProvider";
-import Clock from "../components/ui/Clock"
+import { useAuth } from "@auth/components/AuthProvider";
+import Clock from "@components/ui/Clock"
 
 const getCompanyName = (user = {}) => user?.company_name || "";
 

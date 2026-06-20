@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
 import { makeRequest } from "../../api/httpClient";
-import { useAuth } from "../../auth/AuthProvider";
+import { useAuth } from "@auth/components/AuthProvider";
 import { validatePasswordUpdate } from "../../utils/passwordValidation";
 
 const editableFields = new Set(["email", "whatsappNo", "address", "userName"]);

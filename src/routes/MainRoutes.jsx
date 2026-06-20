@@ -1,30 +1,31 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getAuthRoutes } from "./AuthRoutes";
-import { useAuth } from "../auth/AuthProvider";
-import { getCurrentSession, getStoredMenuList, getStoredPermissions, saveMenuList } from "../auth/authStorage";
-import { fetchMenuList, flattenMenus, getFirstAllowedPath, getMenuId, getMenuLink, normalizePath } from "../auth/permissions";
+import { useAuth } from "@auth/components/AuthProvider";
+import { getCurrentSession, getStoredMenuList, getStoredPermissions, saveMenuList } from "@auth/utils/authStorage";
+import { fetchMenuList, flattenMenus, getFirstAllowedPath, getMenuId, getMenuLink, normalizePath } from "@auth/utils/permissions";
 import ProtectedRoute from "./ProtectedRoute";
 import PermissionRoute from "./PermissionRoute";
+import FlowupSLoader from "./FlowupsLoader";
 
-const AppLayout = lazy(() => import("../layouts/AppLayout"));
-const Dashboard = lazy(() => import("../modules/dashboard/Dashboard"));
-const UsersModulePage = lazy(() => import("../modules/users/UsersModulePage"));
-const TicketsModulePage = lazy(() => import("../modules/tasks/TicketsModulePage"));
-const MenuMasterModulePage = lazy(() => import("../modules/menu-master/MenuMasterModulePage"));
-const CustomerModulePage = lazy(() => import("../modules/customer/CustomerModulePage"));
-const AmcRemindersModulePage = lazy(() => import("../modules/amc-reminders/AmcRemindersModulePage"));
-const CategoryModulePage = lazy(() => import("../modules/category/CategoryModulePage"));
-const ProductModulePage = lazy(() => import("../modules/products/ProductModulePage"));
-const CompanyMasterModulePage = lazy(() => import("../modules/company-master/CompanyMasterModulePage"));
-const AccessControlModulePage = lazy(() => import("../modules/access-control/AccessControlModulePage"));
-const PerformanceReportPage = lazy(() => import("../modules/reports/PerformanceReportPage"));
-const UserPerformancePage = lazy(() => import("../modules/reports/UserPerformancePage"));
-const WorkReportModulePage = lazy(() => import("../modules/work-report/WorkReportModulePage"));
-const CustomerReport = lazy(() => import("../modules/customer/components/CustomerReport"));
-const ProductExpiryReport = lazy(() => import("../modules/products/ProductExpiryReport"));
-const UserMarkers = lazy(() => import("../modules/dashboard/UserMarkers"));
-const UserProfilePage = lazy(() => import("../modules/profile/UserProfilePage"));
+const AppLayout = lazy(() => import("@layouts/AppLayout"));
+const Dashboard = lazy(() => import("@modules/dashboard/Dashboard"));
+const UsersModulePage = lazy(() => import("@modules/users/UsersModulePage"));
+const TicketsModulePage = lazy(() => import("@modules/tasks/TicketsModulePage"));
+const MenuMasterModulePage = lazy(() => import("@modules/menu-master/MenuMasterModulePage"));
+const CustomerModulePage = lazy(() => import("@modules/customer/CustomerModulePage"));
+const AmcRemindersModulePage = lazy(() => import("@modules/amc-reminders/AmcRemindersModulePage"));
+const CategoryModulePage = lazy(() => import("@modules/category/CategoryModulePage"));
+const ProductModulePage = lazy(() => import("@modules/products/ProductModulePage"));
+const CompanyMasterModulePage = lazy(() => import("@modules/company-master/CompanyMasterModulePage"));
+const AccessControlModulePage = lazy(() => import("@modules/access-control/AccessControlModulePage"));
+const PerformanceReportPage = lazy(() => import("@modules/reports/PerformanceReportPage"));
+const UserPerformancePage = lazy(() => import("@modules/reports/UserPerformancePage"));
+const WorkReportModulePage = lazy(() => import("@modules/work-report/WorkReportModulePage"));
+const CustomerReport = lazy(() => import("@modules/customer/components/CustomerReport"));
+const ProductExpiryReport = lazy(() => import("@modules/products/ProductExpiryReport"));
+const UserMarkers = lazy(() => import("@modules/dashboard/UserMarkers"));
+const UserProfilePage = lazy(() => import("@modules/profile/UserProfilePage"));
 
 const withPermission = (menuId, element) => (
   <PermissionRoute menuId={menuId}>{element}</PermissionRoute>
@@ -79,12 +80,12 @@ function RouteFallback({ loading }) {
 }
 
 function PageLoader() {
-  return <div className="p-6 text-sm text-slate-500">Loading page...</div>;
+  return <FlowupSLoader/>;
 }
 
 function NoMenuPermission() {
   return (
-    <div className="flex min-h-[420px] items-center justify-center p-6">
+    <div className="flex min-h-105 items-center justify-center p-6">
       <div className="max-w-sm rounded-md border border-slate-200 bg-white p-6 text-center">
         <h2 className="text-base font-semibold text-slate-900">No Menu Permission</h2>
         <p className="mt-2 text-sm text-slate-500">

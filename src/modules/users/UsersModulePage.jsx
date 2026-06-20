@@ -15,7 +15,7 @@ import DynamicFilter from "../../components/DynamicFilter";
 import UserForm from "./components/UserForm";
 import ResizableTable from "../../components/table/ResizableTable";
 import { usersFallbackColumns, usersModuleSchema } from "./data/module.schema";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 
 function UsersModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || usersModuleSchema.menu_id || null;

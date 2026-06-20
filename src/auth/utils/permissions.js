@@ -1,5 +1,5 @@
 import { getStoredMenuList, getStoredPermissions } from "./authStorage";
-import { makeRequest } from "../api/httpClient";
+import { getMenus, getPermissions } from "../data/auth.service";
 
 let menuListRequest = null;
 let menuListForbidden = false;
@@ -193,21 +193,13 @@ export const buildMenusFromPermissions = (permissions = {}) => {
 export const fetchUserPermissions = async (userId) => {
   if (!userId) return {};
 
-  const res = await makeRequest(`/get-permissions/${userId}`, {
-    method: "GET",
-  });
+  const res = await getPermissions(userId);
 
   return res?.success ? normalizePermissionMap(res) : {};
 };
 
 const fetchBootstrapMenus = async () => {
-  const requestOptions = {
-    method: "POST",
-    body: { getAll: "Y" },
-  };
-
-  const res = await makeRequest("/get-menus", requestOptions);
-
+  const res = await getMenus();
   if (res?.success || (res?.status !== 404 && res?.code !== 404)) {
     return res;
   }
@@ -225,13 +217,9 @@ export const fetchMenuList = async (msg, options = {}) => {
     const res = await fetchBootstrapMenus();
 
     if (res?.success) return res.data || [];
-
-    // If backend says current user cannot view Menu Master,
-    // do not keep calling /menus again and again in the same app session.
     if (res?.type === "FORBIDDEN" || res?.code === 2007 || res?.status === 403) {
       menuListForbidden = true;
     }
-
     return buildMenusFromPermissions(fallbackPermissions);
   })();
 

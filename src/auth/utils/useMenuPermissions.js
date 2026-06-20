@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "@auth/components/AuthProvider";
 import { hasMenuActionPermission, hasMenuViewPermission } from "./permissions";
 
 function useMenuPermissions(menuId) {

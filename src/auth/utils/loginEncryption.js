@@ -1,5 +1,4 @@
-import { makeRequest } from "../api/httpClient";
-
+import { getSalt } from "../data/auth.service";
 function base64ToArrayBuffer(base64 = "") {
   const binaryString = window.atob(base64);
   const bytes = new Uint8Array(binaryString.length);
@@ -25,9 +24,7 @@ export async function encryptLoginPassword(password) {
     throw new Error("Secure password encryption is not available in this browser.");
   }
 
-  const response = await makeRequest("/salt", {
-    method: "GET",
-  });
+  const response = await getSalt();
 
   const salt = response?.salt || response?.data?.salt;
   

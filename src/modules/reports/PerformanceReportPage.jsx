@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { getMenuPermission, hasMenuActionPermission } from "../../auth/permissions";
-import { useAuth } from "../../auth/AuthProvider";
+import { getMenuPermission, hasMenuActionPermission } from "@auth/utils/permissions";
+import { useAuth } from "@auth/components/AuthProvider";
 import ModulePageLayout from "../shared/ModulePageLayout";
 import PerformanceReportWorkspace from "./PerformanceReportWorkspace";
 import { exportPerformanceExcel, exportPerformancePdf } from "./reportExport";

@@ -1,31 +1,23 @@
 import { toast } from "react-toastify";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../auth/AuthProvider";
-import { makeRequest } from "../../api/httpClient";
-import { useModuleFilters } from "../../store/hooks";
+import { useAuth } from "@auth/components/AuthProvider";
+import { makeRequest } from "@api/httpClient";
+import { useModuleFilters } from "@store/hooks";
 import { useLocation } from "react-router-dom";
 import { Columns3, Table2 } from "lucide-react";
-import { saveViewMode, getViewMode } from "../../auth/authStorage";
-import {
-  defaultSortConfig,
-  getNextSortConfig,
-} from "../../utils/sorting";
+import { saveViewMode, getViewMode } from "@auth/utils/authStorage";
+import { defaultSortConfig, getNextSortConfig, } from "@utils/sorting";
+import { buildFilterFieldsFromStructure, buildTableColumnsFromStructure, getDefinitions, } from "@utils/moduleStructure";
 
-import {
-  buildFilterFieldsFromStructure,
-  buildTableColumnsFromStructure,
-  getDefinitions,
-} from "../../utils/moduleStructure";
+import ModuleControls from "@shared/ModuleControls";
+import ModulePageLayout from "@shared/ModulePageLayout";
+import ModulePagination from "@shared/ModulePagination";
 
-import ModuleControls from "../shared/ModuleControls";
-import ModulePageLayout from "../shared/ModulePageLayout";
-import ModulePagination from "../shared/ModulePagination";
-
-import DynamicFilter from "../../components/DynamicFilter";
-import ResizableTable from "../../components/table/ResizableTable";
-import ActionButton from "../../components/ui/ActionButton";
-import KanbanBoard from "../../components/kanban/KanbanBoard";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import DynamicFilter from "@components/DynamicFilter";
+import ResizableTable from "@components/table/ResizableTable";
+import ActionButton from "@components/ui/ActionButton";
+import KanbanBoard from "@components/kanban/KanbanBoard";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 
 import TicketForm from "./components/TicketForm";
 

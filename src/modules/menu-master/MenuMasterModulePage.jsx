@@ -12,7 +12,7 @@ import ModulePageLayout from "../shared/ModulePageLayout";
 import DynamicFilter from "../../components/DynamicFilter";
 import ActionButton from "../../components/ui/ActionButton";
 import Spinner from "../../components/ui/Spinner";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 
 import MenuForm from "./components/MenuForm";
 import MenuList from "./components/MenuList";
