@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import { makeRequest } from "../../api/httpClient";
-import { Circle } from "lucide-react";
-import { API_BASE_URL } from '../../api/config';
+import { makeRequest } from "@api/httpClient";
+import { API_BASE_URL } from '@api/config';
 import { Check } from 'lucide-react';
 import DefaultLabel from './DefaultLabel';
 import ValidationError from './ValidationError';

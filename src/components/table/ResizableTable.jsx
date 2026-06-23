@@ -11,6 +11,8 @@ import { isAmcActive } from "@utils/amc";
 
 window.TIMEFORMAT = "Do MMMM YYYY"
 
+const DEFAULT_COLUMN_WIDTH = 800;
+
 const STATUS_CLASS_MAP = {
   active: "status-green",
   pending: "status-amber",
@@ -29,10 +31,12 @@ const PILL_BASE_CLASS = {
 };
 
 function getCellStyle(column) {
+  const width = getColumnWidth(column.currentWidth, column.minWidth || 40, DEFAULT_COLUMN_WIDTH);
+
   return {
-    width: column.currentWidth,
-    minWidth: column.currentWidth,
-    maxWidth: column.currentWidth,
+    width,
+    minWidth: width,
+    maxWidth: width,
   };
 }
 
@@ -80,6 +84,22 @@ function getStoredWidths(storageKey) {
   } catch {
     return {};
   }
+}
+
+function getNumberValue(value) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function getColumnWidth(...values) {
+  for (const value of values) {
+    const numberValue = getNumberValue(value);
+    if (numberValue !== null) {
+      return numberValue;
+    }
+  }
+
+  return DEFAULT_COLUMN_WIDTH;
 }
 
 function getStoredVisibleColumnKeys(storageKey) {
@@ -223,14 +243,11 @@ function renderPersonCell(value, row, colorField, index) {
     : undefined;
 
   return (
-    <div className="person-cell">
-      <span
-        className={`person-avatar ${avatarStyle ? "" : `avatar-${index % 12}`}`.trim()}
-        style={avatarStyle}
-      >
-        {String(value || "?").charAt(0)}
-      </span>
-      <span className="text-overflow">{value || "-"}</span>
+    <div className="person-cell w-full justify-between">
+      <div className="flex gap-1.5 items-center">
+        <span className={`person-avatar ${avatarStyle ? "" : `avatar-${index % 12}`}`.trim()} style={avatarStyle} > {String(value || "?").charAt(0)} </span>
+        <span className="text-overflow">{value || "-"}</span>
+      </div>
       {isAmcActive(row) ? <span className="table-amc-chip">AMC</span> : null}
     </div>
   );
@@ -578,7 +595,7 @@ function ResizableTable({
     );
   }
   );
-  
+
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
   const handleEditRow = onEditRow || editRow;
   const shouldShowActions = showActions ?? Boolean(handleEditRow || onDeleteRow || rowActions.length || renderActions);
@@ -636,7 +653,10 @@ function ResizableTable({
         .filter((column) => column.checkbox || column.className === "icon-col" || column.isAlwaysVisible || hasFieldVisiblePermission({ menuId, field: column, user }))
         .map((column) => ({
           ...column,
-          currentWidth: Math.max(column.minWidth || 40, columnWidths[column.key] || column.width || 800),
+          currentWidth: Math.max(
+            getColumnWidth(column.minWidth, 40),
+            getColumnWidth(columnWidths[column.key], column.width, DEFAULT_COLUMN_WIDTH)
+          ),
         }));
 
       if (!shouldShowActions) {
@@ -647,7 +667,10 @@ function ResizableTable({
         ...visibleColumns,
         {
           ...ACTIONS_COLUMN,
-          currentWidth: Math.max(ACTIONS_COLUMN.minWidth, columnWidths[ACTIONS_COLUMN.key] || ACTIONS_COLUMN.width),
+          currentWidth: Math.max(
+            getColumnWidth(ACTIONS_COLUMN.minWidth, 90),
+            getColumnWidth(columnWidths[ACTIONS_COLUMN.key], ACTIONS_COLUMN.width, ACTIONS_COLUMN.minWidth)
+          ),
         },
       ];
     },

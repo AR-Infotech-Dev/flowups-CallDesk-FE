@@ -1,11 +1,6 @@
 import { useMemo, useSyncExternalStore } from "react";
 import store from "./index";
-import {
-  clearModuleFilters,
-  selectModuleFilterState,
-  setModuleFilters,
-  setModuleSort,
-  setModuleSearchText,
+import { clearModuleFilters, selectModuleFilterState, setModuleFilters, setModuleSort, setModuleSearchText,
 } from "./moduleFiltersSlice";
 import { applyModuleFilters } from "../utils/filtering";
 

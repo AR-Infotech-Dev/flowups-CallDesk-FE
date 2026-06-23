@@ -2322,12 +2322,12 @@ tbody tr:hover td {
 }
 
 tbody tr.table-row-amc-active td {
-  background: #f0fdf4;
-  border-bottom-color: #bbf7d0;
+  /* background: #f0fdf4;
+  border-bottom-color: #bbf7d0; */
 }
 
 tbody tr.table-row-amc-active:hover td {
-  background: #dcfce7;
+  /* background: #dcfce7; */
 }
 
 .table-amc-chip {
@@ -2770,11 +2770,11 @@ tbody tr:hover .check-col {
 }
 
 tbody tr.table-row-amc-active .check-col {
-  background: #f0fdf4;
+  /* background: #f0fdf4; */
 }
 
 tbody tr.table-row-amc-active:hover .check-col {
-  background: #dcfce7;
+  /* background: #dcfce7; */
 }
 
 .is-resizable {

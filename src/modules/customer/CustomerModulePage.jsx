@@ -1,15 +1,10 @@
 import { toast } from "react-toastify";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { BarChart3, Upload } from "lucide-react";
-import { makeRequest } from "../../api/httpClient";
 import { useModuleFilters } from "../../store/hooks";
-import { defaultSortConfig, getNextSortConfig } from "../../utils/sorting";
-import {
-  buildFilterFieldsFromStructure,
-  buildTableColumnsFromStructure,
-  getDefinitions,
-} from "../../utils/moduleStructure";
-import { useLocation,useNavigate } from "react-router-dom";
+
+import { getNextSortConfig } from "../../utils/sorting";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
@@ -22,110 +17,35 @@ import ActionButton from "../../components/ui/ActionButton";
 import { useAuth } from "@auth/components/AuthProvider";
 import CustomerForm from "./components/CustomerForm";
 import CustomerImportFlyout from "./components/CustomerImportFlyout";
-import { customerFallbackColumns, customerModuleSchema } from "./data/module.schema";
+
+import { customerModuleSchema } from "./data/module.schema";
+
+import { useAppSelector } from "@store/hooks";
+import { useCustomersModule } from "./hooks/useCustomersModule";
+import { useCustomerTableConfig } from "./hooks/useCustomerTableConfig";
+
+import { selectCustomersRows } from "./data/customer.slice";
 
 function CustomerModulePage({ menu_id }) {
+
   const navigate = useNavigate();
+  const location = useLocation();
   const { authSession } = useAuth();
   const role_slug = authSession?.user?.role_slug;
   const resolvedMenuID = menu_id || customerModuleSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
-
-  const [fields, setFields] = useState([]);
-  const [customerList, setCustomerList] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
-  const [getBackTo, setGetBackTo] = useState(null);
+
   const [isImportFlyoutOpen, setIsImportFlyoutOpen] = useState(false);
-  const [pagination, setPagination] = useState({});
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [selectedRowIds, setSelectedRowIds] = useState([]);
-  const [deleting, setDeleting] = useState(false);
+  const [getBackTo, setGetBackTo] = useState(null);
 
-  const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters } = useModuleFilters(
-    "customer",
-    customerList
-  );
 
-  const sortConfig = {
-    key: filterState.order_by || defaultSortConfig.key,
-    direction: String(filterState.order || defaultSortConfig.direction).toLowerCase(),
-  };
+  const customerList = useAppSelector(selectCustomersRows);
+  const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters } = useModuleFilters("customer", customerList);
+  const { pagination, page, loading, deleting, selectedRowIds, getCustomersList, handlePageChange, handleToggleRow, handleToggleAllRows, handleDeleteSelected, handleDeleteRow, } = useCustomersModule({ filterState });
+  const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useCustomerTableConfig({ resolvedMenuID, filterState });
 
-  const columnOptions = {
-    skipFields: customerModuleSchema.skipFields,
-    columnMappings: customerModuleSchema.columnMappings,
-    tableCellConfig: customerModuleSchema.tableCellConfig,
-  };
-
-  const resolvedColumns = useMemo(
-    () => buildTableColumnsFromStructure(fields, customerFallbackColumns, columnOptions),
-    [fields]
-  );
-
-  const defaultVisibleColumnKeys = useMemo(
-    () => customerFallbackColumns.map((column) => column.key),
-    []
-  );
-
-  const resolvedFilterFields = useMemo(
-    () =>
-      buildFilterFieldsFromStructure(
-        fields,
-        customerModuleSchema.defaultColumns.map((key) => ({
-          label: customerFallbackColumns.find((column) => column.key === key)?.label || key,
-          value: key,
-          type: "text",
-        })),
-        columnOptions
-      ),
-    [fields]
-  );
-
-  const getCustomerList = async () => {
-    setLoading(true);
-
-    const res = await makeRequest(customerModuleSchema.api.list, {
-      method: "POST",
-      body: {
-        page,
-        searchText: filterState.searchText,
-        filters: filterState.filters,
-        order: filterState.order,
-        order_by: filterState.order_by,
-      },
-    });
-
-    setLoading(false);
-
-    if (res.success) {
-      setCustomerList(res.data || []);
-      setPagination(res.pagination || {});
-      setSelectedRowIds([]);
-      return;
-    }
-
-    toast.error(res?.message || "Error while fetching customers");
-  };
-
-  const getColumnList = async () => {
-    if (!resolvedMenuID) {
-      setFields([]);
-      return;
-    }
-
-    const res = await getDefinitions(resolvedMenuID);
-    if (res?.success) {
-      setFields(res.data || []);
-    }
-  };
-
-  const handleToggleRow = (rowId, checked) => {
-    setSelectedRowIds((current) =>
-      checked ? [...new Set([...current, rowId])] : current.filter((item) => item !== rowId)
-    );
-  };
 
   const handleReport = (customer) => {
     const customerId = customer?.customer_id ?? customer?.id;
@@ -135,77 +55,21 @@ function CustomerModulePage({ menu_id }) {
     }
     navigate(`/customer/report/${customerId}`, { state: { customer } });
   };
-
-  const handleToggleAllRows = (checked) => {
-    if (!checked) {
-      setSelectedRowIds([]);
-      return;
+  const handleSortChange = (columnKey) => {
+    const nextSort = getNextSortConfig(sortConfig, columnKey);
+    if (page !== 1) {
+      handlePageChange(1);
     }
-
-    setSelectedRowIds(customerList.map((row) => row.customer_id).filter(Boolean));
-  };
-
-  const handleDeleteSelected = async () => {
-    if (!selectedRowIds.length) {
-      toast.error("Please select at least one customer.");
-      return;
-    }
-
-    setDeleting(true);
-
-    const res = await makeRequest(customerModuleSchema.api.delete, {
-      method: "POST",
-      body: {
-        action: "delete",
-        ids: selectedRowIds,
-      },
+    setSort({
+      order_by: nextSort.key,
+      order: nextSort.direction.toUpperCase(),
     });
-
-    setDeleting(false);
-
-    if (res.success) {
-      toast.success(res?.message || "Customers deleted successfully.");
-      await getCustomerList();
-      return;
-    }
-
-    toast.error(res?.message || "Error while deleting customers");
   };
-
-  const handleDeleteRow = async (row) => {
-    const rowId = row?.customer_id ?? row?.id;
-    if (!rowId) {
-      toast.error("Customer id not found.");
-      return;
-    }
-
-    if (!window.confirm("Delete this customer?")) return;
-
-    setDeleting(true);
-    const res = await makeRequest(customerModuleSchema.api.delete, {
-      method: "POST",
-      body: {
-        action: "delete",
-        ids: [rowId],
-      },
-    });
-    setDeleting(false);
-
-    if (res.success) {
-      toast.success(res?.message || "Customer deleted successfully.");
-      await getCustomerList();
-      return;
-    }
-
-    toast.error(res?.message || "Error while deleting customer");
-  };
-
-  const location = useLocation();
 
   useEffect(() => {
     const customer = location.state?.openCustomer;
     console.log(customer);
-    
+
     if (customer?.customer_id) {
       setSelectedCustomer(customer);
       setIsFlyoutOpen(true);
@@ -216,16 +80,12 @@ function CustomerModulePage({ menu_id }) {
   }, [location.state]);
 
   useEffect(() => {
-    getColumnList();
-  }, [resolvedMenuID]);
-
-  useEffect(() => {
-    getCustomerList();
+    getCustomersList();
   }, [page, filterState.searchText, filterState.order, filterState.order_by, JSON.stringify(filterState.filters)]);
 
   useEffect(() => {
     if (page !== 1) {
-      setPage(1);
+      handlePageChange(1);
     }
   }, [filterState.searchText, filterState.order, filterState.order_by, JSON.stringify(filterState.filters)]);
 
@@ -239,7 +99,7 @@ function CustomerModulePage({ menu_id }) {
             canCreate={permissions.canAdd}
             canDelete={permissions.canDelete}
             loading={loading}
-            onRefresh={getCustomerList}
+            onRefresh={getCustomersList}
             onCreate={() => {
               setSelectedCustomer(null);
               setIsFlyoutOpen(true);
@@ -279,16 +139,7 @@ function CustomerModulePage({ menu_id }) {
             storageKey="customer-module-column-widths"
             defaultVisibleColumnKeys={defaultVisibleColumnKeys}
             sortConfig={sortConfig}
-            onSortChange={(columnKey) => {
-              const nextSort = getNextSortConfig(sortConfig, columnKey);
-              if (page !== 1) {
-                setPage(1);
-              }
-              setSort({
-                order_by: nextSort.key,
-                order: nextSort.direction.toUpperCase(),
-              });
-            }}
+            onSortChange={handleSortChange}
             editRow={permissions.canEdit ? (customer) => {
               setSelectedCustomer(customer);
               setIsFlyoutOpen(true);
@@ -309,7 +160,7 @@ function CustomerModulePage({ menu_id }) {
             ]}
           />
         }
-        footer={<ModulePagination pagination={pagination} onPageChange={setPage} />}
+        footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}
       />
 
       <CustomerForm
@@ -317,19 +168,19 @@ function CustomerModulePage({ menu_id }) {
         onClose={() => {
           setIsFlyoutOpen(false);
           setSelectedCustomer(null);
-          console.log('getBackTo :',getBackTo);
-          
-          getBackTo ? navigate(getBackTo) : null ;
+          console.log('getBackTo :', getBackTo);
+
+          getBackTo ? navigate(getBackTo) : null;
         }}
         selectedCustomer={selectedCustomer}
-        onAfterSave={getCustomerList}
+        onAfterSave={getCustomersList}
         menu_id={resolvedMenuID}
       />
 
       <CustomerImportFlyout
         isOpen={isImportFlyoutOpen}
         onClose={() => setIsImportFlyoutOpen(false)}
-        onImported={getCustomerList}
+        onImported={getCustomersList}
       />
     </>
   );

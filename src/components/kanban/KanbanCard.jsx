@@ -6,7 +6,7 @@ import { useAuth } from "@auth/components/AuthProvider";
 import { hasFieldVisiblePermission } from "@auth/utils/permissions";
 import { useKanbanContext } from "./KanbanContext";
 import { isInlineColorValue, resolveCardValue } from "./kanbanUtils";
-import { isAmcActive } from "../../utils/amc";
+import { isAmcActive } from "@utils/amc";
 
 function formatFieldValue(field, value) {
   if (value === null || value === undefined || value === "") {

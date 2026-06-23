@@ -1,14 +1,7 @@
-import { toast } from "react-toastify";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect,useState } from "react";
 
-import { makeRequest } from "../../api/httpClient";
-import { useModuleFilters } from "../../store/hooks";
-import { defaultSortConfig, getNextSortConfig } from "../../utils/sorting";
-import {
-  buildFilterFieldsFromStructure,
-  buildTableColumnsFromStructure,
-  getDefinitions,
-} from "../../utils/moduleStructure";
+import { useAppSelector, useModuleFilters } from "../../store/hooks";
+import { getNextSortConfig } from "../../utils/sorting";
 
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
@@ -17,176 +10,44 @@ import ModulePagination from "../shared/ModulePagination";
 import DynamicFilter from "../../components/DynamicFilter";
 import ResizableTable from "../../components/table/ResizableTable";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
+import { selectProductsRows } from "./data/products.slice";
 
 import ProductForm from "./components/ProductForm";
-import { productsFallbackColumns, productsModuleSchema } from "./data/module.schema";
+import { productsModuleSchema } from "./data/module.schema";
+import { useProductsModule } from "./hooks/useProductsModule";
+import { useProductsTableConfig } from "./hooks/useProductsTableConfig";
 
 function ProductModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || productsModuleSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
-
-  const [fields, setFields] = useState([]);
-  const [productList, setProductList] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
-  const [pagination, setPagination] = useState({});
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [selectedRowIds, setSelectedRowIds] = useState([]);
-  const [deleting, setDeleting] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  
 
+  const productList = useAppSelector(selectProductsRows);
   const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters } = useModuleFilters(
     "products",
     productList
   );
-
-  const sortConfig = {
-    key: filterState.order_by || defaultSortConfig.key,
-    direction: String(filterState.order || defaultSortConfig.direction).toLowerCase(),
-  };
-
-  const columnOptions = {
-    skipFields: productsModuleSchema.skipFields,
-    columnMappings: productsModuleSchema.columnMappings,
-    tableCellConfig: productsModuleSchema.tableCellConfig,
-  };
-
-  const resolvedColumns = useMemo(
-    () => buildTableColumnsFromStructure(fields, productsFallbackColumns, columnOptions),
-    [fields]
-  );
-
-  const defaultVisibleColumnKeys = useMemo(
-    () => productsFallbackColumns.map((column) => column.key),
-    []
-  );
-
-  const resolvedFilterFields = useMemo(
-    () =>
-      buildFilterFieldsFromStructure(
-        fields,
-        productsModuleSchema.defaultColumns.map((key) => ({
-          label: productsFallbackColumns.find((column) => column.key === key)?.label || key,
-          value: key,
-          type: "text",
-        })),
-        columnOptions
-      ),
-    [fields]
-  );
-
-  const getProductList = async () => {
-    setLoading(true);
-
-    const res = await makeRequest(productsModuleSchema.api.list, {
-      method: "POST",
-      body: {
-        status: "active",
-        page,
-        searchText: filterState.searchText,
-        filters: filterState.filters,
-        order: filterState.order,
-        order_by: filterState.order_by,
-      },
-    });
-
-    setLoading(false);
-
-    if (res.success) {
-      setProductList(res.data || []);
-      setPagination(res.pagination || {});
-      setSelectedRowIds([]);
-      return;
-    }
-
-    toast.error(res?.message || "Error while fetching products");
-  };
-
-  const getColumnList = async () => {
-    if (!resolvedMenuID) {
-      setFields([]);
-      return;
-    }
-
-    const res = await getDefinitions(resolvedMenuID);
-    if (res?.success) {
-      setFields(res.data || []);
-    }
-  };
-
-  const handleToggleRow = (rowId, checked) => {
-    setSelectedRowIds((current) =>
-      checked ? [...new Set([...current, rowId])] : current.filter((item) => item !== rowId)
-    );
-  };
-
-  const handleToggleAllRows = (checked) => {
-    if (!checked) {
-      setSelectedRowIds([]);
-      return;
-    }
-
-    setSelectedRowIds(productList.map((row) => row?.product_id ?? row?.id).filter(Boolean));
-  };
-
-  const handleDeleteSelected = async () => {
-    if (!selectedRowIds.length) {
-      toast.error("Please select at least one product.");
-      return;
-    }
-
-    setDeleting(true);
-
-    const res = await makeRequest(productsModuleSchema.api.delete, {
-      method: "POST",
-      body: {
-        action: "delete",
-        ids: selectedRowIds,
-      },
-    });
-
-    setDeleting(false);
-
-    if (res.success) {
-      toast.success(res?.message || "Products deleted successfully.");
-      await getProductList();
-      return;
-    }
-
-    toast.error(res?.message || "Error while deleting products");
-  };
-
-  const handleDeleteRow = async (row) => {
-    const rowId = row?.product_id ?? row?.id;
-    if (!rowId) {
-      toast.error("Product id not found.");
-      return;
-    }
-
-    if (!window.confirm("Delete this product?")) return;
-
-    setDeleting(true);
-    const res = await makeRequest(productsModuleSchema.api.delete, {
-      method: "POST",
-      body: {
-        action: "delete",
-        ids: [rowId],
-      },
-    });
-    setDeleting(false);
-
-    if (res.success) {
-      toast.success(res?.message || "Product deleted successfully.");
-      await getProductList();
-      return;
-    }
-
-    toast.error(res?.message || "Error while deleting product");
-  };
-
-  useEffect(() => {
-    getColumnList();
-  }, [resolvedMenuID]);
+  const {
+    pagination,
+    page,
+    loading,
+    deleting,
+    selectedRowIds,
+    handlePageChange,
+    getProductList,
+    handleToggleRow,
+    handleToggleAllRows,
+    handleDeleteSelected,
+    handleDeleteRow,
+  } = useProductsModule({ filterState });
+  const {
+    sortConfig,
+    resolvedColumns,
+    defaultVisibleColumnKeys,
+    resolvedFilterFields,
+  } = useProductsTableConfig({ resolvedMenuID, filterState });
 
   useEffect(() => {
     getProductList();
@@ -194,7 +55,7 @@ function ProductModulePage({ menu_id }) {
 
   useEffect(() => {
     if (page !== 1) {
-      setPage(1);
+      handlePageChange(1);
     }
   }, [filterState.searchText, filterState.order, filterState.order_by, JSON.stringify(filterState.filters)]);
 
@@ -224,9 +85,9 @@ function ProductModulePage({ menu_id }) {
                 savedFilters={productsModuleSchema.savedFilters}
                 onSearch={setSearchText}
                 onApplyFilters={applyFilterPayload}
-                onSaveFilter={() => {}}
-                onDeleteFilter={() => {}}
-                onSelectSavedFilter={() => {}}
+                onSaveFilter={() => { }}
+                onDeleteFilter={() => { }}
+                onSelectSavedFilter={() => { }}
                 onClearFilters={clearFilters}
               />
             }
@@ -244,7 +105,7 @@ function ProductModulePage({ menu_id }) {
             onSortChange={(columnKey) => {
               const nextSort = getNextSortConfig(sortConfig, columnKey);
               if (page !== 1) {
-                setPage(1);
+                handlePageChange(1);
               }
               setSort({
                 order_by: nextSort.key,
@@ -262,7 +123,7 @@ function ProductModulePage({ menu_id }) {
             onToggleAllRows={handleToggleAllRows}
           />
         }
-        footer={<ModulePagination pagination={pagination} onPageChange={setPage} />}
+        footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}
       />
 
       <ProductForm

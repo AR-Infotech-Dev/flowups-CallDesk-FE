@@ -1,6 +1,11 @@
 import { useMemo, useRef } from "react";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Plus } from "lucide-react";
 
+function getSafeWidth(value, fallback = 80) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
 function TableHeader({
   columns,
   onResize,
@@ -19,6 +24,7 @@ function TableHeader({
 
     const { key, startX, startWidth, minWidth } = resizeStateRef.current;
     const delta = event.clientX - startX;
+    
     onResize(key, Math.max(minWidth, startWidth + delta));
   };
 
@@ -35,8 +41,8 @@ function TableHeader({
     resizeStateRef.current = {
       key: column.key,
       startX: event.clientX,
-      startWidth: column.currentWidth,
-      minWidth: column.minWidth || 60,
+      startWidth: getSafeWidth(column.currentWidth),
+      minWidth: getSafeWidth(column.minWidth, 60),
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -61,12 +67,15 @@ function TableHeader({
   return (
     <thead className="bg-blue-50" >
       <tr>
-        {columns.map((column) => (
-          <th
-            key={column.key}
-            className={`${column.className || ""} ${column.resizable === false ? "" : "is-resizable"} bg-blue-50`}
-            style={{ width: column.currentWidth, minWidth: column.currentWidth, maxWidth: column.currentWidth }}
-          >
+        {columns.map((column) => {
+          const columnWidth = getSafeWidth(column.currentWidth);
+
+          return (
+            <th
+              key={column.key}
+              className={`${column.className || ""} ${column.resizable === false ? "" : "is-resizable"} bg-blue-50`}
+              style={{ width: columnWidth, minWidth: columnWidth, maxWidth: columnWidth }}
+            >
             {column.checkbox ? (
               <input
                 type="checkbox"
@@ -99,8 +108,9 @@ function TableHeader({
                 onMouseDown={(event) => startResize(event, column)}
               />
             )}
-          </th>
-        ))}
+            </th>
+          );
+        })}
         <th >
           <div className="table-column-picker">
             <button

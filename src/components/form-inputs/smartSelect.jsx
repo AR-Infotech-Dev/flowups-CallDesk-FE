@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { makeRequest } from "../../api/httpClient";
+import { makeRequest } from "@api/httpClient";
 import DefaultLabel from "./DefaultLabel";
 import ValidationError from "./ValidationError";
 

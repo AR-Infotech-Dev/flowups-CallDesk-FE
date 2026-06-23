@@ -1,4 +1,4 @@
-import { makeRequest } from "../../api/httpClient";
+import { makeRequest } from "@api/httpClient";
 
 export const getSalt = async () => {
     return await makeRequest("/salt", {

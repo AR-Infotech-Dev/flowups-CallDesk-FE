@@ -6,12 +6,12 @@ import { getCurrentSession, getStoredMenuList, getStoredPermissions, saveMenuLis
 import { fetchMenuList, flattenMenus, getFirstAllowedPath, getMenuId, getMenuLink, normalizePath } from "@auth/utils/permissions";
 import ProtectedRoute from "./ProtectedRoute";
 import PermissionRoute from "./PermissionRoute";
-import FlowupSLoader from "./FlowupsLoader";
+import FlowupSLoader from "../components/ui/FlowupsLoader";
 
 const AppLayout = lazy(() => import("@layouts/AppLayout"));
 const Dashboard = lazy(() => import("@modules/dashboard/Dashboard"));
 const UsersModulePage = lazy(() => import("@modules/users/UsersModulePage"));
-const TicketsModulePage = lazy(() => import("@modules/tasks/TicketsModulePage"));
+const TicketsModulePage = lazy(() => import("@modules/tickets/TicketsModulePage"));
 const MenuMasterModulePage = lazy(() => import("@modules/menu-master/MenuMasterModulePage"));
 const CustomerModulePage = lazy(() => import("@modules/customer/CustomerModulePage"));
 const AmcRemindersModulePage = lazy(() => import("@modules/amc-reminders/AmcRemindersModulePage"));
