@@ -231,11 +231,6 @@ export const ticketsModuleSchema = {
               allowAddNew: true,
               multi: false,
               getValue: (item) => item.customer_id,
-              // getLabel: (item) => {
-
-              //   console.log("item :",item);
-              //   return item.name || "Unnamed Client"
-              // },
               getLabel: (item) => {
                 const serialNumbers =
                   item.customer_products?.length

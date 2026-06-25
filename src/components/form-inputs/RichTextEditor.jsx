@@ -1,34 +1,44 @@
+import { useRef } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import DefaultLabel from "./DefaultLabel";
 import ValidationError from "./ValidationError";
 
-const RichTextEditor = ({ field, value, onChange, className = "", error }) => {
+const RichTextEditor = ({ field, value, onChange, className = '', modules, error }) => {
+  const quillRef = useRef(null);
   const isReadOnly = Boolean(field.disabled || field.readOnly);
+  const handleEditorChange = (content, delta, source, editor) => {
+    if (isReadOnly || source !== "user") return;
 
-  const handleEditorChange = (event) => {
-    if (isReadOnly) return;
+    // 👇 simulate normal input event
+    const nextValue = Boolean(field.plain_text) ? editor.getText().trim() : content;
+    if (String(nextValue || "") === String(value || "")) return;
 
     onChange({
       target: {
         name: field.name,
-        value: event.target.value,
+        value: nextValue,
       },
     });
   };
 
   return (
-    <div className="flex flex-col gap-1 bg-white">
+    <div className="bg-white" >
+      
       {field.label && <DefaultLabel label={field.label} required={field.required} />}
-      <textarea
+      <ReactQuill
+        ref={quillRef}
         name={field.name}
-        rows={field.rows || 5}
-        value={value || ""}
+        theme="snow"
+        value={value}
         onChange={handleEditorChange}
-        placeholder={field.placeholder}
-        disabled={Boolean(field.disabled)}
+        className={`mt-0 ${className}`}
+        modules={modules}
         readOnly={isReadOnly}
-        className={`rounded border border-slate-50 bg-gray-100 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
       />
-      {error && <ValidationError error={error} />}
+      {error && (
+        <ValidationError error={error} />
+      )}
     </div>
   );
 };

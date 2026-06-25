@@ -96,7 +96,7 @@ const DynamicFilter = ({
 
                     {(searchText || activeFilters.length || hasAppliedFilters) ? (
                         <button
-                            // type="button"
+                            type="button"
                             onClick={clearFilters}
                             className="inline-flex h-7 items-center justify-center rounded border! border-slate-200! bg-white px-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
                         >
