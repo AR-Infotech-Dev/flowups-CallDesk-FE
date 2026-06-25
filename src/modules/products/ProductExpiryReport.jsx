@@ -6,7 +6,14 @@ import ProductExpiryReportFilters from "./components/ProductExpiryReportFilters"
 import ProductExpiryReportSummary from "./components/ProductExpiryReportSummary";
 import ProductExpiryReportTable from "./components/ProductExpiryReportTable";
 import ProductActivityModal from "./components/ProductActivityModal";
-import { defaultProductExpiryFilters, fetchProductActivity, getProductExpiryReport } from "./data/product.report.service";
+import ProductExpiryCallDescriptionModal from "./components/ProductExpiryCallDescriptionModal";
+import {
+  defaultProductExpiryFilters,
+  fetchProductActivity,
+  getDefaultProductExpiryCallDescription,
+  getProductExpiryReport,
+  makeToCustomer,
+} from "./data/product.report.service";
 import "./product-expiry-report.css";
 
 const defaultSort = { key: "expiry_date", direction: "ASC" };
@@ -38,6 +45,9 @@ function ProductExpiryReport() {
   const [activityData, setActivityData] = useState(null);
   const [activityTab, setActivityTab] = useState("calls");
   const [activityLoadingRowKey, setActivityLoadingRowKey] = useState(null);
+  const [callRow, setCallRow] = useState(null);
+  const [callDescription, setCallDescription] = useState("");
+  const [callingRowKey, setCallingRowKey] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchText(searchText), 350);
@@ -115,6 +125,65 @@ function ProductExpiryReport() {
     toast.error(response?.message || "Unable to fetch product activity.");
   };
 
+  const getCallDetails = (row = {}) => ({
+    product: {
+      product_id: row.product_id || null,
+      product_name: row.product_name || null,
+      serial_number: row.serial_number || null,
+      expiry_date: row.expiry_date || null,
+      days_left: row.days_left || null,
+      expiry_status: row.expiry_status || null,
+      add_ons: row.add_ons || null,
+    },
+    customer_id: row.customer_id || null,
+  });
+
+  const openCallModal = (row) => {
+    if (!row?.customer_id) {
+      toast.error("Customer not found !");
+      return;
+    }
+
+    setCallRow(row);
+    setCallDescription(getDefaultProductExpiryCallDescription(row));
+  };
+
+  const closeCallModal = () => {
+    if (callingRowKey) return;
+    setCallRow(null);
+    setCallDescription("");
+  };
+
+  const handleConfirmCall = async () => {
+    const description = String(callDescription || "").trim();
+    if (!callRow?.customer_id) {
+      toast.error("Customer not found !");
+      return;
+    }
+
+    if (!description) {
+      toast.error("Call description required!");
+      return;
+    }
+
+    const { product, customer_id } = getCallDetails(callRow);
+    const rowKey = `${customer_id}-${product.serial_number || product.product_id || ""}`;
+
+    setCallingRowKey(rowKey);
+    const res = await makeToCustomer({ customer_id, product, description });
+    setCallingRowKey(null);
+
+    if (res.success) {
+      toast.success(res?.message || "Call registered successfully");
+      setCallRow(null);
+      setCallDescription("");
+      refreshList();
+      return;
+    }
+
+    toast.error(res?.msg || res?.message || "Something went wrong");
+  };
+
   const closeActivityModal = () => {
     setActivityCustomer(null);
     setActivityProduct(null);
@@ -154,8 +223,10 @@ function ProductExpiryReport() {
             sortConfig={sortConfig}
             refreshList={refreshList}
             onSort={handleSort}
+            onMakeCall={openCallModal}
             onOpenActivity={handleOpenActivity}
             activityLoadingRowKey={activityLoadingRowKey}
+            callingRowKey={callingRowKey}
           />
           <ModulePagination pagination={pagination} onPageChange={setPage} />
           <ProductActivityModal
@@ -165,6 +236,14 @@ function ProductExpiryReport() {
             activeTab={activityTab}
             onTabChange={setActivityTab}
             onClose={closeActivityModal}
+          />
+          <ProductExpiryCallDescriptionModal
+            row={callRow}
+            description={callDescription}
+            saving={Boolean(callingRowKey)}
+            onChange={setCallDescription}
+            onClose={closeCallModal}
+            onConfirm={handleConfirmCall}
           />
         </div>
       }

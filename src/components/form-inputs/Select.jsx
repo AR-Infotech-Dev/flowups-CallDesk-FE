@@ -36,8 +36,8 @@ const Select = ({ field, value, onChange, className = '', ...rest }) => {
         {...rest}
       >
         {!isMulti && <option value="">{field.placeholder || `Select ${field.label}`}</option>}
-        {options.map((opt) => (
-          <option key={`${field.name}-${opt.value}`} value={opt.value}>
+        {options.map((opt, index) => (
+          <option key={opt.key || `${field.name}-${opt.value}-${index}`} value={opt.value}>
             {opt.label}
           </option>
         ))}

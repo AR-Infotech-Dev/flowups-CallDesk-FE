@@ -54,12 +54,18 @@ export async function sendAmcReminder({ customerId, includeReport = false }) {
     },
   });
 }
+
+export function getDefaultAmcCallDescription(customer = {}) {
+  return `AMC call registered for ${customer?.name || "customer"}.`;
+}
+
 export async function makeAmcCallTicket({ customer, remarks = "" }) {
   const customerId = customer?.customer_id || customer?.id || customer?.client_id;
   const today = new Date().toISOString().split("T")[0];
   const authId = typeof window !== "undefined"
     ? window.localStorage.getItem("_auth_id") || window.localStorage.getItem("auth_id")
     : null;
+  const description = String(remarks || "").trim() || getDefaultAmcCallDescription(customer);
 
   return makeRequest(CALL_ENDPOINT, {
     method: "POST",
@@ -69,7 +75,7 @@ export async function makeAmcCallTicket({ customer, remarks = "" }) {
       client_id: customerId,
       contact_person: customer?.contact_person || customer?.name || "",
       contact_no: customer?.mobile_no || customer?.contact_no || customer?.mobile || "",
-      description: remarks || `AMC call created for ${customer?.name || "customer"}.`,
+      description,
       title: `AMC Call - ${customer?.name || customerId}`,
       query_type: customer?.amc_query_type || customer?.query_type || null,
       ticket_status: customer?.amc_ticket_status || customer?.ticket_status || "205",

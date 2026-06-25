@@ -40,11 +40,11 @@ export const ticketsModuleSchema = {
   staticJoined: [],
   tableCellConfig: [
     { column_name: "client_id", type: "person" },
-    // { column_name: "contact_person", type: "person" },
+    { column_name: "contact_person", type: "person" },
     { column_name: "query_type", type: "badge", color_field: "type_color" },
     { column_name: "ticket_status", type: "badge", color_field: "status_color" },
     { column_name: "ticket_priority", type: "tag", color_field: "priority_color" },
-    // { column_name: "assignee", type: "person" }
+    { column_name: "assignee", type: "person" }
   ],
   kanban: {
     enabled: true,
@@ -67,11 +67,10 @@ export const ticketsModuleSchema = {
     cardFields: [
       { key: "ticket_visibility_label", label: "View", type: "badge", colorField: "ticket_visibility_color" },
       { key: "client_id", label: "Client" },
-      { key: "assignee", label: "Assignee" },
+      { key: "assignee", label: "Assignee", type: "person" },
       { key: "query_type", label: "Type", type: "badge", colorField: "type_color" },
       { key: "due_date", label: "Due", type: "date" },
       { key: "ticket_priority", label: "Priority", type: "tag", colorField: "priority_color" },
-      { key: "work_status", label: "Work Status", type: "tag" },
     ],
   },
   defaultColumns: ["client_id", "query_type", "ticket_status", "assignee", "ticket_priority", "start_date", "due_date"],
@@ -79,6 +78,103 @@ export const ticketsModuleSchema = {
   columnMappings: [
     { "client_id": "Customer Name" },
     { "product_add_ons": "Add-on" }
+  ],
+  filterFieldOptions: {
+    query_type: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchSlugList",
+        body: { slug: "query_types", status: "active" },
+        rowsPath: ["data", 0, "sublist"],
+        valueKey: "category_id",
+        labelKey: "categoryName",
+      },
+    },
+    ticket_status: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchSlugList",
+        body: { slug: "ticket_status", status: "active" },
+        rowsPath: ["data", 0, "sublist"],
+        valueKey: "category_id",
+        labelKey: "categoryName",
+      },
+    },
+    ticket_priority: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchSlugList",
+        body: { slug: "ticket_priority", status: "active" },
+        rowsPath: ["data", 0, "sublist"],
+        valueKey: "category_id",
+        labelKey: "categoryName",
+      },
+    },
+    client_id: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchList",
+        body: {
+          tableName: "customer",
+          list: "customer_id,name",
+          wherec: "name",
+          status: "true",
+        },
+        rowsPath: ["data"],
+        valueKey: "customer_id",
+        labelKey: "name",
+      },
+    },
+    assignee: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchList",
+        body: {
+          tableName: "admin",
+          list: "adminID,name",
+          wherec: "name",
+          status: "true",
+        },
+        rowsPath: ["data"],
+        valueKey: "adminID",
+        labelKey: "name",
+      },
+    },
+    created_by: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchList",
+        body: {
+          tableName: "admin",
+          list: "adminID,name",
+          wherec: "name",
+          status: "true",
+        },
+        rowsPath: ["data"],
+        valueKey: "adminID",
+        labelKey: "name",
+      },
+    },
+    modified_by: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchList",
+        body: {
+          tableName: "admin",
+          list: "adminID,name",
+          wherec: "name",
+          status: "true",
+        },
+        rowsPath: ["data"],
+        valueKey: "adminID",
+        labelKey: "name",
+      },
+    },
+  },
+  defaultFilters: [
+    { field: "assignee" },
+    { field: "ticket_status" },
+    { field: "due_date", }
   ],
   savedFilters: [],
   form: {
@@ -178,6 +274,7 @@ export const ticketsModuleSchema = {
             gridSpan: 12,
             visibleWhen: (values) => Boolean(values.client_id),
             options: (values) => (Array.isArray(values.customer_products) ? values.customer_products : []).map((product) => ({
+              key: `${product.product_id || "product"}-${product.serial_number || product.product_serial_number || "serial"}`,
               value: product.product_id,
               label: `${product.product_name || "Unnamed Product"}${product.serial_number ? ` - ${product.serial_number}` : ""}`,
             })),
@@ -398,7 +495,7 @@ export const ticketsModuleSchema = {
       {
         columns: 1,
         fields: [
-          { name: "description", required: true, label: "Issue Description", type: "editor", placeholder: "Provide details about the ticket...", gridSpan: 12 },
+          { name: "description", plain_text: true, required: true, label: "Issue Description", type: "editor", placeholder: "Provide details about the ticket...", gridSpan: 12 },
         ]
       },
     ],

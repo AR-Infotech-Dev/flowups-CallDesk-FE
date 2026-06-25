@@ -1,3 +1,18 @@
+const COLORS = [
+  "#2563EB",
+  "#7C3AED",
+  "#DC2626",
+  "#059669",
+  "#EA580C",
+  "#0891B2",
+  "#BE123C",
+  "#4F46E5",
+  "#16A34A",
+  "#9333EA",
+];
+
+export const getRandomAvatarColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
+
 export const formatDate = (dateString, type = "full") => {
   if (!dateString) return "";
 
@@ -54,3 +69,5 @@ export const formatRelativeTime = (dateString) => {
   const years = Math.floor(days / 365);
   return `${years}yr${years > 1 ? "s" : ""} ago`;
 };
+
+

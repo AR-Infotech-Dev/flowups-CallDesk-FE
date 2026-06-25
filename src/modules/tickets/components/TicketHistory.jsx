@@ -77,7 +77,17 @@ function getMessage(item) {
                 Ticket assigned to{" "}
                 <span className="font-semibold text-slate-800">
                     {item.new_label}
-                </span>
+                </span>{" "}
+                {item.comment &&
+                    <>
+                        <span>
+                            Because 
+                        </span>{" "}
+                        <span className="font-semibold text-amber-800">
+                            {item.comment}
+                        </span>
+                    </>
+                }
             </>
         );
     }

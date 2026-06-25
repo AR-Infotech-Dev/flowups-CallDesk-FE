@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
-import DynamicFilter from "@components/DynamicFilter";
+import DynamicFilter from "@components/dynamic-filter";
 import ResizableTable from "@components/table/ResizableTable";
 import ModuleControls from "@shared/ModuleControls";
 import ModulePageLayout from "@shared/ModulePageLayout";
@@ -9,6 +9,7 @@ import { useAppSelector, useModuleFilters } from "@store/hooks";
 import { defaultSortConfig } from "@utils/sorting";
 import ActivityModal from "./components/ActivityModal";
 import AmcReminderTableRow from "./components/AmcReminderTableRow";
+import CallDescriptionModal from "./components/CallDescriptionModal";
 import ReminderConfirmModal from "./components/ReminderConfirmModal";
 import VisitScheduleModal from "./components/VisitScheduleModal";
 import { AMC_REMINDER_FILTER_FIELDS } from "./data/amcReminder.constants";
@@ -50,6 +51,8 @@ function AmcRemindersModulePage({ menu_id }) {
     includeReport,
     sendingCustomerId,
     callingCustomerId,
+    callCustomer,
+    callDescription,
     visitCustomer,
     schedulingVisitCustomerId,
     activityCustomer,
@@ -65,6 +68,9 @@ function AmcRemindersModulePage({ menu_id }) {
     closeReminderModal,
     handleSendReminder,
     handleMakeCall,
+    closeCallModal,
+    handleCallDescriptionChange,
+    handleConfirmMakeCall,
     handleAddVisit,
     closeVisitModal,
     handleVisitFieldChange,
@@ -156,6 +162,14 @@ function AmcRemindersModulePage({ menu_id }) {
         onIncludeReportChange={setIncludeReport}
         onClose={closeReminderModal}
         onConfirm={handleSendReminder}
+      />
+      <CallDescriptionModal
+        customer={callCustomer}
+        description={callDescription}
+        saving={Boolean(callingCustomerId)}
+        onChange={handleCallDescriptionChange}
+        onClose={closeCallModal}
+        onConfirm={handleConfirmMakeCall}
       />
       <VisitScheduleModal
         customer={visitCustomer}

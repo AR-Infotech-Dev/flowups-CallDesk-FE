@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppSelector, useModuleFilters } from "@store/hooks";
 import { getNextSortConfig } from "@utils/sorting";
-import DynamicFilter from "@components/DynamicFilter";
+import DynamicFilter from "@components/dynamic-filter";
 import ResizableTable from "@components/table/ResizableTable";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
 import ModuleControls from "../shared/ModuleControls";

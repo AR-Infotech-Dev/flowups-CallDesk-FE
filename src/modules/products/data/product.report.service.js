@@ -83,12 +83,25 @@ export async function sendAlertToCustomer({customer_id = null , product = {}}) {
 
   return response;
 }
-export async function makeToCustomer({customer_id = null , product = {}}) {
+export function getDefaultProductExpiryCallDescription(row = {}) {
+  const productName = row.product_name || row.product?.product_name || "product";
+  const serialNumber = row.serial_number || row.product?.serial_number || "";
+  const expiryDate = row.expiry_date || row.product?.expiry_date || "";
+  const customerName = row.customer_name || row.customer?.name || "customer";
+  const serialText = serialNumber ? ` (${serialNumber})` : "";
+  const expiryText = expiryDate ? ` expiring on ${expiryDate}` : "";
+
+  return `Product expiry call registered for ${customerName} - ${productName}${serialText}${expiryText}.`;
+}
+
+export async function makeToCustomer({customer_id = null , product = {}, description = ""}) {
   const response = await makeRequest("/reports/product-expiry/makeCall", {
     method: "POST",
     body: {
       product,
-      customer_id
+      customer_id,
+      description: String(description || "").trim() || getDefaultProductExpiryCallDescription({ product }),
+      call_description: String(description || "").trim() || getDefaultProductExpiryCallDescription({ product }),
     },
   });
 

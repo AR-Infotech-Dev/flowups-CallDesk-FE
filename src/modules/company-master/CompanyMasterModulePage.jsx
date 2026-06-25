@@ -5,7 +5,7 @@ import { getNextSortConfig } from "../../utils/sorting";
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
 import ModulePagination from "../shared/ModulePagination";
-import DynamicFilter from "../../components/DynamicFilter";
+import DynamicFilter from "../../components/dynamic-filter";
 import ResizableTable from "../../components/table/ResizableTable";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
 

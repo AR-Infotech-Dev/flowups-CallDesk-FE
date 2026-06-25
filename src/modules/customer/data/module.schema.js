@@ -146,7 +146,7 @@ export const customerModuleSchema = {
             alwaysEditable: true,
             visibleWhen: (values) => values.is_amc === "yes",
             options: [
-              { value: "4_month", label: "4 Month" },
+              { value: "3_month", label: "3 Month" },
               { value: "6_month", label: "6 Month" },
               { value: "yearly", label: "Yearly" },
             ],

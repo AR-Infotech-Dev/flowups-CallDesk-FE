@@ -5,7 +5,7 @@ import { getNextSortConfig } from "@utils/sorting";
 import ModuleControls from "@shared/ModuleControls";
 import ModulePageLayout from "@shared/ModulePageLayout";
 import ModulePagination from "@shared/ModulePagination";
-import DynamicFilter from "@components/DynamicFilter";
+import DynamicFilter from "@components/dynamic-filter";
 import ResizableTable from "@components/table/ResizableTable";
 import ActionButton from "@components/ui/ActionButton";
 import KanbanBoard from "@components/kanban/KanbanBoard";
@@ -28,7 +28,7 @@ function TicketsModulePage({ menu_id }) {
     applyFilterPayload,
     setSort,
     clearFilters,
-  } = useModuleFilters("tickets");
+  } = useModuleFilters("tickets", [], ticketsModuleSchema.defaultFilters);
 
   const {
     ticketList,
@@ -115,6 +115,7 @@ function TicketsModulePage({ menu_id }) {
               filter={
                 <DynamicFilter
                   fields={resolvedFilterFields}
+                  defaultFilters={ticketsModuleSchema.defaultFilters}
                   savedFilters={ticketsModuleSchema.savedFilters}
                   onSearch={setSearchText}
                   onApplyFilters={applyFilterPayload}
@@ -122,7 +123,7 @@ function TicketsModulePage({ menu_id }) {
                   onDeleteFilter={() => {}}
                   onSelectSavedFilter={() => {}}
                   onClearFilters={handleClearFilters}
-                  onlySearchText
+                  // onlySearchText
                 />
               }
             >

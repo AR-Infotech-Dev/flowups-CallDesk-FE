@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import { sendAlertToCustomer, makeToCustomer } from "../data/product.report.service"
+import { sendAlertToCustomer } from "../data/product.report.service"
 import { Phone, Send, MailCheck, History } from "lucide-react"
 
 const statusLabels = {
@@ -20,7 +20,17 @@ const headers = [
   ["action", "Action"],
 ];
 
-function ProductExpiryReportTable({ rows, loading, sortConfig, onSort, refreshList, onOpenActivity, activityLoadingRowKey }) {
+function ProductExpiryReportTable({
+  rows,
+  loading,
+  sortConfig,
+  onSort,
+  refreshList,
+  onMakeCall,
+  onOpenActivity,
+  activityLoadingRowKey,
+  callingRowKey,
+}) {
   if (loading) {
     return <div className="product-expiry-empty">Loading product expiry report...</div>;
   }
@@ -56,24 +66,6 @@ function ProductExpiryReportTable({ rows, loading, sortConfig, onSort, refreshLi
       toast.error(error.message || "Server error");
     }
   }
-  const handelExpiryRelatedCall = async (row) => {
-    try {
-      const { product, customer_id } = getDetails(row);
-
-      if (!customer_id) {
-        toast.error("Customer not found !");
-      }
-      const res = await makeToCustomer({ customer_id, product });
-      if (res.success) {
-        toast.success(res?.message || `Alert sent successfully`);
-        return;
-      }
-      toast.error(res?.msg || res?.message || "Something went wrong");
-    } catch (error) {
-      toast.error(error.message || "Server error");
-    }
-  }
-
   return (
     <div className="product-expiry-table-panel">
       <div className="product-expiry-table-scroll">
@@ -99,10 +91,11 @@ function ProductExpiryReportTable({ rows, loading, sortConfig, onSort, refreshLi
               <ProductExpiryReportRow
                 key={`${row.customer_id}-${row.product_id}-${row.serial_number}-${row.expiry_date}`}
                 row={row}
-                handelExpiryRelatedCall={handelExpiryRelatedCall}
+                onMakeCall={onMakeCall}
                 handelAlertSend={handelAlertSend}
                 onOpenActivity={onOpenActivity}
                 activityLoadingRowKey={activityLoadingRowKey}
+                callingRowKey={callingRowKey}
               />
             ))}
           </tbody>
@@ -112,10 +105,18 @@ function ProductExpiryReportTable({ rows, loading, sortConfig, onSort, refreshLi
   );
 }
 
-function ProductExpiryReportRow({ row, handelAlertSend, handelExpiryRelatedCall, onOpenActivity, activityLoadingRowKey }) {
+function ProductExpiryReportRow({
+  row,
+  handelAlertSend,
+  onMakeCall,
+  onOpenActivity,
+  activityLoadingRowKey,
+  callingRowKey,
+}) {
   const sentToday = Boolean(Number(row?.sent_today || 0));
   const rowKey = `${row.customer_id}-${row.serial_number || row.product_id || ""}`;
   const isActivityLoading = activityLoadingRowKey === rowKey;
+  const isCalling = callingRowKey === rowKey;
 
   return (
     <tr>
@@ -130,7 +131,15 @@ function ProductExpiryReportRow({ row, handelAlertSend, handelExpiryRelatedCall,
       <td className="items-center w-fit">
         {row.expiry_status !== "valid" &&
           <div className="flex items-center h-full gap-2" >
-            <button title="Make Call" type="button" className="product-expiry-button primary" onClick={() => handelExpiryRelatedCall(row)}><Phone size={14} /></button>
+            <button
+              title="Make Call"
+              type="button"
+              className="product-expiry-button primary"
+              onClick={() => onMakeCall(row)}
+              disabled={isCalling}
+            >
+              <Phone size={14} />
+            </button>
             <button title="History" type="button" className="product-expiry-button primary" onClick={() => onOpenActivity(row)} disabled={isActivityLoading}>
               <History size={14} />
             </button>

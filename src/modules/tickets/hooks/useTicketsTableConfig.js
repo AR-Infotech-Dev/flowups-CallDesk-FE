@@ -20,6 +20,7 @@ export const useTicketsTableConfig = ({ resolvedMenuID, filterState }) => {
     skipFields: ticketsModuleSchema.skipFields,
     columnMappings: ticketsModuleSchema.columnMappings,
     tableCellConfig: ticketsModuleSchema.tableCellConfig,
+    filterFieldOptions: ticketsModuleSchema.filterFieldOptions,
   };
 
   const resolvedColumns = useMemo(() => {

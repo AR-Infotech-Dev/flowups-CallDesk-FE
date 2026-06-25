@@ -171,7 +171,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
         isOpen={isOpen}
         onClose={handleClose}
         title={selectedTicket ? "Edit Ticket" : "Create Ticket"}
-        subtitle={formData.ticket_no && <p className="text-[14px] text-slate-500 w-full text-end"><span className="bg-gray-50 p-1">#{formData.ticket_no}</span></p>}
+        subtitle={formData.ticket_no && <span className="block w-full text-end text-[14px] text-slate-500"><span className="bg-gray-50 p-1">#{formData.ticket_no}</span></span>}
         closeButton={
           <button className="flyout-close" onClick={handleClose} aria-label="Close panel">
             <X size={18} />

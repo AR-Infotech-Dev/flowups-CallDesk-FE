@@ -11,6 +11,7 @@ import {
 } from "../data/amcReminder.slice";
 import {
   fetchAmcActivity,
+  getDefaultAmcCallDescription,
   makeAmcCallTicket,
   scheduleAmcVisit,
   sendAmcReminder,
@@ -37,6 +38,8 @@ export const useAmcRemindersModule = ({
   const [includeReport, setIncludeReport] = useState(false);
   const [sendingCustomerId, setSendingCustomerId] = useState(null);
   const [callingCustomerId, setCallingCustomerId] = useState(null);
+  const [callCustomer, setCallCustomer] = useState(null);
+  const [callDescription, setCallDescription] = useState("");
   const [visitCustomer, setVisitCustomer] = useState(null);
   const [schedulingVisitCustomerId, setSchedulingVisitCustomerId] = useState(null);
   const [activityCustomer, setActivityCustomer] = useState(null);
@@ -131,14 +134,47 @@ export const useAmcRemindersModule = ({
       return;
     }
 
+    setCallCustomer(customer);
+    setCallDescription(getDefaultAmcCallDescription(customer));
+  };
+
+  const closeCallModal = () => {
+    if (callingCustomerId) return;
+    setCallCustomer(null);
+    setCallDescription("");
+  };
+
+  const handleCallDescriptionChange = (value) => {
+    setCallDescription(value);
+  };
+
+  const handleConfirmMakeCall = async () => {
+    const customerId = callCustomer?.customer_id;
+    const remarks = String(callDescription || "").trim();
+
+    if (!customerId) {
+      toast.error("Customer id is missing.");
+      return;
+    }
+
+    if (!remarks) {
+      toast.error("Call description required!");
+      return;
+    }
+
     setCallingCustomerId(customerId);
 
-    const response = await makeAmcCallTicket({ customer });
+    const response = await makeAmcCallTicket({
+      customer: callCustomer,
+      remarks,
+    });
 
     setCallingCustomerId(null);
 
     if (response?.success) {
       toast.success(response?.message || "AMC call ticket created successfully.");
+      setCallCustomer(null);
+      setCallDescription("");
       await getReminderList();
       return;
     }
@@ -250,6 +286,8 @@ export const useAmcRemindersModule = ({
     includeReport,
     sendingCustomerId,
     callingCustomerId,
+    callCustomer,
+    callDescription,
     visitCustomer,
     schedulingVisitCustomerId,
     activityCustomer,
@@ -265,6 +303,9 @@ export const useAmcRemindersModule = ({
     closeReminderModal,
     handleSendReminder,
     handleMakeCall,
+    closeCallModal,
+    handleCallDescriptionChange,
+    handleConfirmMakeCall,
     handleAddVisit,
     closeVisitModal,
     handleVisitFieldChange,

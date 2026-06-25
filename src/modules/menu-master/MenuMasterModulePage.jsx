@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useModuleFilters } from "../../store/hooks";
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
-import DynamicFilter from "../../components/DynamicFilter";
+import DynamicFilter from "../../components/dynamic-filter";
 import ActionButton from "../../components/ui/ActionButton";
 import Spinner from "../../components/ui/Spinner";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
