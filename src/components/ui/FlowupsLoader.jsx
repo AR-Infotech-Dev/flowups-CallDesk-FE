@@ -41,7 +41,7 @@ const FlowupSLoader = () => {
           <img
             src="./logo 1.png"
             alt="FlowupS CallDesk Logo"
-            className="relative h-27 w-auto object-contain drop-shadow-sm "
+            className="relative h-27 w-auto object-contain drop-shadow-sm animate-pulse delay-1000"
           />
         </div>
 
