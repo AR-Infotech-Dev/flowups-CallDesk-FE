@@ -41,6 +41,15 @@ export const normalizeCustomerContacts = (source = []) => {
     : [];
 };
 
+export const normalizeMobileNumber = (value = "") => String(value || "").replace(/\D/g, "");
+
+export const findCustomerContactByMobile = (contacts = [], mobile = "") => {
+  const normalizedMobile = normalizeMobileNumber(mobile);
+  if (!normalizedMobile) return null;
+
+  return normalizeCustomerContacts(contacts).find((contact) => normalizeMobileNumber(contact.mobile_no) === normalizedMobile) || null;
+};
+
 export const normalizeTicketAddOns = (source = []) => {
   if (typeof source === "string") {
     try {
@@ -159,6 +168,35 @@ export const mergeCurrentTicketProduct = (products = [], ticket = {}) => {
   ];
 };
 
+export const mergeCurrentTicketContact = (contacts = [], ticket = {}) => {
+  const normalizedContacts = normalizeCustomerContacts(contacts);
+  const ticketContactName = String(ticket?.contact_person || "").trim();
+  const ticketContactMobile = normalizeMobileNumber(ticket?.contact_no);
+
+  if (!ticketContactName && !ticketContactMobile) return normalizedContacts;
+
+  const hasCurrentContact = normalizedContacts.some((contact) => {
+    const sameMobile = ticketContactMobile && normalizeMobileNumber(contact.mobile_no) === ticketContactMobile;
+    const sameName = ticketContactName && String(contact.name || "").trim() === ticketContactName;
+    return sameMobile || sameName;
+  });
+
+  if (hasCurrentContact) return normalizedContacts;
+
+  return [
+    {
+      contact_id: "",
+      name: ticketContactName || ticketContactMobile,
+      mobile_no: ticketContactMobile,
+      email: "",
+      designation: "",
+      department: "",
+      is_primary: "n",
+    },
+    ...normalizedContacts,
+  ];
+};
+
 export const buildTicketSavePayload = (formData = {}) => {
   const {
     customer_products,
@@ -170,6 +208,12 @@ export const buildTicketSavePayload = (formData = {}) => {
   return {
     ...ticketPayload,
     product_add_ons: normalizeTicketAddOn(formData.product_add_ons),
+    contact_details: formData.save_contact
+      ? {
+        ...(formData.contact_details || {}),
+        mobile_no: normalizeMobileNumber(formData.contact_details?.mobile_no || formData.contact_no),
+      }
+      : undefined,
     title: formData.title || formData.client_name,
   };
 };

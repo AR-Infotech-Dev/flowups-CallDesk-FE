@@ -12,11 +12,14 @@ import {
 import { findActiveWorkLog } from "../utils/workLogStatus";
 import {
   buildTicketSavePayload,
+  findCustomerContactByMobile,
   getPrimaryCustomerContact,
   getTicketIdentifier,
   isCustomizationQueryName,
+  mergeCurrentTicketContact,
   mergeCurrentTicketProduct,
   normalizeCustomerContacts,
+  normalizeMobileNumber,
   normalizeCustomerProducts,
   normalizeTicketCustomerData,
   normalizeTicketData,
@@ -69,18 +72,35 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
       setFetchingTicket(true);
       const res = await getTicketDetails(ticketId);
       const ticketData = res?.data || selectedTicket;
-      const normalizedTicket = normalizeTicketData(ticketData);
+      const ticketDataWithSelectedContact = {
+        ...ticketData,
+        ...(selectedTicket?.contact_person ? { contact_person: selectedTicket.contact_person } : {}),
+        ...(selectedTicket?.contact_no ? { contact_no: selectedTicket.contact_no } : {}),
+      };
+      const normalizedTicket = normalizeTicketData(ticketDataWithSelectedContact);
       const normalizedCustomer = normalizeTicketCustomerData(ticketData);
       const customerId = normalizedCustomer?.customer_id || normalizedTicket?.client_id;
       const detailedCustomer = customerId
         ? await loadCustomerDetails(customerId, normalizedCustomer)
         : normalizedCustomer;
-      const normalizedDetailedCustomer = normalizeTicketCustomerData({ ...ticketData, customer: detailedCustomer });
+      const normalizedDetailedCustomer = normalizeTicketCustomerData({ ...ticketDataWithSelectedContact, customer: detailedCustomer });
       const customerProducts = mergeCurrentTicketProduct(normalizedDetailedCustomer.customer_products, normalizedTicket);
-      const customerContacts = normalizeCustomerContacts(normalizedDetailedCustomer.customer_contacts || normalizedDetailedCustomer.contact_persons);
+      const customerContacts = mergeCurrentTicketContact(
+        normalizedDetailedCustomer.customer_contacts || normalizedDetailedCustomer.contact_persons,
+        normalizedTicket
+      );
+      const matchedContact = findCustomerContactByMobile(customerContacts, normalizedTicket.contact_no);
+      const resolvedTicketContact = mode === "edit"
+        ? (normalizedTicket.contact_person || selectedTicket?.contact_person || "")
+        : (matchedContact?.name || normalizedTicket.contact_person || "");
+      const resolvedTicketContactNo = mode === "edit"
+        ? (normalizedTicket.contact_no || selectedTicket?.contact_no || "")
+        : (matchedContact?.mobile_no || normalizedTicket.contact_no || "");
 
       setFormData({
         ...normalizedTicket,
+        contact_person: resolvedTicketContact,
+        contact_no: resolvedTicketContactNo,
         customer_products: customerProducts,
         customer_contacts: customerContacts,
         contact_persons: customerContacts,
@@ -88,6 +108,12 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
       setOldFormData(normalizedTicket);
       setSelectedCustomer({
         ...normalizedDetailedCustomer,
+        ...(mode === "edit"
+          ? {
+            contact_person: resolvedTicketContact || normalizedDetailedCustomer.contact_person,
+            mobile_no: resolvedTicketContactNo || normalizedDetailedCustomer.mobile_no,
+          }
+          : {}),
         customer_products: customerProducts,
         products: customerProducts,
         customer_contacts: customerContacts,
@@ -95,8 +121,9 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
       });
     } catch (error) {
       toast.error("Unable to fetch ticket details");
-      setFormData(normalizeTicketData(selectedTicket));
-      setOldFormData(normalizeTicketData(selectedTicket));
+      const normalizedSelectedTicket = normalizeTicketData(selectedTicket);
+      setFormData(normalizedSelectedTicket);
+      setOldFormData(normalizedSelectedTicket);
       setSelectedCustomer(normalizeTicketCustomerData(selectedTicket));
     } finally {
       setFetchingTicket(false);
@@ -110,6 +137,10 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
 
   useEffect(() => {
     if (selectedTicket && isOpen) {
+      setFormData(normalizeTicketData(selectedTicket));
+      setOldFormData(normalizeTicketData(selectedTicket));
+      setSelectedCustomer(normalizeTicketCustomerData(selectedTicket));
+      setErrors({});
       fetchTicketDetails();
       return;
     }
@@ -146,6 +177,30 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
           const contact = normalizeCustomerContacts(current.customer_contacts || current.contact_persons).find((item) => String(item.name) === String(value));
           return {
             contact_no: contact?.mobile_no || current.contact_no || "",
+            save_contact: false,
+            contact_details: ticketsModuleSchema.form.initialValues.contact_details,
+          };
+        })()
+        : {}),
+      ...(name === "contact_no"
+        ? (() => {
+          const mobile = normalizeMobileNumber(value);
+          const contact = findCustomerContactByMobile(current.customer_contacts || current.contact_persons, mobile);
+          if (contact) {
+            return {
+              contact_person: contact.name || current.contact_person || "",
+              save_contact: false,
+              contact_details: ticketsModuleSchema.form.initialValues.contact_details,
+            };
+          }
+
+          return {
+            contact_person: mobile.length === 10 ? "" : current.contact_person,
+            save_contact: Boolean(current.client_id && mobile.length === 10),
+            contact_details: {
+              ...(current.contact_details || ticketsModuleSchema.form.initialValues.contact_details),
+              mobile_no: mobile,
+            },
           };
         })()
         : {}),
@@ -153,6 +208,35 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
         ? { product_add_ons: [] }
         : {}),
     }));
+  };
+
+  const handleQuickContactChange = (event) => {
+    const { name, value, type, checked } = event.target;
+
+    setFormData((current) => {
+      const nextContactDetails = {
+        ...(current.contact_details || ticketsModuleSchema.form.initialValues.contact_details),
+        mobile_no: normalizeMobileNumber(current.contact_no),
+      };
+
+      if (name === "save_contact") {
+        return {
+          ...current,
+          save_contact: checked,
+          contact_details: nextContactDetails,
+        };
+      }
+
+      return {
+        ...current,
+        save_contact: true,
+        contact_person: name === "name" ? value : current.contact_person,
+        contact_details: {
+          ...nextContactDetails,
+          [name]: value,
+        },
+      };
+    });
   };
 
   const handleObjectSelect = async (field, item = {}) => {
@@ -178,6 +262,12 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
 
     setSelectedCustomer(customerId ? {
       ...normalizedCustomer,
+      ...(mode === "edit"
+        ? {
+          contact_person: formData.contact_person || normalizedCustomer.contact_person,
+          mobile_no: formData.contact_no || normalizedCustomer.mobile_no,
+        }
+        : {}),
       customer_products: customerProducts,
       products: customerProducts,
       customer_contacts: customerContacts,
@@ -186,8 +276,12 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
 
     setFormData((current) => ({
       ...current,
-      contact_no: primaryContact?.mobile_no || detailedCustomer?.mobile_no || "",
-      contact_person: primaryContact?.name || detailedCustomer?.contact_person || current.contact_person || "",
+      contact_no: mode === "edit"
+        ? current.contact_no
+        : (primaryContact?.mobile_no || detailedCustomer?.mobile_no || ""),
+      contact_person: mode === "edit"
+        ? current.contact_person
+        : (primaryContact?.name || detailedCustomer?.contact_person || current.contact_person || ""),
       ...(String(current.client_id || "") !== String(customerId || "")
         ? {
           product_id: null,
@@ -300,7 +394,7 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
     if (!result.success) {
       const nextErrors = {};
       result.error.issues.forEach((issue) => {
-        nextErrors[issue.path[0]] = issue.message;
+        nextErrors[issue.path.join(".") || issue.path[0]] = issue.message;
       });
       setErrors(nextErrors);
       return;
@@ -366,6 +460,7 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
     ticketId,
     handleClose,
     handleChange,
+    handleQuickContactChange,
     handleObjectSelect,
     openCustomerCreate,
     handleCustomerSaved,

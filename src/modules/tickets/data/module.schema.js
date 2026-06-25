@@ -92,6 +92,14 @@ export const ticketsModuleSchema = {
       customer_products: [],
       customer_contacts: [],
       contact_no: null,
+      save_contact: false,
+      contact_details: {
+        name: "",
+        mobile_no: "",
+        email: "",
+        designation: "",
+        department: "",
+      },
       description: null,
       query_type: null,
       ticket_status: "205",
@@ -222,7 +230,7 @@ export const ticketsModuleSchema = {
             type: "select",
             required: true,
             gridSpan: 6,
-            readOnlyWhen: (values) => Boolean(values.ticket_id),
+            // readOnlyWhen: (values) => Boolean(values.ticket_id),
             options: (values) => (Array.isArray(values.customer_contacts) ? values.customer_contacts : []).map((contact) => ({
               value: contact.name,
               label: `${contact.designation ? `[${contact.designation}] - ` : ""} ${contact.name}`,
@@ -255,7 +263,7 @@ export const ticketsModuleSchema = {
             required: true,
             placeholder: "+1 (555) 000-0000",
             gridSpan: 6,
-            readOnlyWhen: (values) => Boolean(values.ticket_id),
+            // readOnlyWhen: (values) => Boolean(values.ticket_id),
           },
         ],
       },
@@ -400,6 +408,14 @@ export const ticketsModuleSchema = {
     description: z.string().nullable().transform(v => v ?? "").pipe(z.string().trim().min(1, "Description is Required!")),
     contact_person: z.string().nullable().optional().transform(v => v ?? "").refine(v => v === "" || v.trim().length > 0, "Contact person name required"),
     contact_no: z.string().nullable().optional().transform(v => v ?? "").refine(v => v === "" || /^[0-9]\d{9}$/.test(v), "Enter valid 10-digit mobile number"),
+    save_contact: z.boolean().optional().default(false),
+    contact_details: z.object({
+      name: z.string().optional().default(""),
+      mobile_no: z.string().optional().default(""),
+      email: z.string().optional().default(""),
+      designation: z.string().optional().default(""),
+      department: z.string().optional().default(""),
+    }).optional(),
     start_date: z.coerce.date({ required_error: "Start date is Required!", invalid_type_error: "Start date is Required!", }),
     due_date: z.coerce.date({ required_error: "Due date is Required!", invalid_type_error: "Due date is Required!", }),
     query_type: z.coerce.number().min(1, "Query type is Required!"),
@@ -408,10 +424,45 @@ export const ticketsModuleSchema = {
     ticket_status: z.coerce.number().min(1, "Ticket status is Required!"),
     ticket_priority: z.coerce.number().min(1, "Ticket priority is Required!"),
     status: z.string().nullable().default("active"),
-  }).refine((data) => {
+  }).superRefine((data, ctx) => {
     if (!data.start_date || !data.due_date) return true; // avoid crash
-    return data.due_date >= data.start_date;
-  }, { message: "Due date must be after Start date", path: ["due_date"], })
+    if (data.due_date < data.start_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Due date must be after Start date",
+        path: ["due_date"],
+      });
+    }
+
+    if (!data.save_contact) return;
+
+    const contact = data.contact_details || {};
+    const mobile = String(contact.mobile_no || data.contact_no || "").replace(/\D/g, "");
+
+    if (!String(contact.name || "").trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Contact name is required to add new contact",
+        path: ["contact_details.name"],
+      });
+    }
+
+    if (!/^[0-9]\d{9}$/.test(mobile)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter valid 10-digit mobile number",
+        path: ["contact_details.mobile_no"],
+      });
+    }
+
+    if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(contact.email).trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid contact email address",
+        path: ["contact_details.email"],
+      });
+    }
+  })
 };
 
 export const ticketsFallbackColumns = [
