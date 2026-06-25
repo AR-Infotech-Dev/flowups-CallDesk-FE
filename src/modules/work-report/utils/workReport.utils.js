@@ -1,12 +1,18 @@
 import { Clock, FileText, Ticket, Users } from "lucide-react";
 
 export const formatWorkMinutes = (value = 0) => {
-  const minutes = Number(value || 0);
-  if (!minutes) return "0m";
+  const totalSeconds = Math.max(0, Math.round(Number(value || 0) * 60));
+  if (!totalSeconds) return "0s";
 
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return [hours ? `${hours}h` : "", mins ? `${mins}m` : ""].filter(Boolean).join(" ");
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [
+    hours ? `${hours}h` : "",
+    mins ? `${mins}m` : "",
+    seconds ? `${seconds}s` : "",
+  ].filter(Boolean).join(" ");
 };
 
 export const getNextWorkReportSort = (currentSort, key) => ({

@@ -8,7 +8,7 @@ import ModulePagination from "@shared/ModulePagination";
 import { useAppSelector, useModuleFilters } from "@store/hooks";
 import { defaultSortConfig } from "@utils/sorting";
 import ActivityModal from "./components/ActivityModal";
-import { renderAmcReminderCell } from "./components/AmcReminderTableCell";
+import AmcReminderTableRow from "./components/AmcReminderTableRow";
 import ReminderConfirmModal from "./components/ReminderConfirmModal";
 import VisitScheduleModal from "./components/VisitScheduleModal";
 import { AMC_REMINDER_FILTER_FIELDS } from "./data/amcReminder.constants";
@@ -16,7 +16,6 @@ import { selectAmcRows } from "./data/amcReminder.slice";
 import { amcReminderFallbackColumns, amcReminderModuleSchema } from "./data/module.schema";
 import { useAmcReminderTableConfig } from "./hooks/useAmcReminderTableConfig";
 import { useAmcRemindersModule } from "./hooks/useAmcRemindersModule";
-import { getAmcReminderRowIdentifier } from "./utils/amcReimders.utils";
 
 function AmcRemindersModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || amcReminderModuleSchema.menu_id || null;
@@ -80,16 +79,7 @@ function AmcRemindersModulePage({ menu_id }) {
     canSendReminder,
   });
 
-  const {
-    sortConfig,
-    defaultVisibleColumnKeys,
-    handleSortChange,
-  } = useAmcReminderTableConfig({
-    filterState,
-    setSort,
-    page,
-    handlePageChange,
-  });
+  const { sortConfig, defaultVisibleColumnKeys, handleSortChange, } = useAmcReminderTableConfig({ filterState, setSort, page, handlePageChange, });
 
   useEffect(() => {
     getReminderList();
@@ -139,29 +129,20 @@ function AmcRemindersModulePage({ menu_id }) {
             sortConfig={sortConfig}
             onSortChange={handleSortChange}
             renderRow={(row, index, columns) => (
-              <tr key={getAmcReminderRowIdentifier(row, index)} className="group">
-                {columns.map((column) => (
-                  <td
-                    key={column.key}
-                    className={column.key === "actions" ? "amc-action-cell" : column.className || ""}
-                    style={{
-                      width: column.currentWidth,
-                      minWidth: column.currentWidth,
-                      maxWidth: column.currentWidth,
-                    }}
-                  >
-                    {renderAmcReminderCell(column, row, {
-                      onOpenReminder: openReminderModal,
-                      onMakeCall: handleMakeCall,
-                      onAddVisit: handleAddVisit,
-                      onOpenActivity: handleOpenActivity,
-                      sendingCustomerId,
-                      callingCustomerId,
-                      activityLoadingCustomerId,
-                    })}
-                  </td>
-                ))}
-              </tr>
+              <AmcReminderTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                actions={{
+                  onOpenReminder: openReminderModal,
+                  onMakeCall: handleMakeCall,
+                  onAddVisit: handleAddVisit,
+                  onOpenActivity: handleOpenActivity,
+                  sendingCustomerId,
+                  callingCustomerId,
+                  activityLoadingCustomerId,
+                }}
+              />
             )}
           />
         }

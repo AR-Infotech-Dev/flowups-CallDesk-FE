@@ -167,12 +167,16 @@ function ClientHistory({ openedTiket = null, client = {}, CLIENT_HISTORY_ITEMS }
             <div className="histories ticket-scroll-pane px-2 space-y-2 mt-2">
                 {ticketList.filter((item) => item.ticket_id !== openedTiket).map((item) => (
                     <article key={item.ticket_id} className="relative rounded-sm border border-slate-200 bg-white  px-4 py-2 shadow-sm" >
-                        <span className={`absolute top-2 right-2 rounded-full text-[${item.status_color}] px-2.5 py-0.5 text-[0.55rem] shadow-sm font-medium`}>
+                        <span className={`absolute top-2 right-2 rounded-full text-[${item.status_color}] bg-[${item.status_color}] px-2.5 py-0.5 text-[0.55rem] shadow-sm font-medium`} style={{ backgroundColor: item.status_color , color: "white" }}>
                             {item?.ticket_status}
                         </span>
-                        <div className="flex items-center justify-between gap-3">
-                            <h4 className=" font-semibold text-slate-800">
-                                {item.ticket_no && <span className="mr-2.5 text-orange-400 text-[12px]">{item.ticket_no} <br /></span>} <span className=" text-red-300 text-[11px]"> Query Type : {item.query_type}</span>
+                        <div className="flex items-center  justify-center gap-3">
+                            <h4 className=" font-semibold text-slate-800 w-full">
+                                {item.ticket_no && <span className="mr-2.5 text-orange-400 text-[12px]">{item.ticket_no} <br /></span>}
+                                <span className="flex justify-between">
+                                    <span className="text-red-300 text-[11px] w-[70%]"> Query Type : {item.query_type}</span>
+                                    <span className="text-slate-600 text-[11px] w-[30%] text-right">{formatDate(item.created_date, "short")}</span><br />
+                                </span>
                                 <span className="text-[13px] font-semibold text-slate-500" dangerouslySetInnerHTML={{ __html: item.description }} ></span>
                             </h4>
                         </div>

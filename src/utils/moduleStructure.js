@@ -43,6 +43,8 @@ function normalizeCellDisplayConfig(config = {}) {
     key: String(key).trim(),
     type,
     colorField: String(colorField || "").trim(),
+    width: config.width,
+    minWidth: config.minWidth || config.min_width,
   };
 }
 
@@ -144,14 +146,14 @@ export function buildFallbackColumnsFromKeys(keys = [], options = {}) {
       cellDisplayMap
     );
 
-    return {
-      key,
-      label: getFieldLabel({}, key, labelMap),
-      width: 180,
-      minWidth: 120,
-      cellType: cellConfig?.type || 'text',
-      colorField: cellConfig?.colorField || "",
-    }
+      return {
+        key,
+        label: getFieldLabel({}, key, labelMap),
+        width: cellConfig?.width || 180,
+        minWidth: cellConfig?.minWidth || 120,
+        cellType: cellConfig?.type || 'text',
+        colorField: cellConfig?.colorField || "",
+      }
   }
   );
 }
@@ -179,8 +181,8 @@ export function buildTableColumnsFromStructure(fields = [], fallbackColumns = []
       return {
         key,
         label: getFieldLabel(field, key, labelMap),
-        width: 180,
-        minWidth: 120,
+        width: cellConfig?.width || 180,
+        minWidth: cellConfig?.minWidth || 120,
         cellType: cellConfig?.type || "text",
         colorField: cellConfig?.colorField || "",
       };

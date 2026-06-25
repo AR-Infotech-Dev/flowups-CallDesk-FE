@@ -8,7 +8,7 @@ export function UserPerformanceHero({ userName, summary = {}, rating }) {
         <span>User Performance</span>
         <h3>{userName}</h3>
         <p>
-          Assigned Tickets: {summary?.assigned || 0} · Closed Tickets: {summary?.closed || 0} · Pending Tickets: {summary?.pending || 0}
+          Generated Tickets: {summary?.generated || 0} · Assigned Tickets: {summary?.assigned || 0} · Closed Tickets: {summary?.closed || 0} · Pending Tickets: {summary?.pending || 0}
         </p>
       </div>
       <div className="performance-rating">

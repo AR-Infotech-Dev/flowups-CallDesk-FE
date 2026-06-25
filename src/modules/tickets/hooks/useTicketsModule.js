@@ -25,6 +25,8 @@ import {
   mergeTicketFilters,
   normalizeTicketVisibility,
 } from "../utils/tickets.utils";
+import { TICKET_QUICK_FILTERS } from "../utils/tickets.utils";
+
 
 export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
   const location = useLocation();
@@ -42,6 +44,7 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
   const [viewMode, setViewMode] = useState(getViewMode(resolvedMenuID) || "table");
   const [viewAll, setViewAll] = useState(false);
   const [quickFilter, setQuickFilter] = useState("");
+  const [quickFilterList, setQuickFilterList] = useState(TICKET_QUICK_FILTERS);
   const [kanbanReloadVersion, setKanbanReloadVersion] = useState(0);
 
   const isKanbanView = viewMode === "kanban";
@@ -61,6 +64,14 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
 
   useEffect(() => {
     saveViewMode(resolvedMenuID, viewMode);
+    if (viewMode === 'kanban') {
+      const removeValues = ["closed", "pending", "open", "in_progress"];
+      setQuickFilterList((prev) =>
+        prev.filter((item) => !removeValues.includes(item.value))
+      );
+    } else {
+      setQuickFilterList(TICKET_QUICK_FILTERS);
+    }
   }, [resolvedMenuID, viewMode]);
 
   const getTicketList = async () => {
@@ -243,6 +254,7 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
     viewAll,
     setViewAll,
     quickFilter,
+    quickFilterList,
     setQuickFilter,
     kanbanReloadVersion,
     isKanbanView,

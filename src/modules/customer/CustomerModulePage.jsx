@@ -17,7 +17,7 @@ import ActionButton from "../../components/ui/ActionButton";
 import { useAuth } from "@auth/components/AuthProvider";
 import CustomerForm from "./components/CustomerForm";
 import CustomerImportFlyout from "./components/CustomerImportFlyout";
-
+import CustomerTableRow from "./components/CustomerTableRow";
 import { customerModuleSchema } from "./data/module.schema";
 
 import { useAppSelector } from "@store/hooks";
@@ -46,7 +46,6 @@ function CustomerModulePage({ menu_id }) {
   const { pagination, page, loading, deleting, selectedRowIds, getCustomersList, handlePageChange, handleToggleRow, handleToggleAllRows, handleDeleteSelected, handleDeleteRow, } = useCustomersModule({ filterState });
   const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useCustomerTableConfig({ resolvedMenuID, filterState });
 
-
   const handleReport = (customer) => {
     const customerId = customer?.customer_id ?? customer?.id;
     if (!customerId) {
@@ -55,6 +54,9 @@ function CustomerModulePage({ menu_id }) {
     }
     navigate(`/customer/report/${customerId}`, { state: { customer } });
   };
+  const handleProductsFlyout = () => {
+
+  }
   const handleSortChange = (columnKey) => {
     const nextSort = getNextSortConfig(sortConfig, columnKey);
     if (page !== 1) {
@@ -68,8 +70,6 @@ function CustomerModulePage({ menu_id }) {
 
   useEffect(() => {
     const customer = location.state?.openCustomer;
-    console.log(customer);
-
     if (customer?.customer_id) {
       setSelectedCustomer(customer);
       setIsFlyoutOpen(true);
@@ -131,6 +131,7 @@ function CustomerModulePage({ menu_id }) {
           </ModuleControls>
         }
         table={
+          
           <ResizableTable
             loading={loading}
             menuId={resolvedMenuID}
@@ -149,6 +150,14 @@ function CustomerModulePage({ menu_id }) {
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            renderRow={(row, index, columns, table) => (
+              <CustomerTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                table={table}
+              />
+            )}
             rowActions={[
               {
                 key: "report",
@@ -156,7 +165,7 @@ function CustomerModulePage({ menu_id }) {
                 icon: BarChart3,
                 className: "table-action-edit",
                 onClick: handleReport,
-              }
+              },
             ]}
           />
         }
@@ -168,15 +177,12 @@ function CustomerModulePage({ menu_id }) {
         onClose={() => {
           setIsFlyoutOpen(false);
           setSelectedCustomer(null);
-          console.log('getBackTo :', getBackTo);
-
           getBackTo ? navigate(getBackTo) : null;
         }}
         selectedCustomer={selectedCustomer}
         onAfterSave={getCustomersList}
         menu_id={resolvedMenuID}
       />
-
       <CustomerImportFlyout
         isOpen={isImportFlyoutOpen}
         onClose={() => setIsImportFlyoutOpen(false)}

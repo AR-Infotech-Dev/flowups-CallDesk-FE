@@ -8,6 +8,7 @@ import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
 import ModulePagination from "../shared/ModulePagination";
 import CategoryForm from "./components/CategoryForm";
+import CategoryTableRow from "./components/CategoryTableRow";
 import { categoryModuleSchema } from "./data/module.schema";
 import { selectCategoriesRows } from "./data/categories.slice";
 import { useCategoriesModule } from "./hooks/useCategoriesModule";
@@ -123,6 +124,14 @@ function CategoryModulePage({ menu_id }) {
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            renderRow={(row, index, columns, table) => (
+              <CategoryTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                table={table}
+              />
+            )}
           />
         }
         footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}

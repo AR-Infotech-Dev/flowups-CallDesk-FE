@@ -5,6 +5,7 @@ import Spinner from "@components/ui/Spinner";
 import DynamicModuleForm from "@components/ui/DynamicModuleForm";
 import { customerModuleSchema } from "../data/module.schema";
 import { useCustomerForm } from "../hooks/useCustomerForm";
+import CustomerContactsEditor from "./CustomerContactsEditor";
 import CustomerProductsEditor from "./CustomerProductsEditor";
 
 const EMPTY_INITIAL_VALUES = {};
@@ -23,6 +24,7 @@ function CustomerForm({
     formData,
     productOptions,
     productRows,
+    contactRows,
     loadingProducts,
     errors,
     handleClose,
@@ -34,6 +36,10 @@ function CustomerForm({
     addProductAddon,
     updateProductAddon,
     removeProductAddon,
+    addContactRow,
+    updateContactRow,
+    removeContactRow,
+    setPrimaryContact,
   } = useCustomerForm({
     isOpen,
     onClose,
@@ -87,6 +93,14 @@ function CustomerForm({
                 onChange={handleChange}
                 errors={errors}
                 menuId={menu_id}
+              />
+              <CustomerContactsEditor
+                contactRows={contactRows}
+                errors={errors}
+                onAddContactRow={addContactRow}
+                onUpdateContactRow={updateContactRow}
+                onRemoveContactRow={removeContactRow}
+                onSetPrimaryContact={setPrimaryContact}
               />
               <CustomerProductsEditor
                 productRows={productRows}

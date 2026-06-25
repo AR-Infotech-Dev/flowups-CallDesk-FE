@@ -5,6 +5,7 @@ import {
   getCustomerIdentifier,
   normalizeAddOns,
   normalizeCustomerData,
+  normalizeCustomerContacts,
   normalizeCustomerProducts,
 } from "../utils/customer.utils";
 import {
@@ -25,6 +26,7 @@ export const useCustomerForm = ({
   const [formData, setFormData] = useState(customerModuleSchema.form.initialValues);
   const [productOptions, setProductOptions] = useState([]);
   const [productRows, setProductRows] = useState([]);
+  const [contactRows, setContactRows] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -41,10 +43,12 @@ export const useCustomerForm = ({
         const customerData = res?.data || selectedCustomer;
         setFormData(normalizeCustomerData(customerData));
         setProductRows(normalizeCustomerProducts(customerData));
+        setContactRows(normalizeCustomerContacts(customerData));
       } catch (error) {
         toast.error("Unable to fetch customer details");
         setFormData(normalizeCustomerData(selectedCustomer));
         setProductRows(normalizeCustomerProducts(selectedCustomer));
+        setContactRows(normalizeCustomerContacts(selectedCustomer));
       } finally {
         setFetchingCustomer(false);
       }
@@ -60,6 +64,7 @@ export const useCustomerForm = ({
       ...initialValues,
     });
     setProductRows(normalizeCustomerProducts(initialValues));
+    setContactRows(normalizeCustomerContacts(initialValues));
     setErrors({});
   }, [selectedCustomer, isOpen, customerId, initialValues]);
 
@@ -84,6 +89,7 @@ export const useCustomerForm = ({
   const handleClose = () => {
     setFormData(customerModuleSchema.form.initialValues);
     setProductRows([]);
+    setContactRows([]);
     setErrors({});
     onClose();
   };
@@ -173,7 +179,98 @@ export const useCustomerForm = ({
     setProductRows((current) => current.filter((_, rowIndex) => rowIndex !== index));
   };
 
+  const addContactRow = () => {
+    setContactRows((current) => [
+      ...current,
+      {
+        contact_id: null,
+        customer_id: customerId || null,
+        name: "",
+        designation: "",
+        mobile_no: "",
+        email: "",
+        department: "",
+        is_primary: current.length === 0 ? "y" : "n",
+      },
+    ]);
+    setErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors.customer_contacts;
+      return nextErrors;
+    });
+  };
+
+  const updateContactRow = (index, key, value) => {
+    setContactRows((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [key]: value } : row
+      )
+    );
+    setErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors[`customer_contacts.${index}.${key}`];
+      delete nextErrors.customer_contacts;
+      return nextErrors;
+    });
+  };
+
+  const removeContactRow = (index) => {
+    setContactRows((current) => {
+      const nextRows = current.filter((_, rowIndex) => rowIndex !== index);
+
+      if (nextRows.length && !nextRows.some((row) => row.is_primary === "y")) {
+        return nextRows.map((row, rowIndex) => ({
+          ...row,
+          is_primary: rowIndex === 0 ? "y" : "n",
+        }));
+      }
+
+      return nextRows;
+    });
+    setErrors((current) => {
+      const nextErrors = {};
+      Object.entries(current).forEach(([key, value]) => {
+        if (!key.startsWith(`customer_contacts.${index}.`)) {
+          nextErrors[key] = value;
+        }
+      });
+      return nextErrors;
+    });
+  };
+
+  const setPrimaryContact = (index) => {
+    setContactRows((current) =>
+      current.map((row, rowIndex) => ({
+        ...row,
+        is_primary: rowIndex === index ? "y" : "n",
+      }))
+    );
+    setErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors.customer_contacts;
+      return nextErrors;
+    });
+  };
+
   const handleSave = async () => {
+    const normalizedContacts = contactRows
+      .map((row) => ({
+        contact_id: row.contact_id || null,
+        customer_id: row.customer_id || customerId || null,
+        name: row.name || "",
+        designation: row.designation || "",
+        mobile_no: row.mobile_no || "",
+        email: row.email || "",
+        department: row.department || "",
+        is_primary: row.is_primary === "y" ? "y" : "n",
+      }))
+      .filter((row) => row.name || row.designation || row.mobile_no || row.email || row.department);
+
+    const primaryContact =
+      normalizedContacts.find((row) => row.is_primary === "y") ||
+      normalizedContacts[0] ||
+      null;
+
     const normalizedAmcData = formData.is_amc === "yes"
       ? {
         amc_term_period: formData.amc_term_period || null,
@@ -189,6 +286,11 @@ export const useCustomerForm = ({
     const payload = {
       ...formData,
       ...normalizedAmcData,
+      contact_person: primaryContact?.name || null,
+      email: primaryContact?.email || null,
+      mobile_no: primaryContact?.mobile_no || null,
+      customer_contacts: normalizedContacts,
+      contact_persons: normalizedContacts,
       customer_products: productRows
         .filter((row) => row.product_id)
         .map((row) => ({
@@ -204,7 +306,8 @@ export const useCustomerForm = ({
     if (!result.success) {
       const nextErrors = {};
       result.error.issues.forEach((issue) => {
-        nextErrors[issue.path[0]] = issue.message;
+        const key = issue.path.length ? issue.path.join(".") : "form";
+        nextErrors[key] = issue.message;
       });
       setErrors(nextErrors);
       return;
@@ -218,6 +321,7 @@ export const useCustomerForm = ({
       if (res.success) {
         toast.success(res?.message || `Customer ${mode === "create" ? "created" : "updated"} successfully`);
         setFormData(customerModuleSchema.form.initialValues);
+        setContactRows([]);
         onAfterSave?.(res, payload);
         onClose();
         return;
@@ -237,6 +341,7 @@ export const useCustomerForm = ({
     formData,
     productOptions,
     productRows,
+    contactRows,
     loadingProducts,
     errors,
     handleClose,
@@ -248,5 +353,9 @@ export const useCustomerForm = ({
     addProductAddon,
     updateProductAddon,
     removeProductAddon,
+    addContactRow,
+    updateContactRow,
+    removeContactRow,
+    setPrimaryContact,
   };
 };

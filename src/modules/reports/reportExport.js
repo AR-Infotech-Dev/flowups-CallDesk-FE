@@ -37,6 +37,7 @@ const ticketColumns = [
 
 const summaryLabels = {
   assigned: "Total Assigned Tickets",
+  generated: "Generated Tickets",
   closed: "Closed Tickets",
   pending: "Pending Tickets",
   delegated: "Delegated Tickets",

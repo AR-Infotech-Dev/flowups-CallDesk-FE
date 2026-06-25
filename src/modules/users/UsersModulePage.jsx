@@ -13,6 +13,7 @@ import DynamicFilter from "@components/DynamicFilter";
 import ResizableTable from "@components/table/ResizableTable";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
 import UserForm from "./components/UserForm";
+import UserTableRow from "./components/UserTableRow";
 
 function UsersModulePage({ menu_id }) {
 
@@ -101,6 +102,14 @@ function UsersModulePage({ menu_id }) {
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            renderRow={(row, index, columns, table) => (
+              <UserTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                table={table}
+              />
+            )}
           />
         }
         footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}

@@ -10,6 +10,7 @@ import ResizableTable from "../../components/table/ResizableTable";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
 
 import CompanyMasterForm from "./components/CompanyMasterForm";
+import CompanyMasterTableRow from "./components/CompanyMasterTableRow";
 import { companyMasterSchema } from "./data/module.schema";
 import { useCompanyMasterModule } from "./hooks/useCompanyMasterModule";
 import { useCompanyMasterTableConfig } from "./hooks/useCompanyMasterTableConfig";
@@ -129,6 +130,14 @@ function CompanyMasterModulePage({ menu_id }) {
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            renderRow={(row, index, columns, table) => (
+              <CompanyMasterTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                table={table}
+              />
+            )}
           />
         }
         footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}

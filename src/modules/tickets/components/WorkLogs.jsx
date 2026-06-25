@@ -8,11 +8,18 @@ import Spinner from "../../../components/ui/Spinner";
 import { findActiveWorkLog, getWorkLogEnd, getWorkLogId, getWorkLogStart } from "../utils/workLogStatus";
 
 function formatMinutes(value = 0) {
-  const minutes = Number(value || 0);
-  if (!minutes) return "0m";
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return [hours ? `${hours}h` : "", mins ? `${mins}m` : ""].filter(Boolean).join(" ");
+  const totalSeconds = Math.max(0, Math.round(Number(value || 0) * 60));
+  if (!totalSeconds) return "0s";
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return [
+    hours ? `${hours}h` : "",
+    mins ? `${mins}m` : "",
+    seconds ? `${seconds}s` : "",
+  ].filter(Boolean).join(" ");
 }
 
 function toLocalDateTimeInputValue(date = new Date()) {
@@ -34,10 +41,11 @@ function calculateSpentMinutes(startValue = "", endValue = "") {
   const start = new Date(String(startValue).replace(" ", "T"));
   const end = new Date(String(endValue).replace(" ", "T"));
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
-  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
+  const minutes = (end.getTime() - start.getTime()) / 60000;
+  return Math.max(0, Math.round(minutes * 100) / 100);
 }
 
-function WorkLogs({ ticket = {}, ticket_id }) {
+function WorkLogs({ ticket = {}, ticket_id, onAfterSave }) {
   const authId = localStorage.getItem("_auth_id");
   const resolvedTicketId = ticket_id || ticket?.ticket_id;
   const [logs, setLogs] = useState([]);
@@ -113,6 +121,7 @@ function WorkLogs({ ticket = {}, ticket_id }) {
       if (res?.success) {
         toast.success("Work started");
         await fetchLogs();
+        onAfterSave();
         return;
       }
 

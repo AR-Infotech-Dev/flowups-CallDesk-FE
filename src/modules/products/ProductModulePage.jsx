@@ -13,6 +13,7 @@ import useMenuPermissions from "@auth/utils/useMenuPermissions";
 import { selectProductsRows } from "./data/products.slice";
 
 import ProductForm from "./components/ProductForm";
+import ProductTableRow from "./components/ProductTableRow";
 import { productsModuleSchema } from "./data/module.schema";
 import { useProductsModule } from "./hooks/useProductsModule";
 import { useProductsTableConfig } from "./hooks/useProductsTableConfig";
@@ -121,6 +122,14 @@ function ProductModulePage({ menu_id }) {
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            renderRow={(row, index, columns, table) => (
+              <ProductTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                table={table}
+              />
+            )}
           />
         }
         footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}

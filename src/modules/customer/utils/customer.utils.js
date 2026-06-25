@@ -59,3 +59,34 @@ export const normalizeCustomerProducts = (customer = {}) => {
     }))
     .filter((row) => row.product_id || row.product_name || row.serial_number || row.expiry_date || row.add_ons.length);
 };
+
+export const normalizeCustomerContacts = (customer = {}) => {
+  const rows =
+    customer?.customer_contacts ||
+    customer?.contact_persons ||
+    customer?.contacts ||
+    [];
+
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+  return rows
+    .map((row) => ({
+      contact_id: row?.contact_id || null,
+      customer_id: row?.customer_id || customer?.customer_id || null,
+      name: row?.name || row?.contact_person || "",
+      designation: row?.designation || "",
+      mobile_no: row?.mobile_no || row?.contact_no || "",
+      email: row?.email || "",
+      department: row?.department || "",
+      is_primary: row?.is_primary === "y" || row?.is_primary === true ? "y" : "n",
+    }))
+    .filter((row) =>
+      row.name ||
+      row.designation ||
+      row.mobile_no ||
+      row.email ||
+      row.department
+    );
+};

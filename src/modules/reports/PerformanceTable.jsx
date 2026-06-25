@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
+import TicketPreview from "./components/TicketPreview";
 
 const columns = [
   { key: "ticket_no", label: "Ticket Number", width: 150 },
@@ -39,22 +41,23 @@ function formatValue(row, key) {
   return value || "-";
 }
 
-function PerformanceTable({
-  rows = [],
-  loading,
-  pagination = {},
-  searchText,
-  sortConfig,
-  onSearchChange,
-  onSortChange,
-  onPageChange,
-}) {
+function PerformanceTable({ rows = [], loading, pagination = {}, searchText, sortConfig, onSearchChange, onSortChange, onPageChange }) {
   const page = Number(pagination.page || 1);
+  const [isOpenPreview, setIsOpenPreview] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState({});
+
   const totalPages = Number(pagination.totalPages || pagination.total_pages || 1);
   const total = Number(pagination.total || rows.length || 0);
-
+  const handleClose = () => {
+    setIsOpenPreview(false);
+    setSelectedTicket({});
+  };
+  const handleOpen = (ticket) => {
+    setIsOpenPreview(true);
+    setSelectedTicket(ticket);
+  };
   return (
-    <section className="performance-panel performance-table-panel">
+    <section className="performance-panel performance-table-panel relative">
       <div className="performance-table-toolbar">
         <div className="performance-panel-head">
           <span>Tickets</span>
@@ -71,7 +74,14 @@ function PerformanceTable({
         </label>
       </div>
 
-      <div className="performance-table-scroll">
+
+
+      <div className="performance-table-scroll relative">
+        <TicketPreview
+          isOpen={isOpenPreview}
+          handleClose={handleClose}
+          selectedTicket={selectedTicket}
+        />
         <table className="performance-table">
           <thead>
             <tr>
@@ -101,9 +111,20 @@ function PerformanceTable({
               ))
             ) : rows.length ? (
               rows.map((row, index) => (
-                <tr key={row.ticket_id || row.ticketID || row.id || index}>
+                <tr
+                  key={row.ticket_id || row.ticketID || row.id || index}
+                  className="cursor-pointer"
+                  tabIndex={0}
+                  onClick={() => handleOpen(row)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleOpen(row);
+                    }
+                  }}
+                >
                   {columns.map((column) => (
-                    <td key={column.key} style={{minWidth:column.width, width:column.width}}>{formatValue(row, column.key)}</td>
+                    <td key={column.key} style={{ minWidth: column.width, width: column.width }}>{formatValue(row, column.key)}</td>
                   ))}
                 </tr>
               ))

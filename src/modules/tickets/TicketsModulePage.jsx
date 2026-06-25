@@ -11,10 +11,10 @@ import ActionButton from "@components/ui/ActionButton";
 import KanbanBoard from "@components/kanban/KanbanBoard";
 import useMenuPermissions from "@auth/utils/useMenuPermissions";
 import TicketForm from "./components/TicketForm";
+import TicketTableRow from "./components/TicketTableRow";
 import { ticketsModuleSchema } from "./data/module.schema";
 import { useTicketsModule } from "./hooks/useTicketsModule";
 import { useTicketsTableConfig } from "./hooks/useTicketsTableConfig";
-import { TICKET_QUICK_FILTERS } from "./utils/tickets.utils";
 
 function TicketsModulePage({ menu_id }) {
   const { authSession } = useAuth();
@@ -44,6 +44,7 @@ function TicketsModulePage({ menu_id }) {
     viewAll,
     setViewAll,
     quickFilter,
+    quickFilterList,
     setQuickFilter,
     kanbanReloadVersion,
     handlePageChange,
@@ -133,7 +134,7 @@ function TicketsModulePage({ menu_id }) {
                   onChange={handleQuickFilterChange}
                 >
                   <option value="">Quick Filter</option>
-                  {TICKET_QUICK_FILTERS.map((filter) => (
+                  {quickFilterList.map((filter) => (
                     <option key={filter.value} value={filter.value}>
                       {filter.label}
                     </option>
@@ -184,6 +185,14 @@ function TicketsModulePage({ menu_id }) {
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            renderRow={(row, index, columns, table) => (
+              <TicketTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                table={table}
+              />
+            )}
           />
         ) : (
           <KanbanBoard
