@@ -40,18 +40,20 @@ export const useUserForm = ({ isOpen, onClose, onAfterSave, selectedUser }) => {
     }
     const handleChange = (event) => {
         const { name, value } = event.target;
-        const updatedData = {
+        let nextData = {
             ...formData,
             [name]: value,
         };
-        setFormData(updatedData);
-        if ((name === "name" || name === "dateOfBirth") && updatedData.name && updatedData.dateOfBirth) {
-            const credentials = generateCredentials(updatedData.name, updatedData.dateOfBirth);
-            const updatedData = {
-                ...formData,
-                ...credentials
+
+        if ((name === "name" || name === "dateOfBirth") && nextData.name && nextData.dateOfBirth) {
+            const credentials = generateCredentials(nextData.name, nextData.dateOfBirth);
+            nextData = {
+                ...nextData,
+                ...credentials,
             };
         }
+
+        setFormData(nextData);
     };
     const handleSave = async () => {
         const result = usersModuleSchema.validationSchema.safeParse(formData);
