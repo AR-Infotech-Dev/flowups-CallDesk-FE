@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
 import { toast } from "react-toastify";
 import { Bike, Clock3, MapPinCheck } from "lucide-react";
@@ -326,6 +329,62 @@ function MovingRouteMarker({ positions = [] }) {
     );
 }
 
+function ClusteredMapMarkers({
+    users = [],
+    visits = [],
+    selectedVisitKey = "",
+}) {
+    const map = useMap();
+
+    useEffect(() => {
+        const clusterGroup = L.markerClusterGroup({
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+        });
+
+        visits.forEach(({ visit, index }) => {
+            const visitKey = getVisitKey(visit, index);
+            const marker = L.marker([visit.latitude, visit.longitude], {
+                icon: getVisitIcon(visit, selectedVisitKey === visitKey),
+            });
+
+            marker.bindPopup(renderToStaticMarkup(<VisitPopup visit={visit} index={index} />), {
+                className: "user-location-popup",
+                closeButton: true,
+            });
+            marker.on("mouseover", () => marker.openPopup());
+            marker.on("click", () => marker.openPopup());
+            clusterGroup.addLayer(marker);
+        });
+
+        users.forEach((user, index) => {
+            const latitude = Number(user.latitude);
+            const longitude = Number(user.longitude);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+            const marker = L.marker([latitude, longitude], {
+                title: user.name || `User ${index + 1}`,
+            });
+
+            marker.bindPopup(renderToStaticMarkup(<UserPopup user={user} />), {
+                className: "user-location-popup",
+                closeButton: true,
+            });
+            marker.on("mouseover", () => marker.openPopup());
+            marker.on("click", () => marker.openPopup());
+            clusterGroup.addLayer(marker);
+        });
+
+        map.addLayer(clusterGroup);
+
+        return () => {
+            map.removeLayer(clusterGroup);
+        };
+    }, [map, selectedVisitKey, users, visits]);
+
+    return null;
+}
+
 export function UserMarkers() {
     const [markers, setMarkers] = useState([]);
     const [visits, setVisits] = useState([]);
@@ -555,7 +614,7 @@ export function UserMarkers() {
                         <h1 className="w-full p-4 text-center text-sm text-slate-500">Loading map...</h1>
                     ) : (
                         <MapContainer
-                            className="shadow-md"
+                            className="shadow-md z-10"
                             center={center}
                             zoom={filter.employee_id ? 12 : 5}
                             minZoom={5}
@@ -583,36 +642,11 @@ export function UserMarkers() {
                                 </>
                             )}
 
-                            {visibleVisitItems.map(({ visit, index }) => (
-                                <Marker
-                                    key={getVisitKey(visit, index)}
-                                    icon={getVisitIcon(visit, selectedVisitKey === getVisitKey(visit, index))}
-                                    position={[visit.latitude, visit.longitude]}
-                                    eventHandlers={{
-                                        mouseover: (event) => event.target.openPopup(),
-                                        click: (event) => event.target.openPopup(),
-                                    }}
-                                >
-                                    <Popup className="user-location-popup" closeButton>
-                                        <VisitPopup visit={visit} index={index} />
-                                    </Popup>
-                                </Marker>
-                            ))}
-
-                            {validUsers.map((user, index) => (
-                                <Marker
-                                    key={user.adminID || index}
-                                    position={[Number(user.latitude), Number(user.longitude)]}
-                                    eventHandlers={{
-                                        mouseover: (event) => event.target.openPopup(),
-                                        click: (event) => event.target.openPopup(),
-                                    }}
-                                >
-                                    <Popup className="user-location-popup" closeButton>
-                                        <UserPopup user={user} />
-                                    </Popup>
-                                </Marker>
-                            ))}
+                            <ClusteredMapMarkers
+                                users={validUsers}
+                                visits={visibleVisitItems}
+                                selectedVisitKey={selectedVisitKey}
+                            />
                         </MapContainer>
                     )}
                 </section>

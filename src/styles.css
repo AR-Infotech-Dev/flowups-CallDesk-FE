@@ -5796,3 +5796,7 @@ table input[type="checkbox"]:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+.leaflet-pane {
+  z-index: 19;
+}
