@@ -1,4 +1,5 @@
 import { makeRequest } from "../../api/httpClient";
+import { downloadBlobResponse } from "../../utils/download.utils";
 
 export const defaultPerformanceFilters = {
   user_id: "",
@@ -119,6 +120,29 @@ export async function fetchUserPerformance(filters = {}, options = {}) {
   return normalizePerformanceResponse(response);
 }
 
+export async function downloadUserPerformanceExcel(filters = {}, options = {}) {
+  const response = await makeRequest("/reports/user-performance/export-excel", {
+    method: "POST",
+    body: {
+      ...defaultPerformanceFilters,
+      ...filters,
+      searchText: options.searchText || "",
+      order_by: options.order_by || "created_date",
+      order: options.order || "DESC",
+    },
+    responseType: "blob",
+    timeout: 30000,
+  });
+
+  if (!response?.success) return response;
+
+  const downloaded = downloadBlobResponse(response, "performance-report.xls");
+  return {
+    success: downloaded,
+    message: downloaded ? "" : "Unable to download performance report.",
+  };
+}
+
 export function buildReportSqlReference() {
   return {
     summary: `
@@ -149,4 +173,3 @@ CREATE TABLE ticket_activity_logs (
 );`,
   };
 }
-

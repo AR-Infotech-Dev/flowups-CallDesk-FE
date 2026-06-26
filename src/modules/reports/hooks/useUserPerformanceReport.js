@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { defaultPerformanceFilters, fetchUserPerformance } from "../performance.service";
-import { exportPerformanceExcel, exportPerformancePdf } from "../reportExport";
+import { defaultPerformanceFilters, downloadUserPerformanceExcel, fetchUserPerformance } from "../performance.service";
+import { exportPerformancePdf } from "../reportExport";
 import {
   defaultPerformanceSort,
   emptyPerformanceReport,
@@ -60,14 +60,16 @@ export const useUserPerformanceReport = ({ userId }) => {
     setSortConfig((current) => getNextPerformanceSort(current, columnKey));
   };
 
-  const handleExportExcel = () => {
-    exportPerformanceExcel({
-      filters,
-      summary: report.summary,
-      tickets: report.tickets,
-      user: report.user,
-      fileName: `performance-${userId}`,
+  const handleExportExcel = async () => {
+    const response = await downloadUserPerformanceExcel({
+      ...filters,
+      user_name: report.user?.name || "",
+    }, {
+      searchText: debouncedSearchText,
+      order_by: sortConfig.key,
+      order: sortConfig.direction,
     });
+    if (!response?.success) toast.error(response?.message || "Unable to export performance report.");
   };
 
   const handleExportPdf = () => {

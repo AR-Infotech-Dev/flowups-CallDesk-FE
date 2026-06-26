@@ -55,3 +55,19 @@ export const saveCustomer = async ({ mode, customerId, payload }) => {
         body: JSON.stringify(payload),
     });
 }
+
+export const downloadExcel = async ({ filterState, selectedColumns = [], skipColumns = [] }) => {
+    return await makeRequest(customerModuleSchema.api.downloadExcel, {
+        method: "POST",
+        body: {
+            searchText: filterState.searchText,
+            filters: filterState.filters,
+            order: filterState.order,
+            order_by: filterState.order_by,
+            selectedColumns,
+            skipColumns,
+        },
+        responseType: "blob",
+        timeout: 30000,
+    });
+}

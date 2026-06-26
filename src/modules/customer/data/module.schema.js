@@ -32,6 +32,7 @@ export const customerModuleSchema = {
     create: "/customers/create",
     edit: "/customers",
     definitions: "/system/getDefinations",
+    downloadExcel: "/customers/download-excel",
     definitionsFallback: "/system/getstructure",
   },
   definitionRequest: {

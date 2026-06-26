@@ -3,8 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Download, Send, FileBarChart, Search, Ticket, TriangleAlert } from "lucide-react";
 import { toast } from "react-toastify";
 import { makeRequest } from "../../../api/httpClient";
-import { toDateInputValue, stripHtml, buildBlankCells, buildExcelSummaryRows, buildSideBySideRows, buildSheetSpacerRow, escapeHtml, excelFormat } from "../../../utils/excel.utils"
-import { renderTemplate } from "../../../utils/templateMaker";
+import { stripHtml, toDateInputValue } from "../../../utils/excel.utils";
+import { downloadBlobResponse } from "../../../utils/download.utils";
 const EMPTY_REPORT = {
     customer: {},
     summary: {},
@@ -17,17 +17,6 @@ function formatDate(value) {
     if (Number.isNaN(date.getTime())) return String(value);
     return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
-const isActiveAMC = (customer = {}) => {
-    const amcEndDate = customer?.amc_end_date
-        ? new Date(customer.amc_end_date)
-        : null;
-
-    return (
-        String(customer?.is_amc || "").toLowerCase() === "yes" &&
-        amcEndDate &&
-        amcEndDate >= new Date()
-    );
-};
 function getTicketDate(ticket = {}) { return ticket.start_date || ticket.created_date || ticket.createdAt || ticket.assigned_date || ticket.due_date || ""; }
 function getTicketStatus(ticket = {}) {
     return ticket.status_name || ticket.ticket_status_name || ticket.ticket_status || ticket.status || "-";
@@ -57,66 +46,6 @@ function normalizeCustomerProducts(customer = {}) {
         }))
         .filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length);
 }
-const exportCustomerReportExcel = ({ customer = {}, summary = {}, products = [], tickets = [], fromDate = "" }) => {
-    // const temp = renderTemplate('customerReport.excel',);
-    const spreadsheetColumnCount = 10;
-    const activeAMC = isActiveAMC(customer)
-    const htmlBody = renderTemplate(
-        "customerReport.excel",
-        {
-            spreadsheetColumnCount,
-            reportTitle: activeAMC
-                ? "AMC Customer Support Report"
-                : "Customer Support Report",
-            spacerRow: buildSheetSpacerRow(18, spreadsheetColumnCount),
-            summarySection: buildSideBySideRows({
-                leftTitle: "Summary",
-                leftData: summary,
-                rightTitle: activeAMC
-                    ? "Report Details"
-                    : "",
-                rightData: activeAMC
-                    ? {
-                        customer: customer.name || "-",
-                        amc_start_date: formatDate(customer.amc_start_date),
-                        amc_expiry_date: formatDate(customer.amc_end_date),
-                        generated_on: formatDate(new Date()),
-                    }
-                    : null,
-                gapCols:2,
-                labelColspan: 2,
-                valueColspan: 2,
-            }),
-            hasSupportRows: tickets.length > 0,
-            supportRows: tickets.map(
-                (row, index) => ({
-                    srNo: index + 1,
-                    ticket_no: row.ticket_no || "-",
-                    created_date: row.created_date || "-",
-                    due_date: row.due_date || "-",
-                    query_type: row.query_type || "-",
-                    ticket_status: row.ticket_status || "-",
-                    resolver: row.resolver_name || "-",
-                    ticket_priority: row.ticket_priority || "-",
-                    assignee: row.assignee_name || "-",
-                    statusClass: "excel-status-open",
-                })
-            ),
-        }
-    );
-    const html = excelFormat(htmlBody);
-    const fileCustomer = String(customer.name || customer.customer_id || "customer").replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "");
-    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `customer-report-${fileCustomer || "customer"}.xls`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
-
 function SummaryCard({ label, value, icon: Icon, tone = "blue" }) {
     return (
         <article className={`customer-report-card customer-report-${tone}`}>
@@ -146,13 +75,17 @@ function CustomerReport({ customerId: providedCustomerId }) {
     const navigate = useNavigate();
     const customerId = providedCustomerId || params.customerId;
     const routeCustomer = location.state?.customer || {};
-    const [fromDate, setFromDate] = useState(() => toDateInputValue(new Date()));
+    const monthStartDate = new Date();
+    monthStartDate.setDate(1);
+    const [fromDate, setFromDate] = useState(() => toDateInputValue(monthStartDate));
+    const [toDate, setToDate] = useState(() => toDateInputValue(new Date()));
     const [report, setReport] = useState(() => ({
         ...EMPTY_REPORT,
         customer: routeCustomer,
     }));
     const [loading, setLoading] = useState(false);
     const [generatedFromDate, setGeneratedFromDate] = useState("");
+    const [generatedToDate, setGeneratedToDate] = useState("");
 
     const products = useMemo(() => normalizeCustomerProducts(report.customer), [report.customer]);
     const reportProducts = report.products?.length ? report.products : products;
@@ -165,7 +98,11 @@ function CustomerReport({ customerId: providedCustomerId }) {
             return;
         }
         if (!fromDate) {
-            toast.error("Please select report date.");
+            toast.error("Please select from date.");
+            return;
+        }
+        if (!toDate) {
+            toast.error("Please select to date.");
             return;
         }
 
@@ -176,6 +113,7 @@ function CustomerReport({ customerId: providedCustomerId }) {
             body: {
                 customer_id: customerId,
                 from_date: fromDate,
+                to_date: toDate,
             },
         });
         setLoading(false);
@@ -193,21 +131,29 @@ function CustomerReport({ customerId: providedCustomerId }) {
             tickets: data.tickets || [],
         });
         setGeneratedFromDate(data.filters?.from_date || fromDate);
+        setGeneratedToDate(data.filters?.to_date || toDate);
     };
 
-    const handleExportExcel = () => {
+    const handleExportExcel = async () => {
         if (!report.tickets.length) {
             toast.error("No report data available to export.");
             return;
         }
 
-        exportCustomerReportExcel({
-            customer: report.customer,
-            summary,
-            products: report.products?.length ? report.products : products,
-            tickets: report.tickets,
-            fromDate: generatedFromDate || fromDate,
+        const res = await makeRequest("/reports/customer/export-excel", {
+            method: "POST",
+            body: {
+                customer_id: customerId,
+                from_date: generatedFromDate || fromDate,
+                to_date: toDate,
+            },
+            responseType: "blob",
+            timeout: 30000,
         });
+
+        if (!res?.success || !downloadBlobResponse(res, "customer-report.xls")) {
+            toast.error(res?.message || "Unable to export customer report.");
+        }
     };
     const handleSendReport = async () => {
         try {
@@ -217,6 +163,7 @@ function CustomerReport({ customerId: providedCustomerId }) {
                 body: {
                     customer_id: customerId,
                     from_date: generatedFromDate || fromDate,
+                    to_date: toDate,
                 },
             });
             if (res.success) {
@@ -252,10 +199,17 @@ function CustomerReport({ customerId: providedCustomerId }) {
 
             <div className="customer-report-toolbar">
                 <label className="customer-report-date-field">
-                    <span>Report From Date</span>
+                    <span>From Date</span>
                     <div>
                         <CalendarDays size={14} />
                         <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} />
+                    </div>
+                </label>
+                <label className="customer-report-date-field">
+                    <span>To Date</span>
+                    <div>
+                        <CalendarDays size={14} />
+                        <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} />
                     </div>
                 </label>
                 <button type="button" className="customer-report-generate" disabled={loading} onClick={handleGenerate}>
@@ -306,7 +260,10 @@ function CustomerReport({ customerId: providedCustomerId }) {
                             <span>Tickets</span>
                             <h3>Ticket Support Report</h3>
                         </div>
-                        <p>From {generatedFromDate ? formatDate(generatedFromDate) : "-"}</p>
+                        <div className="flex gap-2 items-center">
+                            <p>From {generatedFromDate ? formatDate(generatedFromDate) : "-"}</p>
+                            <p>To {generatedToDate ? formatDate(generatedToDate) : "-"}</p>
+                        </div>
                     </div>
                     <div className="customer-report-table-wrap">
                         <table className="customer-report-table">

@@ -11,9 +11,10 @@ import {
     selectCustomersRows,
 } from "../data/customer.slice";
 import * as customersActions from "../data/customer.slice";
-
-export const useCustomersModule = ({ filterState }) => {
-    const dispatch = useAppDispatch();
+import { downloadExcel } from "../data/customers.service";
+import { downloadBlobResponse } from "@/utils/download.utils";
+export const useCustomersModule = ({ filterState, exportColumnKeys = [] }) => {
+    const dispatch = useAppDispatch();  
 
     const selectedRowIds = useAppSelector(selectCustomersSelectedRowIds);
     const pagination = useAppSelector(selectCustomersPagination);
@@ -68,6 +69,14 @@ export const useCustomersModule = ({ filterState }) => {
             toast.error(action.payload);
         }
     };
+    const handleExportsExcel = async () => {
+
+        const res = await downloadExcel({ filterState, selectedColumns: exportColumnKeys })
+
+        if (!res?.success || !downloadBlobResponse(res, "customer-export.xls")) {
+            toast.error(res?.message || "Unable to export customer report.");
+        }
+    };
 
     const handleDeleteRow = async (row) => {
         const rowId = row?.customer_id ?? row?._id ?? row?.id;
@@ -97,5 +106,6 @@ export const useCustomersModule = ({ filterState }) => {
         handleToggleAllRows,
         handleDeleteSelected,
         handleDeleteRow,
+        handleExportsExcel
     }
 }

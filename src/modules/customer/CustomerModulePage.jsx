@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
-import { BarChart3, Upload } from "lucide-react";
+import { BarChart3, Upload, Download } from "lucide-react";
 import { useModuleFilters } from "../../store/hooks";
 
 import { getNextSortConfig } from "../../utils/sorting";
@@ -39,11 +39,12 @@ function CustomerModulePage({ menu_id }) {
 
   const [isImportFlyoutOpen, setIsImportFlyoutOpen] = useState(false);
   const [getBackTo, setGetBackTo] = useState(null);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState([]);
 
 
   const customerList = useAppSelector(selectCustomersRows);
   const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters } = useModuleFilters("customer", customerList);
-  const { pagination, page, loading, deleting, selectedRowIds, getCustomersList, handlePageChange, handleToggleRow, handleToggleAllRows, handleDeleteSelected, handleDeleteRow, } = useCustomersModule({ filterState });
+  const { pagination, page, loading, deleting, selectedRowIds, getCustomersList, handlePageChange, handleToggleRow, handleToggleAllRows, handleDeleteSelected, handleDeleteRow, handleExportsExcel } = useCustomersModule({ filterState, exportColumnKeys: visibleColumnKeys });
   const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useCustomerTableConfig({ resolvedMenuID, filterState });
 
   const handleReport = (customer) => {
@@ -54,9 +55,7 @@ function CustomerModulePage({ menu_id }) {
     }
     navigate(`/customer/report/${customerId}`, { state: { customer } });
   };
-  const handleProductsFlyout = () => {
 
-  }
   const handleSortChange = (columnKey) => {
     const nextSort = getNextSortConfig(sortConfig, columnKey);
     if (page !== 1) {
@@ -124,14 +123,19 @@ function CustomerModulePage({ menu_id }) {
           >
             {(role_slug == "admin" || role_slug == "super_admin") && permissions.canAdd && (
               <ActionButton onClick={() => setIsImportFlyoutOpen(true)}>
-                <Upload size={15} />
+                <Download size={15} />
                 Import Data
+              </ActionButton>
+            )}
+            {(role_slug == "admin" || role_slug == "super_admin") && (
+              <ActionButton onClick={handleExportsExcel}>
+                <Upload size={15} />
+                Export Excel
               </ActionButton>
             )}
           </ModuleControls>
         }
         table={
-          
           <ResizableTable
             loading={loading}
             menuId={resolvedMenuID}
@@ -150,6 +154,7 @@ function CustomerModulePage({ menu_id }) {
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            onVisibleColumnsChange={setVisibleColumnKeys}
             renderRow={(row, index, columns, table) => (
               <CustomerTableRow
                 row={row}

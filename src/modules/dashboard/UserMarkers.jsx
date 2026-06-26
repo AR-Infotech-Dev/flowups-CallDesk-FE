@@ -449,7 +449,7 @@ export function UserMarkers() {
                 <aside className="flex h-full flex-col overflow-hidden border-r border-slate-200 bg-white">
                     <div className="border-b border-slate-200 p-3">
                         <h2 className="text-sm font-bold text-slate-900">Map Filters</h2>
-                        <p className="mt-0.5 text-[11px] text-slate-500">User wise ani date wise visits paha.</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">User wise and date wise visits report.</p>
                     </div>
 
                     <div className="space-y-3 border-b border-slate-200 p-3">

@@ -121,6 +121,7 @@ function ResizableTable({
   defaultVisibleColumnKeys = [],
   allowSelection = true,
   menuId,
+  onVisibleColumnsChange,
 }) {
   const { authSession } = useAuth();
   const user = authSession?.user;
@@ -198,6 +199,15 @@ function ResizableTable({
     },
     [allowSelection, columnWidths, columns, menuId, shouldShowActions, user, visibleColumnKeys]
   );
+
+  useEffect(() => {
+    if (typeof onVisibleColumnsChange !== "function") return;
+    onVisibleColumnsChange(
+      resolvedColumns
+        .filter((column) => !column.checkbox && column.key !== ACTIONS_COLUMN.key)
+        .map((column) => column.key)
+    );
+  }, [onVisibleColumnsChange, resolvedColumns]);
 
   const selectableRows = useMemo(
     () => rows.map((row) => getRowIdentifier(row)).filter(Boolean),

@@ -65,6 +65,7 @@ export const makeRequest = async (url, options = {}) => {
       params = null,
       onUploadProgress = null,
       timeout = 10000,
+      responseType = "json",
     } = options;
     const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
     const requestHeaders = {
@@ -87,8 +88,17 @@ export const makeRequest = async (url, options = {}) => {
       data: isFormData ? body : stripCompanyIdForSuperAdmin(body, url, method),     // for POST, PUT
       params: stripCompanyIdForSuperAdmin(params, url, method), // for GET query params
       onUploadProgress,
+      responseType,
     };
     const res = await axios(config);
+    if (responseType === "blob") {
+      return {
+        success: true,
+        status: res.status,
+        data: res.data,
+        headers: res.headers,
+      };
+    }
 
     return {
       status: res.status,
@@ -144,4 +154,3 @@ async function parseResponse(response) {
 
   return payload;
 }
-
