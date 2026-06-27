@@ -54,12 +54,12 @@ const DynamicFilter = ({
     });
 
     return (
-        <div ref={filterRootRef} className="flex w-full flex-wrap items-center gap-1.5 text-xs">
+        <div ref={filterRootRef} className="dynamic-filter-root flex w-full flex-wrap items-center gap-1.5 text-xs">
             <SearchInput
                 value={searchText}
                 onChange={handleSearchChange}
                 placeholder="Search..."
-                className="w-48"
+                className="dynamic-filter-search w-48"
             />
 
             {onlySearchText ? (

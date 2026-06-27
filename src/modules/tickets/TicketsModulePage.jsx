@@ -100,7 +100,7 @@ function TicketsModulePage({ menu_id }) {
         title={ticketsModuleSchema.title}
         description={ticketsModuleSchema.description}
         controls={
-          <div className="flex flex-col gap-3">
+          <div className="tickets-module-controls flex flex-col gap-3">
             <ModuleControls
               canCreate={permissions.canAdd}
               canDelete={permissions.canDelete}
@@ -128,9 +128,9 @@ function TicketsModulePage({ menu_id }) {
               }
             >
               <div className="flex items-center gap-2" />
-              <div className="flex items-center justify-end gap-2">
+              <div className="ticket-view-controls flex items-center justify-end gap-2">
                 <select
-                  className="h-7 min-w-[140px] rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 hover:border-slate-300 focus:ring-2 focus:ring-blue-100"
+                  className="ticket-quick-filter h-7 min-w-[140px] rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 hover:border-slate-300 focus:ring-2 focus:ring-blue-100"
                   value={quickFilter}
                   onChange={handleQuickFilterChange}
                 >

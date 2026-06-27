@@ -100,7 +100,7 @@
   min-height: 35px;
   padding: 0 24px 0 36px;
   background: rgba(255, 255, 255, 0.98);
-  border-bottom: 1px solid var(--border-soft);
+  border: 1px solid var(--border-soft);
 }
 
 .ws_container {
@@ -346,8 +346,16 @@
 
 
 @media (max-width: 900px) {
+  .flyout-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+  }
+
   .flyout-panel {
     width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
   }
 
   .overlay_header,
@@ -369,8 +377,57 @@
 
   .flyout-close {
     left: auto;
-    right: 18px;
-    top: 22px;
+    right: 8px;
+    top: 3px;
+  }
+
+  .overlay_header {
+    padding-left: 14px;
+    padding-right: 48px;
+  }
+
+  .tab-pane.panel_overflow {
+    padding-right: 8px;
+    padding-left: 8px;
+    white-space: normal;
+  }
+
+  .flyout-footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+  }
+
+  .flyout-footer > * {
+    flex: 1 1 120px;
+  }
+
+  .ticket-form-shell,
+  .ticket-form-shell .ws-main-container {
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .ticket-drawer-layout {
+    display: flex;
+    height: auto;
+    min-height: 100%;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .ticket-drawer-layout > .ticket-scroll-pane {
+    flex: 0 0 auto;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-soft);
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .ticket-drawer-layout > div:last-child {
+    flex: 0 0 auto;
+    min-height: min(360px, 48dvh);
   }
 }
 

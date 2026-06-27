@@ -22,7 +22,7 @@ const FilterChip = ({
     const chipSummary = getFilterChipSummary(item);
 
     return (
-    <div className="relative">
+    <div className="dynamic-filter-chip relative">
         <div className="inline-flex h-7 items-center gap-1.5 rounded border border-blue-100 bg-blue-50 px-2 text-xs">
             <button
                 type="button"

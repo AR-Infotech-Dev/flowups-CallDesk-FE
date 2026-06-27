@@ -9,6 +9,7 @@ const columns = [
   { key: "ticket_status", label: "Ticket Status", width: 150 },
   { key: "assigned_date", label: "Assigned Date", width: 150 },
   { key: "due_date", label: "Due Date", width: 150 },
+  { key: "call_direction", label: "Direction", width: 150 },
   { key: "resolution_time", label: "Resolution Time", width: 160 },
 ];
 
@@ -19,6 +20,7 @@ const valueKeys = {
   ticket_status: ["status_name", "ticket_status_name", "ticket_status", "status"],
   assigned_date: ["assigned_date", "created_date", "start_date", "createdAt"],
   due_date: ["due_date", "dueDate"],
+  call_direction: ["call_direction"],
   resolution_time: ["resolution_time", "resolutionTime", "resolve_time", "avg_resolution_time"],
 };
 
@@ -34,10 +36,19 @@ function formatDate(value) {
   return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function formatDuration(minutes, seconds) {
+  const totalSeconds = Number.isFinite(Number(seconds))
+    ? Math.max(0, Math.round(Number(seconds)))
+    : Math.max(0, Math.round(Number(minutes || 0) * 60));
+  return `${Math.floor(totalSeconds / 60)} min ${totalSeconds % 60} sec`;
+}
+
 function formatValue(row, key) {
   const value = pick(row, key);
   if (key.includes("date")) return formatDate(value);
-  if (key === "resolution_time" && value !== "") return `${value} hrs`;
+  if (key === "resolution_time" && value !== "") {
+    return formatDuration(value, row.resolution_time_seconds);
+  }
   return value || "-";
 }
 
@@ -110,24 +121,28 @@ function PerformanceTable({ rows = [], loading, pagination = {}, searchText, sor
                 </tr>
               ))
             ) : rows.length ? (
-              rows.map((row, index) => (
-                <tr
-                  key={row.ticket_id || row.ticketID || row.id || index}
-                  className="cursor-pointer"
-                  tabIndex={0}
-                  onClick={() => handleOpen(row)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      handleOpen(row);
-                    }
-                  }}
-                >
-                  {columns.map((column) => (
-                    <td key={column.key} style={{ minWidth: column.width, width: column.width }}>{formatValue(row, column.key)}</td>
-                  ))}
-                </tr>
-              ))
+              rows.map((row, index) => {
+                row.call_direction = row.call_direction === "in" ? "Incomming" : "Outgoing";
+                const isAmc = row.amc_call === "y" ? { backgroundColor : "#14ff142e"} : {};
+                return (
+                  <tr
+                    key={row.ticket_id || row.ticketID || row.id || index}
+                    className={`cursor-pointer`}
+                    tabIndex={0}
+                    onClick={() => handleOpen(row)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleOpen(row);
+                      }
+                    }}
+                  >
+                    {columns.map((column) => (
+                      <td key={column.key} style={{ ...isAmc,minWidth: column.width, width: column.width }}>{formatValue(row, column.key)}</td>
+                    ))}
+                  </tr>
+                )
+              })
             ) : (
               <tr>
                 <td colSpan={columns.length}>

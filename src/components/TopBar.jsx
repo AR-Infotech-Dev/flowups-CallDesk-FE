@@ -1,4 +1,4 @@
-import { Building2, ChevronDown, LogOut, UserRound, } from "lucide-react";
+import { Building2, ChevronDown, LogOut, Menu, UserRound, } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "./ui/Spinner";
@@ -9,7 +9,7 @@ import Clock from "@components/ui/Clock"
 
 const getCompanyName = (user = {}) => user?.company_name || "";
 
-function TopBar({ onLogout }) {
+function TopBar({ onLogout, onMenuToggle, isMenuOpen = false }) {
   const navigate = useNavigate();
   const { authSession } = useAuth() || {};
 
@@ -65,7 +65,16 @@ function TopBar({ onLogout }) {
     <div className="topbar-shell">
       <header className="topbar">
         <div className="topbar-left">
-          <div className="p-2">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={onMenuToggle}
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMenuOpen}
+          >
+            <Menu size={19} />
+          </button>
+          <div className="topbar-greeting p-2">
             <h5 className="relative text-slate-600 font-bold text-sm">Welcome back, {user?.name || "User"}
               <span className="ml-1 absolute animate-bounce">👋</span>
             </h5>
@@ -148,7 +157,7 @@ function TopBar({ onLogout }) {
               </div>
             )}
           </div>
-          <Clock />
+          <div className="topbar-clock"><Clock /></div>
 
         </div>
       </header>

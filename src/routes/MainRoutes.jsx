@@ -39,7 +39,7 @@ const menuRouteComponents = {
   "/tickets": TicketsModulePage,
   "/menus": MenuMasterModulePage,
   "/customers": CustomerModulePage,
-  "/amc-reminders": AmcRemindersModulePage,
+  "/amc-management": AmcRemindersModulePage,
   "/amc-reminder": AmcRemindersModulePage,
   "/products": ProductModulePage,
   "/product": ProductModulePage,
@@ -192,14 +192,14 @@ function MainRoutes() {
                   : <PerformanceReportPage menu_id={performanceReportMenuId} />
               }
             />
-            <Route
+            {/* <Route
               path="/reports/performance/:userId"
               element={
                 performanceReportMenuId
                   ? withPermission(performanceReportMenuId, <UserPerformancePage menu_id={performanceReportMenuId} />)
                   : <UserPerformancePage menu_id={performanceReportMenuId} />
               }
-            />
+            /> */}
             <Route
               path="/work-report"
               element={

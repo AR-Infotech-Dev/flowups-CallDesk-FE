@@ -9,7 +9,7 @@ const FieldPicker = ({
     onSearchChange,
     onAddField,
 }) => (
-    <div className="relative">
+    <div className="dynamic-filter-field-picker relative">
         <button
             type="button"
             onClick={onToggle}

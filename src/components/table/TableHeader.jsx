@@ -65,7 +65,7 @@ function TableHeader({
   };
 
   return (
-    <thead className="bg-blue-50" >
+    <thead className="premium-table-header">
       <tr>
         {columns.map((column) => {
           const columnWidth = getSafeWidth(column.currentWidth);
@@ -73,7 +73,7 @@ function TableHeader({
           return (
             <th
               key={column.key}
-              className={`${column.className || ""} ${column.resizable === false ? "" : "is-resizable"} bg-blue-50`}
+              className={`${column.className || ""} ${column.resizable === false ? "" : "is-resizable"} ${sortConfig?.key === column.key ? "is-sorted" : ""}`}
               style={{ width: columnWidth, minWidth: columnWidth, maxWidth: columnWidth }}
             >
             {column.checkbox ? (
@@ -111,7 +111,7 @@ function TableHeader({
             </th>
           );
         })}
-        <th >
+        <th className="table-column-picker-header">
           <div className="table-column-picker">
             <button
               type="button"

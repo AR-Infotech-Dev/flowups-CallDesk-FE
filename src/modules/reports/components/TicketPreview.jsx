@@ -12,9 +12,12 @@ const formatDate = (value) => {
   return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
-const formatResolution = (value) => {
+const formatResolution = (value, seconds) => {
   if (value === undefined || value === null || value === "") return "-";
-  return `${value} hrs`;
+  const totalSeconds = Number.isFinite(Number(seconds))
+    ? Math.max(0, Math.round(Number(seconds)))
+    : Math.max(0, Math.round(Number(value || 0) * 60));
+  return `${Math.floor(totalSeconds / 60)} min ${totalSeconds % 60} sec`;
 };
 
 function DetailItem({ icon: Icon, label, value }) {
@@ -97,7 +100,11 @@ function TicketPreview({ isOpen, handleClose, selectedTicket = {} }) {
             <DetailItem icon={CalendarDays} label="Due" value={formatDate(selectedTicket.due_date)} />
           </div>
           <div>
-            <DetailItem icon={CalendarDays} label="Resolution" value={formatResolution(selectedTicket.resolution_time)} />
+            <DetailItem
+              icon={CalendarDays}
+              label="Resolution"
+              value={formatResolution(selectedTicket.resolution_time, selectedTicket.resolution_time_seconds)}
+            />
           </div>
           <div>
             <DetailItem icon={Package} label="Product" value={[selectedTicket.product_name, selectedTicket.product_serial_number].filter(Boolean).join(" | ")} />
