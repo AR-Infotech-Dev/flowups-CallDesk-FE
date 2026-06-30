@@ -1,158 +1,43 @@
-import { toast } from "react-toastify";
-import { useEffect, useMemo, useState } from "react";
-import { makeRequest } from "../../api/httpClient";
-import { useModuleFilters } from "../../store/hooks";
-import { defaultSortConfig, getNextSortConfig } from "../../utils/sorting";
-import {
-  buildFilterFieldsFromStructure,
-  buildTableColumnsFromStructure,
-  getDefinitions
-} from "../../utils/moduleStructure";
-import ModuleControls from "../shared/ModuleControls";
-import ModulePageLayout from "../shared/ModulePageLayout";
-import ModulePagination from "../shared/ModulePagination";
-import DynamicFilter from "../../components/DynamicFilter";
+import { useEffect, useState } from "react";
+import { usersModuleSchema } from "./data/module.schema";
+import { useUsersTableConfig } from "./hooks/useUsersTableConfig";
+import { useUsersModule } from "./hooks/useUsersModule";
+import { getNextSortConfig } from "@utils/sorting";
+import { useModuleFilters, useAppSelector } from "@store/hooks";
+import { selectUsersRows } from "./data/users.slice";
+
+import ModuleControls from "@shared/ModuleControls";
+import ModulePageLayout from "@shared/ModulePageLayout";
+import ModulePagination from "@shared/ModulePagination";
+import DynamicFilter from "@components/dynamic-filter";
+import ResizableTable from "@components/table/ResizableTable";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 import UserForm from "./components/UserForm";
-import ResizableTable from "../../components/table/ResizableTable";
-import { usersFallbackColumns, usersModuleSchema } from "./data/module.schema";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import UserTableRow from "./components/UserTableRow";
 
 function UsersModulePage({ menu_id }) {
+
   const resolvedMenuID = menu_id || usersModuleSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
-  const [fields, setFields] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
-  const [pagination, setPagination] = useState({});
-  const [page, setPage] = useState(1);
-  const [userList, setUserList] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedRowIds, setSelectedRowIds] = useState([]);
-  const [deleting, setDeleting] = useState(false);
-  const {
-    filterState,
-    setSearchText,
-    applyFilterPayload,
-    setSort,
-    clearFilters,
-  } = useModuleFilters("user-master", userList);
+  const userList = useAppSelector(selectUsersRows);
+  const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters, } = useModuleFilters("user-master", userList);
+  const { pagination, page, loading, deleting, selectedRowIds, getUserList, handlePageChange, handleToggleRow, handleToggleAllRows, handleDeleteSelected, handleDeleteRow, } = useUsersModule({ filterState });
+  const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useUsersTableConfig({ resolvedMenuID, filterState });
 
-  const sortConfig = {
-    key: filterState.order_by || defaultSortConfig.key,
-    direction: String(filterState.order || defaultSortConfig.direction).toLowerCase(),
-  };
+  const handleSortChange = (columnKey) => {
+    const nextSort = getNextSortConfig(sortConfig, columnKey);
 
-  const columnOptions = {
-    skipFields: usersModuleSchema.skipFields,
-    columnMappings: usersModuleSchema.columnMappings,
-    tableCellConfig: usersModuleSchema.tableCellConfig,
-  };
+    if (page !== 1) {
+      handlePageChange(1);
+    }
 
-  const resolvedColumns = useMemo(
-    () => buildTableColumnsFromStructure(fields, usersFallbackColumns, columnOptions),
-    [fields]
-  );
-
-  const defaultVisibleColumnKeys = useMemo(
-    () => usersFallbackColumns.map((column) => column.key),
-    []
-  );
-
-  const resolvedFilterFields = useMemo(
-    () =>
-      buildFilterFieldsFromStructure(
-        fields,
-        usersModuleSchema.defaultColumns.map((key) => ({
-          label:
-            usersFallbackColumns.find((column) => column.key === key)?.label || key,
-          value: key,
-          type: "text",
-        })),
-        columnOptions
-      ),
-    [fields]
-  );
-
-  const getUserList = async () => {
-    setLoading(true);
-    const res = await makeRequest(usersModuleSchema.api.list, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: {
-        status: "active",
-        page,
-        searchText: filterState.searchText,
-        filters: filterState.filters,
-        order: filterState.order,
-        order_by: filterState.order_by,
-      },
+    setSort({
+      order_by: nextSort.key,
+      order: nextSort.direction.toUpperCase(),
     });
-    setLoading(false);
-
-    if (res.success) {
-      setSelectedUser(null);
-      setUserList(res.data || []);
-      setPagination(res.pagination || {});
-      setSelectedRowIds([]);
-      return;
-    }
-
-    toast.error(res?.message || "Error while fetching users");
   };
-
-  const handleToggleRow = (rowId, checked) => {
-    setSelectedRowIds((current) =>
-      checked ? [...new Set([...current, rowId])] : current.filter((item) => item !== rowId)
-    );
-  };
-
-  const handleToggleAllRows = (checked) => {
-    if (!checked) {
-      setSelectedRowIds([]);
-      return;
-    }
-
-    setSelectedRowIds(userList.map((row) => row?._id ?? row?.id ?? row?.adminID).filter(Boolean));
-  };
-
-  const handleDeleteSelected = async () => {
-    if (!selectedRowIds.length) {
-      toast.error("Please select at least one user to delete.");
-      return;
-    }
-
-    setDeleting(true);
-    const res = await makeRequest(usersModuleSchema.api.delete, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: {
-        action:'delete',
-        ids: selectedRowIds,
-      },
-    });
-    setDeleting(false);
-
-    if (res.success) {
-      toast.success(res?.message || "Selected users deleted successfully.");
-      await getUserList();
-      return;
-    }
-
-    toast.error(res?.message || "Error while deleting users");
-  };
-
-  const getColumnList = async () => {
-    const res = await getDefinitions(resolvedMenuID);
-    if (res.success) {
-      setFields(res.data || []);
-      return;
-    }
-    toast.error(res?.message || "Error while fetching model fields");
-  };
-
-  useEffect(() => {
-    getColumnList();
-  }, [resolvedMenuID]);
 
   useEffect(() => {
     getUserList();
@@ -160,7 +45,7 @@ function UsersModulePage({ menu_id }) {
 
   useEffect(() => {
     if (page !== 1) {
-      setPage(1);
+      handlePageChange(1)
     }
   }, [filterState.searchText, filterState.order, filterState.order_by, JSON.stringify(filterState.filters)]);
 
@@ -207,27 +92,27 @@ function UsersModulePage({ menu_id }) {
             storageKey="users-module-column-widths"
             defaultVisibleColumnKeys={defaultVisibleColumnKeys}
             sortConfig={sortConfig}
-            onSortChange={(columnKey) => {
-              const nextSort = getNextSortConfig(sortConfig, columnKey);
-              if (page !== 1) {
-                setPage(1);
-              }
-              setSort({
-                order_by: nextSort.key,
-                order: nextSort.direction.toUpperCase(),
-              });
-            }}
+            onSortChange={handleSortChange}
             editRow={permissions.canEdit ? (user) => {
               setSelectedUser(user);
               setIsFlyoutOpen(true);
             } : undefined}
+            onDeleteRow={permissions.canDelete ? handleDeleteRow : undefined}
             allowSelection={permissions.canDelete}
             selectedRowIds={selectedRowIds}
             onToggleRow={handleToggleRow}
             onToggleAllRows={handleToggleAllRows}
+            renderRow={(row, index, columns, table) => (
+              <UserTableRow
+                row={row}
+                index={index}
+                columns={columns}
+                table={table}
+              />
+            )}
           />
         }
-        footer={<ModulePagination pagination={pagination} onPageChange={setPage} />}
+        footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}
       />
       <UserForm
         isOpen={isFlyoutOpen}

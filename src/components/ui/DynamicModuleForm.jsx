@@ -1,14 +1,15 @@
-import Input from "../form-inputs/Input";
-import Radio from "../form-inputs/Radio";
-import Select from "../form-inputs/Select";
-import TextArea from "../form-inputs/TextArea";
-import RichTextEditor from "../form-inputs/RichTextEditor";
-import SmartSelect from "../form-inputs/smartSelect";
-import SmartSelectInput from "../form-inputs/smartSelectInput";
-import ColorSwatches from "../form-inputs/ColorSwatches";
-import IconPicker from "../form-inputs/IconPicker";
-import { useAuth } from "../../auth/AuthProvider";
-import { hasFieldEditablePermission, hasFieldVisiblePermission } from "../../auth/permissions";
+import { Fragment } from "react";
+import Input from "@formInputs/Input";
+import Radio from "@formInputs/Radio";
+import Select from "@formInputs/Select";
+import TextArea from "@formInputs/TextArea";
+import RichTextEditor from "@formInputs/RichTextEditor";
+import SmartSelect from "@formInputs/smartSelect";
+import SmartSelectInput from "@formInputs/smartSelectInput";
+import ColorSwatches from "@formInputs/ColorSwatches";
+import IconPicker from "@formInputs/IconPicker";
+import { useAuth } from "@auth/components/AuthProvider";
+import { hasFieldEditablePermission, hasFieldVisiblePermission } from "@auth/utils/permissions";
 
 const SECTION_COLUMN_CLASS = {
   1: "grid grid-cols-12 gap-x-4 gap-y-5",
@@ -66,7 +67,14 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
         return <RichTextEditor field={field} onChange={onChange} value={value} error={errors[field.name]} />;
         break;
       case "smartSelect":
-        return <SmartSelect field={field} value={value} onSelect={onChange} config={field.config} error={errors[field.name]} />
+        return <SmartSelect
+          field={field}
+          value={value}
+          onSelect={onChange}
+          onObjectSelect={(item) => onObjectSelect?.(field, item)}
+          config={field.config}
+          error={errors[field.name]}
+        />
         break;
       case "smartSelectInput":
         return <SmartSelectInput
@@ -96,8 +104,19 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
     <div className="space-y-5">
       {sections.map((section, sectionIndex) => {
         const Icon = section.icon; 
+        const visibleFields = section.fields.filter((field) => {
+          const isVisible = field.visibleWhen
+            ? field.visibleWhen(values, oldValues, mode)
+            : true;
+
+          if (!isVisible) return false;
+          return field.alwaysVisible || hasFieldVisiblePermission({ menuId, field, user });
+        });
+
+        if (!visibleFields.length) return null;
+
         return (
-          <>
+          <Fragment key={section.key || section.title || `section-${sectionIndex}`}>
             {section.title &&
               <div className={`flex text-md font-semibold items-center mb-1 ${sectionIndex != 0 && "mt-4"}`}  >
                 {Icon && <Icon className="m1 mr-2" size={15} />}
@@ -105,16 +124,16 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
               </div>
             }
             <div key={`section-${sectionIndex}`} className={`mb-2 ${SECTION_COLUMN_CLASS[section.columns] || SECTION_COLUMN_CLASS[2]}`}>
-              {section.fields.map((field) => {
+              {visibleFields.map((field) => {
                 const isVisible = field.visibleWhen
                   ? field.visibleWhen(values, oldValues, mode)
                   : true;
 
                 if (!isVisible) return null;
-                const canViewField = hasFieldVisiblePermission({ menuId, field, user });
+                const canViewField = field.alwaysVisible || hasFieldVisiblePermission({ menuId, field, user });
                 if (!canViewField) return null;
 
-                const canEditField = hasFieldEditablePermission({ menuId, field, user });
+                const canEditField = field.alwaysEditable || hasFieldEditablePermission({ menuId, field, user });
                 const isDisabled = getConditionalFlag(field, "disabled") || getConditionalFlag(field, "disabledWhen");
                 const isReadOnly =
                   getConditionalFlag(field, "readOnly") ||
@@ -123,6 +142,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                   getConditionalFlag(field, "readonlyWhen");
                 const resolvedField = {
                   ...field,
+                  options: typeof field.options === "function" ? field.options(values) : field.options,
                   disabled: isDisabled,
                   readOnly: isReadOnly || !canEditField,
                 };
@@ -137,7 +157,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                 )
               })}
             </div>
-          </>
+          </Fragment>
         )
       })}
     </div>

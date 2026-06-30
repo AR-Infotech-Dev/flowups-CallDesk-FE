@@ -1,19 +1,24 @@
 .flyout-overlay {
   position: absolute;
-  inset: 0;
-  z-index: 20;
+  right: 0;
+  bottom: 0px;
+  left: 0;
+  z-index: 19;
   display: flex;
   justify-content: flex-end;
-  background: rgba(10, 16, 34, 0.12);
+  background: #0a10221f;
 }
-.flyout-panel.open{
+
+.flyout-panel.open {
   /* animation: slideOutRight 2s ease forwards; */
   animation: slideInRight .2s ease forwards;
 }
-.flyout-panel.close{
+
+.flyout-panel.close {
   /* animation: slideInRight 2s ease forwards; */
   animation: slideOutRight .2s ease forwards;
 }
+
 .flyout-panel {
   display: flex;
   flex-direction: column;
@@ -26,7 +31,7 @@
   overflow: hidden;
 }
 
-.flyout-close{
+.flyout-close {
   animation: fadeIn .6s ease forwards;
 }
 
@@ -35,6 +40,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -44,6 +50,7 @@
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -62,6 +69,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(100%);
   }
@@ -80,7 +88,7 @@
   height: 30px;
   border: 1px solid #dfe3eb;
   border-radius: 999px;
-  color: #111827;
+  color: var(--text-primary);
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
 }
@@ -92,7 +100,7 @@
   min-height: 35px;
   padding: 0 24px 0 36px;
   background: rgba(255, 255, 255, 0.98);
-  border-bottom: 1px solid var(--border-soft);
+  border: 1px solid var(--border-soft);
 }
 
 .ws_container {
@@ -104,7 +112,7 @@
 
 .page_title {
   margin: 0;
-  color: var(--dark-primary);
+  color: var(--text-primary);
   font-size: 16px;
   font-weight: 500;
 }
@@ -197,7 +205,7 @@
 .form-shell:focus-within {
   border-color: var(--primary-300);
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(19, 153, 234, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.12);
 }
 
 .form-shell {
@@ -338,8 +346,16 @@
 
 
 @media (max-width: 900px) {
+  .flyout-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+  }
+
   .flyout-panel {
     width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
   }
 
   .overlay_header,
@@ -361,8 +377,57 @@
 
   .flyout-close {
     left: auto;
-    right: 18px;
-    top: 22px;
+    right: 8px;
+    top: 3px;
+  }
+
+  .overlay_header {
+    padding-left: 14px;
+    padding-right: 48px;
+  }
+
+  .tab-pane.panel_overflow {
+    padding-right: 8px;
+    padding-left: 8px;
+    white-space: normal;
+  }
+
+  .flyout-footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+  }
+
+  .flyout-footer > * {
+    flex: 1 1 120px;
+  }
+
+  .ticket-form-shell,
+  .ticket-form-shell .ws-main-container {
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .ticket-drawer-layout {
+    display: flex;
+    height: auto;
+    min-height: 100%;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .ticket-drawer-layout > .ticket-scroll-pane {
+    flex: 0 0 auto;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-soft);
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .ticket-drawer-layout > div:last-child {
+    flex: 0 0 auto;
+    min-height: min(360px, 48dvh);
   }
 }
 

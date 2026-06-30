@@ -1,34 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import {
-  Accessibility,
-  BriefcaseBusiness,
-  Building2,
-  ChevronDown,
-  ContactRound,
-  FileText,
-  Folder,
-  Gauge,
-  LayoutGrid,
-  Mail,
-  Map,
-  MenuSquare,
-  NotepadText,
-  ShieldCheck,
-  Sparkles,
-  Ticket,
-  Users,
-  Workflow,
-} from "lucide-react";
-import { useAuth } from "../auth/AuthProvider";
-import { getStoredMenuList, getStoredPermissions } from "../auth/authStorage";
-import {
-  buildAllowedMenuTree,
-  getMenuId,
-  getMenuLabel,
-  getMenuLink,
-  normalizePath,
-} from "../auth/permissions";
+import { Accessibility, BriefcaseBusiness, Building2, ChevronDown, ContactRound, FileText, Folder, Gauge, LayoutGrid, Mail, Map, MenuSquare, NotepadText, Package, ShieldCheck, Sparkles, Ticket, Users, Workflow, X, } from "lucide-react";
+import { useAuth } from "@auth/components/AuthProvider";
+import { APP_NAME } from "@api/config";
+import { getStoredMenuList, getStoredPermissions } from "@auth/utils/authStorage";
+import { buildAllowedMenuTree, getMenuId, getMenuLabel, getMenuLink, normalizePath, } from "@auth/utils/permissions";
 
 const iconMap = {
   Accessibility,
@@ -42,6 +18,7 @@ const iconMap = {
   Map,
   MenuSquare,
   NotepadText,
+  Package,
   ShieldCheck,
   Sparkles,
   Ticket,
@@ -76,7 +53,7 @@ const buildSidebar = (menus = [], permissions = {}, user = {}) =>
   })
     .filter(Boolean);
 
-function Sidebar({ onSelectModule }) {
+function Sidebar({ onSelectModule, isMobileOpen = false, onClose }) {
   const { authSession } = useAuth();
   const [menus, setMenus] = useState(() => getStoredMenuList());
   const [loading, setLoading] = useState(() => !getStoredMenuList().length);
@@ -113,7 +90,33 @@ function Sidebar({ onSelectModule }) {
   }, [sidebarGroups.length]);
 
   return (
-    <aside className="sidebar">
+    <>
+    <button
+      type="button"
+      className={`sidebar-backdrop ${isMobileOpen ? "is-visible" : ""}`}
+      onClick={onClose}
+      aria-label="Close navigation menu"
+      tabIndex={isMobileOpen ? 0 : -1}
+    />
+    <aside className={`sidebar ${isMobileOpen ? "mobile-open" : ""}`}>
+      <div className="sidebar-brand" title={APP_NAME}>
+        <img
+          // src="/logo 1.png"
+          src="/logo 1 (1).png"
+          alt={APP_NAME}
+          className="sidebar-logo"
+        />
+        <span className="sidebar-brand-fallback">{APP_NAME}</span>
+        <button
+          type="button"
+          className="sidebar-mobile-close"
+          onClick={onClose}
+          aria-label="Close navigation menu"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
       <div className="sidebar-sections">
         <section className="sidebar-group">
           <div className="sidebar-group-title px-2">Main Menu</div>
@@ -197,14 +200,15 @@ function Sidebar({ onSelectModule }) {
         </section>
       </div>
 
-      <div className="sync-card">
+      {/* <div className="sync-card">
         <div className="sync-ring" />
         <div>
           <div className="sync-title">CRM Connected</div>
           <div className="sync-subtitle">Permission menu loaded</div>
         </div>
-      </div>
+      </div> */}
     </aside>
+    </>
   );
 }
 

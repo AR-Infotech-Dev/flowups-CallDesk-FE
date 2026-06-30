@@ -1,45 +1,117 @@
-import { Code } from "lucide-react";
-import { API_BASE_URL, DEFAULT_HEADERS, getDefaultHeaders } from "./config";
 import axios from 'axios';
-import { clearAuthSession } from "../auth/authStorage";
-import { set } from "react-hook-form";
+import { API_BASE_URL, DEFAULT_HEADERS, getDefaultHeaders } from "./config";
+import { clearAuthSession, getCurrentSession } from "@auth/utils/authStorage";
+import { hideGlobalLoader, showGlobalLoader } from "@context/loaderStore";
+
+const isSuperAdminSession = () => getCurrentSession()?.user?.role_slug === "super_admin";
+
+const isCompanyIdKey = (key = "") => String(key).toLowerCase() === "company_id";
+
+const shouldBypassCompanyIdFilter = (url = "", method = "GET") => {
+  const normalizedUrl = String(url || "").toLowerCase();
+  const normalizedMethod = String(method || "GET").toUpperCase();
+  const normalizedPath = normalizedUrl
+    .replace(/^https?:\/\/[^/]+/, "")
+    .replace(/\/+$/, "");
+
+  if (normalizedPath.includes("/permissions/save/")) return false;
+
+  if (normalizedMethod === "GET") return true;
+
+  if (normalizedMethod === "POST" && ["/users", "/customers", "/products", "/tickets", "/categories", "/companies", "/menus", "/comments",].includes(normalizedPath)) { return true; }
+
+  return ["/list", "searchlist", "searchsluglist", "getdefinations", "get-menus", "get-permissions", "permissions/", "/dashboard", "get-markers", "/notifications",].some((segment) => normalizedUrl.includes(segment));
+};
+
+const stripCompanyIdFilterRows = (value) => {
+  if (Array.isArray(value)) {
+    return value
+      .map(stripCompanyIdFilterRows)
+      .filter((item) => {
+        if (!item || typeof item !== "object" || Array.isArray(item)) return true;
+        return !isCompanyIdKey(item.field || item.key || item.name || item.column_name);
+      });
+  }
+
+  if (!value || typeof value !== "object") return value;
+
+  return Object.entries(value).reduce((accumulator, [key, itemValue]) => {
+    accumulator[key] = stripCompanyIdFilterRows(itemValue);
+    return accumulator;
+  }, {});
+};
+
+const stripCompanyIdForSuperAdmin = (payload, url, method) => {
+  if (!isSuperAdminSession() || !shouldBypassCompanyIdFilter(url, method) || !payload) return payload;
+
+  if (typeof payload === "string") {
+    try {
+      return JSON.stringify(stripCompanyIdFilterRows(JSON.parse(payload)));
+    } catch {
+      return payload;
+    }
+  }
+
+  return stripCompanyIdFilterRows(payload);
+};
 
 export const makeRequest = async (url, options = {}) => {
   try {
-    const token = localStorage.getItem("_bb_key");
+    showGlobalLoader();
     const {
       method = "GET",
       headers = {},
       body = null,
       params = null,
+      onUploadProgress = null,
+      timeout = 10000,
+      responseType = "json",
     } = options;
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+    const requestHeaders = {
+      ...getDefaultHeaders(),
+      ...headers,
+    };
+
+    if (isFormData) {
+      delete requestHeaders["Content-Type"];
+      delete requestHeaders["content-type"];
+    }
+
     const config = {
       url,
       baseURL: API_BASE_URL,
       method,
-      headers: {
-        ...getDefaultHeaders(),
-        ...headers,
-      },
-      data: body,     // for POST, PUT
-      params: params, // for GET query params
+      timeout,
+      withCredentials: true,
+      headers: requestHeaders,
+      data: isFormData ? body : stripCompanyIdForSuperAdmin(body, url, method),     // for POST, PUT
+      params: stripCompanyIdForSuperAdmin(params, url, method), // for GET query params
+      onUploadProgress,
+      responseType,
     };
     const res = await axios(config);
+    if (responseType === "blob") {
+      return {
+        success: true,
+        status: res.status,
+        data: res.data,
+        headers: res.headers,
+      };
+    }
 
     return {
       status: res.status,
       ...res.data
     };
-
   } catch (error) {
-    console.log("Axios Error:", error.response);
+    console.error("Axios Error:", error.response);
     if (error.response) {
-      // AUTO LOGOUT ON 401
-      if (error.response.status === 401) {
+      if (error.response.status === 401 && [2006, 2007, 2009].includes(error?.response?.data?.code)) {
         clearAuthSession();
-        setTimeout(()=>{
+        setTimeout(() => {
           window.location.href = "/login";
-        },2000)
+        }, 2000)
       }
       return {
         ...error.response.data,
@@ -58,6 +130,8 @@ export const makeRequest = async (url, options = {}) => {
         message: error.message,
       };
     }
+  } finally {
+    hideGlobalLoader();
   }
 };
 
@@ -79,57 +153,4 @@ async function parseResponse(response) {
   }
 
   return payload;
-}
-
-
-export async function apiRequest(path, options = {}) {
-  const { headers, ...restOptions } = options;
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...restOptions,
-    headers: {
-      ...DEFAULT_HEADERS,
-      ...headers,
-    },
-  });
-
-  return parseResponse(response);
-}
-
-export function get(path, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "GET",
-  });
-}
-
-export function post(path, body, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-}
-
-export function put(path, body, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "PUT",
-    body: JSON.stringify(body),
-  });
-}
-
-export function patch(path, body, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "PATCH",
-    body: JSON.stringify(body),
-  });
-}
-
-export function remove(path, options = {}) {
-  return apiRequest(path, {
-    ...options,
-    method: "DELETE",
-  });
 }

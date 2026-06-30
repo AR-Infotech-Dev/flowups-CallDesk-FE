@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 import { buildFallbackColumnsFromKeys } from "../../../utils/moduleStructure";
 import { z } from "zod";
 
@@ -50,8 +49,8 @@ export const usersModuleSchema = {
       options: [],
     },
   ],
-  defaultColumns: ["name", "userName", "email", "contactNo", "roleID", "status"],
-  skipFields: ["user_setting", "gfcmToken", "otp", "country_code", "otp_exp_time", "g_cal_token", "one_drive_access_token", "is_google_sync", "is_one_drive_sync", "ftoken", "isVerified", "photo", "adminID", "latitude", "longitude", "roleOfUser"],
+  defaultColumns: ["name", "userName", "email", "contactNo", "roleID", "status", "company_id"],
+  skipFields: ["user_setting", "gfcmToken", "otp", "country_code", "otp_exp_time", "g_cal_token", "one_drive_access_token", "is_google_sync", "is_one_drive_sync", "ftoken", "isVerified", "photo", "adminID", "latitude", "longitude", "roleOfUser", "password"],
   tableCellConfig: [
     { column_name: "name", type: "person" },
     { column_name: "userName", type: "person" },
@@ -65,7 +64,7 @@ export const usersModuleSchema = {
     { whatsappNo: "Whatsapp No" },
     { dateOfBirth: "Date Of Birth" },
     { lastLogin: "Last Login" },
-    { company_id: "Assigned Company/Branch" },
+    { company_id: "Assigned Company" },
     { userName: "User Name" },
     { roleID: "User Role" },
     { is_approver: "Approval Privileges" },
@@ -93,7 +92,7 @@ export const usersModuleSchema = {
       dateOfBirth: null,
       created_by: null,
       modified_by: null,
-      status: "active",
+      status: "inactive",
     },
     sections: [
       // `columns` decides the grid and each field controls label/type/required state.
@@ -120,22 +119,6 @@ export const usersModuleSchema = {
               { value: "UTC+00:00", label: "(UTC+00:00) Greenwich Mean Time (GMT)" },
             ],
           },
-          // {
-          //   name: "default_company",
-          //   label: "Assign Company/Branch",
-          //   type: "select",
-          //   required: true,
-          //   joinedField: "default_company",
-          //   placeholder: "Select Company/Branch",
-          // },
-          // {
-          //   name: "roleID",
-          //   label: "User Role",
-          //   type: "select",
-          //   required: true,
-          //   joinedField: "roleID",
-          //   placeholder: "Select user role",
-          // },
         ],
       },
       {

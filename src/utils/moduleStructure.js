@@ -43,6 +43,8 @@ function normalizeCellDisplayConfig(config = {}) {
     key: String(key).trim(),
     type,
     colorField: String(colorField || "").trim(),
+    width: config.width,
+    minWidth: config.minWidth || config.min_width,
   };
 }
 
@@ -131,6 +133,56 @@ function getFieldType(field) {
   return String(field?.Type || field?.type || field?.input_type || "text").toLowerCase();
 }
 
+function getFilterFieldType(fieldKey, fieldType) {
+  const normalizedKey = String(fieldKey || "").toLowerCase();
+  const normalizedType = String(fieldType || "").toLowerCase();
+
+  if (
+    normalizedType.startsWith("enum") ||
+    normalizedType === "enum" ||
+    normalizedType === "select"
+  ) {
+    return "enum";
+  }
+
+  if (
+    normalizedType.includes("datetime") ||
+    normalizedType.includes("timestamp") ||
+    normalizedType === "date" ||
+    normalizedKey.endsWith("_date") ||
+    normalizedKey.endsWith("_at")
+  ) {
+    return "date";
+  }
+
+  if (
+    normalizedType.includes("int") ||
+    normalizedType.includes("decimal") ||
+    normalizedType.includes("double") ||
+    normalizedType.includes("float") ||
+    normalizedType === "number" ||
+    normalizedType === "numeric"
+  ) {
+    return "number";
+  }
+
+  return "text";
+}
+
+function getEnumOptions(fieldType = "") {
+  const match = String(fieldType || "").match(/^enum\((.*)\)$/i);
+  if (!match) return [];
+
+  return match[1]
+    .split(",")
+    .map((item) => item.trim().replace(/^'|'$/g, "").replace(/^"|"$/g, ""))
+    .filter(Boolean)
+    .map((item) => ({
+      label: titleCaseFromKey(item),
+      value: item,
+    }));
+}
+
 export function buildFallbackColumnsFromKeys(keys = [], options = {}) {
   const labelMap = buildLabelMap(options.columnMappings);
   const cellDisplayMap = buildCellDisplayMap(
@@ -144,14 +196,14 @@ export function buildFallbackColumnsFromKeys(keys = [], options = {}) {
       cellDisplayMap
     );
 
-    return {
-      key,
-      label: getFieldLabel({}, key, labelMap),
-      width: 180,
-      minWidth: 120,
-      cellType: cellConfig?.type || 'text',
-      colorField: cellConfig?.colorField || "",
-    }
+      return {
+        key,
+        label: getFieldLabel({}, key, labelMap),
+        width: cellConfig?.width || 180,
+        minWidth: cellConfig?.minWidth || 120,
+        cellType: cellConfig?.type || 'text',
+        colorField: cellConfig?.colorField || "",
+      }
   }
   );
 }
@@ -179,8 +231,8 @@ export function buildTableColumnsFromStructure(fields = [], fallbackColumns = []
       return {
         key,
         label: getFieldLabel(field, key, labelMap),
-        width: 180,
-        minWidth: 120,
+        width: cellConfig?.width || 180,
+        minWidth: cellConfig?.minWidth || 120,
         cellType: cellConfig?.type || "text",
         colorField: cellConfig?.colorField || "",
       };
@@ -193,6 +245,7 @@ export function buildTableColumnsFromStructure(fields = [], fallbackColumns = []
 export function buildFilterFieldsFromStructure(fields = [], fallbackFields = [], options = {}) {
   const skipFieldSet = new Set((options.skipFields || []).map((field) => normalizeKey(field)));
   const labelMap = buildLabelMap(options.columnMappings);
+  const filterFieldOptions = options.filterFieldOptions || {};
   const normalizedFields = fields
     .map((field) => {
       const key = getFieldKey(field);
@@ -201,20 +254,24 @@ export function buildFilterFieldsFromStructure(fields = [], fallbackFields = [],
       }
 
       const type = getFieldType(field);
+      const filterType = getFilterFieldType(key, type);
+      const fieldOptions = filterFieldOptions[key] || filterFieldOptions[normalizeKey(key)] || {};
       return {
         label: getFieldLabel(field, key, labelMap),
         value: key,
-        type:
-          type === "number" || type === "numeric"
-            ? "number"
-            : type === "date"
-              ? "date"
-              : "text",
+        type: fieldOptions.type || filterType,
+        options: fieldOptions.options || (filterType === "enum" ? getEnumOptions(type) : undefined),
+        optionsSource: fieldOptions.optionsSource,
       };
     })
     .filter(Boolean);
 
-  return normalizedFields.length ? normalizedFields : fallbackFields;
+  return normalizedFields.length
+    ? normalizedFields
+    : fallbackFields.map((field) => ({
+        ...field,
+        type: getFilterFieldType(field.value, field.type),
+      }));
 }
 
 export async function getDefinitions(menu_id) {

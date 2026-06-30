@@ -1,63 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { Columns, Star, Pencil } from "lucide-react";
-import moment from "moment";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import TableHeader from "./TableHeader";
 import TableSkeleton from "./TableSkeleton";
 import NoTableData from "./NoTableData";
 import ColumnArranger from "./ColumnArranger";
-import { useAuth } from "../../auth/AuthProvider";
-import { hasFieldVisiblePermission } from "../../auth/permissions";
+import { useAuth } from "@auth/components/AuthProvider";
+import { hasFieldVisiblePermission } from "@auth/utils/permissions";
+import {
+  ACTIONS_COLUMN,
+  DEFAULT_COLUMN_WIDTH,
+  DefaultRow,
+  createRowRenderContext,
+  getColumnWidth,
+  getRowIdentifier,
+} from "./tableRowHelpers";
 
 window.TIMEFORMAT = "Do MMMM YYYY"
 
-const STATUS_CLASS_MAP = {
-  active: "status-green",
-  pending: "status-amber",
-  inactive: "status-gray",
-  rejected: "status-red",
-  review: "status-purple",
-  closed: "status-gray",
-  resolved: "status-green",
-  open: "status-blue",
-};
-
-const PILL_BASE_CLASS = {
-  badge: "badge",
-  status: "status-pill",
-  tag: "tag",
-};
-
-function getCellStyle(column) {
-  return {
-    width: column.currentWidth,
-    minWidth: column.currentWidth,
-    maxWidth: column.currentWidth,
-  };
-}
-
-function getRowIdentifier(row) {
-  return (
-    row?._id ??
-    row?.id ??
-    row?.adminID ??
-    row?.ticketID ??
-    row?.ticket_id ??
-    row?.roleId ??
-    row?.userId ??
-    row?.menu_id ??
-    row?.customer_id ??
-    row?.company_id ??
-    row?.category_id
-  );
-}
-
-function getStatusClass(value) {
-  if (!value) {
-    return "status-gray";
-  }
-
-  return STATUS_CLASS_MAP[String(value).trim().toLowerCase()] || "status-gray";
-}
+const VISIBLE_COLUMNS_STORAGE_SUFFIX = "-visible-columns";
 
 function getStoredWidths(storageKey) {
   if (typeof window === "undefined") {
@@ -72,359 +31,73 @@ function getStoredWidths(storageKey) {
 }
 
 function getStoredVisibleColumnKeys(storageKey) {
-  if (typeof window === "undefined") {
+  if (!storageKey || typeof window === "undefined") {
     return null;
   }
 
   try {
-    return JSON.parse(window.localStorage.getItem(`${storageKey}-visible-columns`) || "null");
+    const parsedValue = JSON.parse(window.localStorage.getItem(`${storageKey}${VISIBLE_COLUMNS_STORAGE_SUFFIX}`) || "null");
+    return Array.isArray(parsedValue) ? parsedValue : null;
   } catch {
     return null;
   }
 }
 
-function getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys = []) {
-  const fixedColumnKeys = columns
+function setStoredVisibleColumnKeys(storageKey, columnKeys = []) {
+  if (!storageKey || typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(`${storageKey}${VISIBLE_COLUMNS_STORAGE_SUFFIX}`, JSON.stringify(columnKeys));
+}
+
+function getFixedColumnKeys(columns) {
+  return columns
     .filter((column) => column.checkbox || column.className === "icon-col" || column.isAlwaysVisible)
     .map((column) => column.key);
+}
+
+function getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys = []) {
+  const fixedColumnKeys = getFixedColumnKeys(columns);
 
   if (defaultVisibleColumnKeys.length) {
     return [...new Set([...fixedColumnKeys, ...defaultVisibleColumnKeys])];
   }
-
   return columns.map((column) => column.key);
 }
 
-// function getColumnCellType(column) {
-//   if (typeof column.cellType === "object" && column.cellType !== null) {
-//     return column.cellType.type || "text";
-//   }
+function normalizeVisibleColumnKeys(columns, columnKeys = [], defaultVisibleColumnKeys = [], useDefaults = false) {
+  const availableKeySet = new Set(columns.map((column) => column.key));
+  const fixedColumnKeys = getFixedColumnKeys(columns);
+  const sourceKeys = useDefaults
+    ? getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys)
+    : columnKeys;
+  const normalizedKeys = sourceKeys.filter((key) => availableKeySet.has(key));
+  const missingFixedKeys = fixedColumnKeys.filter((key) => !normalizedKeys.includes(key));
 
-//   return column.cellType || "text";
-// }
-
-// Replace getColumnCellType() function with this updated version
-
-function getColumnCellType(column) {
-  if (typeof column.cellType === "object" && column.cellType !== null) {
-    return column.cellType.type || "text";
-  }
-
-  const explicitType = column.cellType || "";
-  if (column.key.toLowerCase().includes("date")) {
-    return "date";
-  }
-  if (explicitType) return explicitType;
-
-  return "text";
+  return [...new Set([...missingFixedKeys, ...normalizedKeys])];
 }
 
-function getColumnColorField(column) {
-  if (typeof column.cellType === "object" && column.cellType !== null) {
-    return column.cellType.colorField || column.cellType.color_field || "";
-  }
-
-  return column.colorField || column.color_field || "";
-}
-
-function isInlineColorValue(value) {
-  if (!value) {
+function hasMatchingStoredColumnKeys(columns, storedKeys = []) {
+  if (!Array.isArray(storedKeys) || storedKeys.length === 0) {
     return false;
   }
 
-  return /^(#|rgb|hsl|var\()/i.test(String(value).trim());
+  const fixedColumnKeys = new Set(getFixedColumnKeys(columns));
+  const availableKeySet = new Set(columns.map((column) => column.key));
+
+  return storedKeys.some((key) => availableKeySet.has(key) && !fixedColumnKeys.has(key));
 }
 
-function getInlineBadgeStyle(colorValue) {
-  if (!isInlineColorValue(colorValue)) {
-    return undefined;
-  }
+function getInitialVisibleColumnKeys(columns, storageKey, defaultVisibleColumnKeys = []) {
+  const storedKeys = getStoredVisibleColumnKeys(storageKey);
+  const useStoredKeys = hasMatchingStoredColumnKeys(columns, storedKeys);
 
-  return {
-    // color: colorValue,
-    // border:`1px solid ${colorValue} `,
-    // backgroundColor: "#ffffff" ,
-    color: "#ffffff",
-    border: colorValue,
-    backgroundColor: colorValue,
-  };
-}
-
-function getBadgeClassName(type, colorValue, fallbackClassName) {
-  const baseClassName = PILL_BASE_CLASS[type] || "status-pill";
-
-  if (!colorValue || isInlineColorValue(colorValue)) {
-    return baseClassName;
-  }
-
-  return `${baseClassName} ${colorValue}`;
-}
-
-function renderCheckboxCell(row, selectionProps) {
-  const rowId = getRowIdentifier(row);
-  const { selectedRowIds = [], onToggleRow, allowSelection = true } = selectionProps;
-
-  // Delete permission controls row selection. If delete is not allowed, checkbox is hidden.
-  if (!allowSelection) return null;
-  
-  return (
-    <input
-      type="checkbox"
-      checked={selectedRowIds.includes(rowId)}
-      onChange={(event) => {
-        event.stopPropagation();
-        onToggleRow?.(rowId, event.target.checked);
-      }}
-      onClick={(event) => event.stopPropagation()}
-    />
-  );
-}
-
-function renderFavoriteCell(row) {
-  return (
-    <button className="table-icon-button user-favorite-button">
-      <Star size={14} fill={row.favorite ? "currentColor" : "none"} />
-    </button>
-  );
-}
-
-function renderPersonCell(value, row, colorField, index) {
-  const avatarColor = row?.[colorField];
-  const avatarStyle = isInlineColorValue(avatarColor)
-    ? { background: avatarColor }
-    : undefined;
-
-  return (
-    <div className="person-cell">
-      <span
-        className={`person-avatar ${avatarStyle ? "" : `avatar-${index % 6}`}`.trim()}
-        style={avatarStyle}
-      >
-        {String(value || "?").charAt(0)}
-      </span>
-      <span className="text-overflow">{value || "-"}</span>
-    </div>
-  );
-}
-
-function renderDotTextCell(value, row, colorField, index) {
-  const dotColor = row?.[colorField];
-  const dotStyle = isInlineColorValue(dotColor)
-    ? { background: dotColor }
-    : undefined;
-  const dotClassName = dotStyle ? "company-dot" : `company-dot user-department-dot dept-${index % 5}`;
-
-  return (
-    <div className="company-cell">
-      <span className={dotClassName} style={dotStyle} />
-      <span className="text-overflow">{value || "-"}</span>
-    </div>
-  );
-}
-
-function renderBadgeCell(type, value, row, colorField) {
-  const colorValue = row?.[colorField];
-  const fallbackClassName = type === "status" ? getStatusClass(value) : type === "tag" ? "lilac" : "status-gray";
-  const className = getBadgeClassName(type, colorValue, fallbackClassName);
-  const inlineStyle = getInlineBadgeStyle(colorValue);
-  const finalClassName = !colorValue || isInlineColorValue(colorValue)
-    ? `${PILL_BASE_CLASS[type] || "status-pill"} ${fallbackClassName}`
-    : className;
-
-  return (
-    <span className={`text-overflow ${finalClassName}`} style={inlineStyle}>
-      {value || "-"}
-    </span>
-  );
-}
-
-function changeTimeFormat(date) {
-  const parsedDate = moment(date, [
-    moment.ISO_8601,
-    "DD-MM-YYYY",
-    "YYYY-MM-DD",
-    "YY-MM-DD",
-    "Do MMMM YYYY",
-    "MMMM Do YYYY"
-  ]);
-
-  if (!parsedDate.isValid()) return "-";
-
-  const timeFormat = window.TIMEFORMAT || "DD-MM-YYYY";
-
-  switch (timeFormat) {
-    case "DD-MM-YYYY":
-      return parsedDate.format("DD-MM-YYYY");
-
-    case "YYYY:MM:DD":
-      return parsedDate.format("YYYY:MM:DD");
-
-    case "YY:MM:DD":
-      return parsedDate.format("YY:MM:DD");
-
-    case "Do MMMM YYYY":
-      return parsedDate.format("Do MMMM YYYY");
-
-    case "MMMM Do YYYY":
-      return parsedDate.format("MMMM Do YYYY");
-
-    case "DD:MM:YY":
-      return parsedDate.format("DD:MM:YY");
-
-    default:
-      return parsedDate.format("DD-MM-YYYY");
-  }
-}
-
-// function padZero(value) {
-//   return String(value).padStart(2, "0");
-// }
-
-// function formatDateByType(dateValue, formatType = "5") {
-//   if (!dateValue) return "-";
-
-//   const date = new Date(dateValue);
-//   if (isNaN(date.getTime())) return dateValue;
-
-//   const dd = padZero(date.getDate());
-//   const mm = padZero(date.getMonth() + 1);
-//   const yyyy = date.getFullYear();
-//   const yy = String(yyyy).slice(-2);
-
-//   const monthShort = date.toLocaleString("en-US", { month: "short" });
-//   const monthLong = date.toLocaleString("en-US", { month: "long" });
-
-//   const hh = padZero(date.getHours());
-//   const min = padZero(date.getMinutes());
-
-//   switch (String(formatType)) {
-//     case "1":
-//       return `${dd}/${mm}/${yyyy}`; // d/m/yyyy
-
-//     case "2":
-//       return `${mm}/${dd}/${yyyy}`; // m/d/yyyy
-
-//     case "3":
-//       return `${dd}/${mm}/${yy}`; // d/m/yy
-
-//     case "4":
-//       return `${mm}/${dd}/${yy}`; // m/d/yy
-
-//     case "5":
-//       return `${dd}-${mm}-${yy}`; // d-m-yy
-
-//     case "6":
-//       return `${mm}-${dd}-${yy}`; // m-d-yy
-
-//     case "7":
-//       return `${dd} ${monthLong} ${yyyy}`; // d Month yyyy
-
-//     case "8":
-//       return `${monthShort} ${dd} ${yyyy}`; // Month d yyyy
-
-//     case "9":
-//       return `${yyyy}-${mm}-${dd}`; // yyyy-m-d
-
-//     case "t":
-//       return `${hh}:${min}`; // time only
-
-//     case "0":
-//     default:
-//       return date.toLocaleDateString("en-IN");
-//   }
-// }
-
-function renderValueCell(column, row, index, selectionProps) {
-  const value = row?.[column.key];
-  const cellType = getColumnCellType(column);
-  const colorField = getColumnColorField(column);
-
-  if (column.checkbox) {
-    return renderCheckboxCell(row, selectionProps);
-  }
-
-  if (column.className === "icon-col") {
-    return renderFavoriteCell(row);
-  }
-
-  switch (cellType) {
-
-
-    case "person":
-      return renderPersonCell(value, row, colorField, index);
-
-    case "clip":
-      return <div className="text-overflow table-text-clip">{value || "-"}</div>;
-
-    case "tag":
-      return renderBadgeCell("tag", value, row, colorField);
-
-    case "badge":
-      return renderBadgeCell("badge", value, row, colorField);
-
-    case "status":
-      return renderBadgeCell("status", value, row, colorField);
-
-    case "dotText":
-      return renderDotTextCell(value, row, colorField, index);
-
-    case "date":
-      return value ? changeTimeFormat(value) : "-";
-
-    case "currency":
-      return value ? `Rs ${Number(value).toLocaleString("en-IN")}` : "Rs 0";
-
-    default:
-      return value ?? "-";
-  }
-}
-
-// function DefaultRow({ row, index, columns, editRow, selectionProps }) {
-//   const rowKey = getRowIdentifier(row) ?? row?.name ?? index;
-
-//   return (
-//     <tr key={rowKey} className="group">
-//       {columns.map((column) => (
-//         <td
-//           key={column.key}
-//           className={column.className || ""}
-//           style={getCellStyle(column)}
-
-//         >
-//           {renderValueCell(column, row, index, selectionProps)}
-//         </td>
-//       ))}
-//       <td className=" relative hidden group-hover:table-cell" >
-//         <div className="flex absolute">
-//           <span className="edit" onClick={typeof editRow === "function" ? () => editRow(row) : undefined}>
-//             <Pencil size={12} /> 
-//           </span>
-//         </div>
-//       </td>
-//     </tr>
-//   );
-// }
-function DefaultRow({ row, index, columns, editRow, selectionProps }) {
-  const rowKey = getRowIdentifier(row) ?? row?.name ?? index;
-
-  return (
-    <tr key={rowKey} className="group">
-      {columns.map((column) => (
-        <td
-          key={column.key}
-          className={column.className || ""}
-          style={getCellStyle(column)}
-          onClick={
-            // If editRow is missing, row click does nothing. Pages pass editRow only when edit permission exists.
-            typeof editRow === "function"
-              ? () => editRow(row)
-              : undefined
-          }
-        >
-          {renderValueCell(column, row, index, selectionProps)}
-        </td>
-      ))}
-    </tr>
+  return normalizeVisibleColumnKeys(
+    columns,
+    useStoredKeys ? storedKeys : [],
+    defaultVisibleColumnKeys,
+    !useStoredKeys
   );
 }
 
@@ -434,6 +107,11 @@ function ResizableTable({
   storageKey,
   renderRow,
   editRow,
+  onEditRow,
+  onDeleteRow,
+  rowActions = [],
+  renderActions,
+  showActions,
   loading,
   sortConfig,
   onSortChange,
@@ -443,67 +121,100 @@ function ResizableTable({
   defaultVisibleColumnKeys = [],
   allowSelection = true,
   menuId,
+  onVisibleColumnsChange,
 }) {
   const { authSession } = useAuth();
   const user = authSession?.user;
   const [columnWidths, setColumnWidths] = useState(() => getStoredWidths(storageKey));
-  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() =>
-    getStoredVisibleColumnKeys(storageKey) || getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys)
-  );
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
+    return getInitialVisibleColumnKeys(columns, storageKey, defaultVisibleColumnKeys);
+  });
+  
+
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
+  const handleEditRow = onEditRow || editRow;
+  const shouldShowActions = showActions ?? Boolean(handleEditRow || onDeleteRow || rowActions.length || renderActions);
 
   useEffect(() => {
+    if (!storageKey) {
+      return;
+    }
+
     window.localStorage.setItem(storageKey, JSON.stringify(columnWidths));
   }, [columnWidths, storageKey]);
 
   useEffect(() => {
-    window.localStorage.setItem(`${storageKey}-visible-columns`, JSON.stringify(visibleColumnKeys));
-  }, [storageKey, visibleColumnKeys]);
-
-  useEffect(() => {
-    const nextDefaultKeys = getDefaultVisibleColumnKeys(columns, defaultVisibleColumnKeys);
     const storedKeys = getStoredVisibleColumnKeys(storageKey);
+    const useStoredKeys = hasMatchingStoredColumnKeys(columns, storedKeys);
 
     setVisibleColumnKeys((current) => {
-      const preferredKeys =
-        Array.isArray(storedKeys) && storedKeys.length
-          ? storedKeys
-          : current?.length
-            ? current
-            : nextDefaultKeys;
+      if (useStoredKeys) {
+        return normalizeVisibleColumnKeys(columns, storedKeys, defaultVisibleColumnKeys, false);
+      }
 
-      const fixedKeysToAppend = nextDefaultKeys.filter((key) => !preferredKeys.includes(key));
-      return [...new Set([...preferredKeys, ...fixedKeysToAppend])];
+      return normalizeVisibleColumnKeys(
+        columns,
+        [],
+        defaultVisibleColumnKeys,
+        true
+      );
     });
   }, [columns, defaultVisibleColumnKeys, storageKey]);
 
+  const handleApplyColumnKeys = (nextColumnKeys) => {
+    const normalizedKeys = normalizeVisibleColumnKeys(columns, nextColumnKeys, defaultVisibleColumnKeys, false);
+    setVisibleColumnKeys(normalizedKeys);
+    setStoredVisibleColumnKeys(storageKey, normalizedKeys);
+  };
+
   const resolvedColumns = useMemo(
-    () =>
-      visibleColumnKeys
+    () => {
+      const visibleColumns = visibleColumnKeys
         .map((key) => columns.find((column) => column.key === key))
         .filter(Boolean)
         .filter((column) => allowSelection || !column.checkbox)
-        .filter((column) => column.checkbox || column.className === "icon-col" || hasFieldVisiblePermission({ menuId, field: column, user }))
+        .filter((column) => column.checkbox || column.className === "icon-col" || column.isAlwaysVisible || hasFieldVisiblePermission({ menuId, field: column, user }))
         .map((column) => ({
           ...column,
-          currentWidth: Math.max(column.minWidth || 40, columnWidths[column.key] || column.width || 800),
-        })),
-    [allowSelection, columnWidths, columns, menuId, user, visibleColumnKeys]
+          currentWidth: Math.max(
+            getColumnWidth(column.minWidth, 40),
+            getColumnWidth(columnWidths[column.key], column.width, DEFAULT_COLUMN_WIDTH)
+          ),
+        }));
+
+      if (!shouldShowActions) {
+        return visibleColumns;
+      }
+
+      return [
+        ...visibleColumns,
+        {
+          ...ACTIONS_COLUMN,
+          currentWidth: Math.max(
+            getColumnWidth(ACTIONS_COLUMN.minWidth, 90),
+            getColumnWidth(columnWidths[ACTIONS_COLUMN.key], ACTIONS_COLUMN.width, ACTIONS_COLUMN.minWidth)
+          ),
+        },
+      ];
+    },
+    [allowSelection, columnWidths, columns, menuId, shouldShowActions, user, visibleColumnKeys]
   );
 
-  const tableWidth = useMemo(
-    () => resolvedColumns.reduce((sum, column) => sum + column.currentWidth, 0),
-    [resolvedColumns]
-  );
+  useEffect(() => {
+    if (typeof onVisibleColumnsChange !== "function") return;
+    onVisibleColumnsChange(
+      resolvedColumns
+        .filter((column) => !column.checkbox && column.key !== ACTIONS_COLUMN.key)
+        .map((column) => column.key)
+    );
+  }, [onVisibleColumnsChange, resolvedColumns]);
 
   const selectableRows = useMemo(
     () => rows.map((row) => getRowIdentifier(row)).filter(Boolean),
     [rows]
   );
 
-  const allRowsSelected =
-    selectableRows.length > 0 &&
-    selectableRows.every((rowId) => selectedRowIds.includes(rowId));
+  const allRowsSelected = selectableRows.length > 0 && selectableRows.every((rowId) => selectedRowIds.includes(rowId));
 
   const selectionProps = useMemo(
     () => ({
@@ -514,13 +225,24 @@ function ResizableTable({
     [allowSelection, onToggleRow, selectedRowIds]
   );
 
+  const rowRenderContext = useMemo(
+    () =>
+      createRowRenderContext({
+        editRow: handleEditRow,
+        selectionProps,
+        onDeleteRow,
+        rowActions,
+        renderActions,
+      }),
+    [handleEditRow, onDeleteRow, renderActions, rowActions, selectionProps]
+  );
+
   const handleResize = (key, nextWidth) => {
     setColumnWidths((current) => ({
       ...current,
       [key]: nextWidth,
     }));
   };
-
   return (
     <div className="table-card">
       <ColumnArranger
@@ -528,11 +250,11 @@ function ResizableTable({
         isColumnMenuOpen={isColumnMenuOpen}
         columns={columns}
         visibleColumnKeys={visibleColumnKeys}
-        onApplyColumnKeys={setVisibleColumnKeys}
+        onApplyColumnKeys={handleApplyColumnKeys}
       />
 
       <div className="table-scroll-x">
-        <table style={{ width: tableWidth, minWidth: tableWidth }}>
+        <table style={{ width: "100%", minWidth: "100%" }}>
           <TableHeader
             setIsColumnMenuOpen={setIsColumnMenuOpen}
             columns={resolvedColumns}
@@ -547,20 +269,27 @@ function ResizableTable({
             {loading && <TableSkeleton resolvedColumns={resolvedColumns} rows={10} />}
 
             {!loading &&
-              rows.map((row, index) =>
-                typeof renderRow === "function" ? (
-                  renderRow(row, index, resolvedColumns)
+              rows.map((row, index) => {
+                const rowKey = getRowIdentifier(row) ?? row?.name ?? index;
+
+                return typeof renderRow === "function" ? (
+                  <Fragment key={rowKey}>
+                    {renderRow(row, index, resolvedColumns, rowRenderContext)}
+                  </Fragment>
                 ) : (
                   <DefaultRow
-                    key={getRowIdentifier(row) ?? row?.name ?? index}
+                    key={rowKey}
                     row={row}
                     index={index}
                     columns={resolvedColumns}
-                    editRow={editRow}
+                    editRow={handleEditRow}
                     selectionProps={selectionProps}
+                    onDeleteRow={onDeleteRow}
+                    rowActions={rowActions}
+                    renderActions={renderActions}
                   />
-                )
-              )}
+                );
+              })}
 
             {!loading && rows.length === 0 && (
               <NoTableData colSpan={Math.max(resolvedColumns.length, 1)} />

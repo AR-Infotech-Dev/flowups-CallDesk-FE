@@ -13,7 +13,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
   const fetchUsers = async (text = "") => {
     try {
       setLoading(true);
-      const res = await makeRequest(usersModuleSchema.api.list, {
+      const res = await makeRequest('get-users', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: {
@@ -59,7 +59,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
     <aside className="min-h-full border border-slate-200 bg-white">
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Select User or Role</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Select User or Role</h3>
           <p className="text-[11px] text-slate-500">{countLabel}</p>
         </div>
         <button
@@ -113,7 +113,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
                 {identity.initials}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-semibold text-slate-900">{identity.name}</span>
+                <span className="block truncate text-xs font-semibold text-slate-700">{identity.name}</span>
                 <span className="block truncate text-[11px] text-slate-500">{identity.email}</span>
                 <span className="block truncate text-[10px] font-medium text-slate-400">
                   Company ID: {identity.company_id || "-"}
@@ -123,7 +123,7 @@ function IdentitySelector({ companyId, selectedIdentity, onSelect }) {
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-700">
                   {identity.badge}
                 </span>
-                <span className="max-w-[72px] truncate text-[10px] text-slate-400">{identity.companyLabel}</span>
+                {/* <span className="max-w-[72px] truncate text-[10px] text-slate-400">{identity.companyLabel}</span> */}
               </span>
             </button>
           ))}

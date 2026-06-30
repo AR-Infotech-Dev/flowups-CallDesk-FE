@@ -1,43 +1,45 @@
 :root {
   
-  --primary: #1399ea;
-  --dark-primary: #014aad;
-  --light-primary: #38B7FF;
-  --deep-blue: #0053c1;
-  --royal-blue: #004eb6;
+  --primary: #2563eb;
+  /* --primary: #0078d4; */
+  --dark-primary: #1d4ed8;
+  --light-primary: #60a5fa;
+  --deep-blue: #1d4ed8;
+  --royal-blue: #1e40af;
 
-  --black: #000000;
+  --black: #334155;
   --white: #ffffff;
   --grey: #8c8e8c;
   --light-grey: #d3d3d3;
 
   --button-color: var(--primary);
-  --text-primary: var(--black);
-  --text-secondary: var(--grey);
+  --text-primary: #334155;
+  --text-secondary: #64748b;
   --background-color: #f5faff;
 
-  --primary-gradient: linear-gradient(135deg, #1399ea 0%, #0053c1 100%);
-  --soft-primary-gradient: linear-gradient(180deg, #38b7ff 0%, #1399ea 100%);
-  --button-gradient: linear-gradient(90deg, #1399ea 0%, #004eb6 100%);
+  --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --soft-primary-gradient: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  --button-gradient: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
 
-  --primary-50: #eef8ff;
-  --primary-100: #d8efff;
-  --primary-200: #b7e3ff;
-  --primary-300: #83d0ff;
-  --primary-400: #47b8ff;
-  --primary-500: #1399ea;
-  --primary-600: #0d7fd2;
-  --primary-700: #0b67ac;
-  --primary-800: #0d588c;
-  --primary-900: #104a73;
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
 
   --surface-base: var(--white);
-  --surface-page: var(--background-color);
-  --surface-soft: var(--primary-50);
-  --surface-soft-2: var(--primary-100);
-  --surface-soft-3: var(--primary-200);
-  --border-soft: rgba(19, 153, 234, 0.14);
-  --border-strong: rgba(1, 74, 173, 0.18);
-  --shadow-soft: rgba(1, 74, 173, 0.1);
-  --shadow-strong: rgba(1, 74, 173, 0.16);
+  --surface-page: var(--white);
+  --surface-soft: #f8fafc;
+  --surface-soft-2: #f1f5f9;
+  --surface-soft-3: #e2e8f0;
+  --border-soft: #ebebeb;
+  /* --border-soft: #e2e8f0; */
+  --border-strong: #cbd5e1;
+  --shadow-soft: rgba(37, 99, 235, 0.1);
+  --shadow-strong: rgba(37, 99, 235, 0.16);
 }

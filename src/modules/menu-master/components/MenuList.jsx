@@ -71,7 +71,7 @@ function MenuRow({
             type="button"
             // Edit permission controls whether row title opens the flyout.
             onClick={canEdit ? () => onEdit?.(menu) : undefined}
-            className={`block max-w-full truncate text-left text-sm font-semibold text-slate-900 ${canEdit ? "hover:text-indigo-600" : "cursor-default"}`}
+            className={`block max-w-full truncate text-left text-sm font-semibold text-slate-700 ${canEdit ? "hover:text-blue-600" : "cursor-default"}`}
           >
             {getMenuName(menu)}
           </button>

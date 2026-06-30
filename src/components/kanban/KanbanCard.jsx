@@ -2,10 +2,12 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, GripVertical, UserRound } from "lucide-react";
 
-import { useAuth } from "../../auth/AuthProvider";
-import { hasFieldVisiblePermission } from "../../auth/permissions";
+import { useAuth } from "@auth/components/AuthProvider";
+import { hasFieldVisiblePermission } from "@auth/utils/permissions";
 import { useKanbanContext } from "./KanbanContext";
 import { isInlineColorValue, resolveCardValue } from "./kanbanUtils";
+import { isAmcActive } from "@utils/amc";
+import { getRandomAvatarColor } from "@/utils/common";
 
 function formatFieldValue(field, value) {
   if (value === null || value === undefined || value === "") {
@@ -77,14 +79,8 @@ function isOverdue(row, columnId, config) {
   return !Number.isNaN(dueDate.getTime()) && dueDate < today;
 }
 
-function getAvatarLabel(row) {
-  const source =
-    row?.assignee_name ||
-    row?.contact_person ||
-    row?.client_name ||
-    row?.name ||
-    row?.ticket_no ||
-    "";
+function getAvatarLabel(avatar_text) {
+  const source = avatar_text || "";
 
   const parts = String(source).trim().split(/\s+/).filter(Boolean);
   if (!parts.length) {
@@ -97,36 +93,23 @@ function getAvatarLabel(row) {
     .join("");
 }
 
-function KanbanCardView({
-  row,
-  columnId,
-  config,
-  style,
-  className = "kanban-card",
-  dragHandleProps = {},
-  onOpen,
-  interactive = true,
-}) {
+function KanbanCardView({ row, columnId, config, style, className = "kanban-card", dragHandleProps = {}, onOpen, interactive = true, }) {
   const { authSession } = useAuth();
   const { menuId } = useKanbanContext();
   const user = authSession?.user;
   const cardId = row._kanbanId;
-  const titleValue =
-    row?.[config.cardTitleField] ||
-    row?.title ||
-    row?.subject ||
-    row?.description ||
-    row?.[config.titleField] ||
-    `#${cardId}`;
+  const titleValue = row?.[config.cardTitleField] || row?.[config.titleField] || row?.title || row?.subject || row?.description || `#${cardId}`;
   const cardFields = (config.cardFields || []).filter((field) =>
     hasFieldVisiblePermission({ menuId, field: typeof field === "string" ? { key: field } : field, user })
   );
   const tagFields = cardFields.filter((field) => field?.type === "tag" || field?.type === "badge");
-  const detailFields = cardFields.filter((field) => field?.type !== "tag" && field?.type !== "badge");
+  const personFields = cardFields.filter((field) => field?.type === "person");
+  const detailFields = cardFields.filter((field) => field?.type !== "tag" && field?.type !== "badge" && field?.type !== "person");
   const showStartDate = hasFieldVisiblePermission({ menuId, field: { key: "start_date", name: "start_date" }, user });
   const showDueDate = hasFieldVisiblePermission({ menuId, field: { key: "due_date", name: "due_date" }, user });
   const showDateRange = showStartDate || showDueDate;
   const overdue = isOverdue(row, columnId, config);
+  const activeAmc = isAmcActive(row);
   const { onKeyDown: onDragKeyDown, ...cardDragProps } = dragHandleProps;
 
   const handleCardKeyDown = (event) => {
@@ -149,7 +132,7 @@ function KanbanCardView({
   return (
     <article
       style={style}
-      className={className}
+      className={`${className} ${activeAmc ? "kanban-card-amc-active" : ""}`.trim()}
       onClick={interactive ? onOpen : undefined}
       onKeyDown={handleCardKeyDown}
       role={interactive ? "button" : undefined}
@@ -168,6 +151,7 @@ function KanbanCardView({
         <div className="kanban-card-title-wrap">
           <h4 className="kanban-card-title">{titleValue}</h4>
         </div>
+        {activeAmc ? <span className="kanban-card-amc-badge">AMC</span> : null}
         {overdue ? <span className="kanban-card-alert">Overdue</span> : null}
       </div>
 
@@ -203,6 +187,29 @@ function KanbanCardView({
               </div>
             );
           })}
+        {personFields
+          .filter((field) => field?.type !== "date" && field?.key !== "start_date" && field?.key !== "due_date")
+          .map((field) => {
+            const key = typeof field === "string" ? field : field.key;
+            const value = resolveCardValue(row, field);
+            const avatar_bg = getRandomAvatarColor();
+            return (
+              <div key={key} className="kanban-card-row">
+                <span className="kanban-card-label">
+                  <FieldIcon type={field?.type} />
+                  {field.label || key}
+                </span>
+                <p className="kanban-card-value flex justify-between items-center gap-2">
+                  <span>
+                    {formatFieldValue(field, value)}
+                  </span>
+                  {value &&
+                    <span className="kanban-card-avatar" style={{ backgroundColor: avatar_bg }} title={getAvatarLabel(value)}>{getAvatarLabel(value)}</span>
+                  }
+                </p>
+              </div>
+            );
+          })}
 
         {tagFields.length ? (
           <div className="kanban-card-footer">
@@ -215,9 +222,9 @@ function KanbanCardView({
               })}
             </div>
 
-            <span className="kanban-card-avatar" title={getAvatarLabel(row)}>
+            {/* <span className="kanban-card-avatar" title={getAvatarLabel(row)}>
               {getAvatarLabel(row)}
-            </span>
+            </span> */}
           </div>
         ) : null}
       </div>
@@ -228,6 +235,7 @@ function KanbanCardView({
 function KanbanCard({ row, columnId, isActiveDrag = false }) {
   const { config, editRow } = useKanbanContext();
   const cardId = row._kanbanId;
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: cardId,
     data: {

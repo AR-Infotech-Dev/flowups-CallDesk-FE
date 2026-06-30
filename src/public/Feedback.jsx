@@ -4,8 +4,6 @@ import { makeRequest } from "../api/httpClient";
 
 export default function FeedbackPage() {
   const { ticket_id, token } = useParams();
-  console.log('useParams() : ',useParams());
-
   const [formData, setFormData] = useState({
     rating: "",
     is_resolved: "yes",

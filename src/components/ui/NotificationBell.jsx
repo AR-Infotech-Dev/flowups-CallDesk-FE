@@ -84,7 +84,7 @@ export default function NotificationBell() {
             const total = await unreadCountRequest;
             setCount(total);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             unreadCountRequest = null;
         }
@@ -93,46 +93,56 @@ export default function NotificationBell() {
     /* ===================================================
        GET LIST
     =================================================== */
-    const getNotifications =
-        useCallback(async () => {
-            try {
-                const res = await makeRequest("/notifications",
-                    {
-                        method: "POST",
-                        body: { page: 1 }
-                    }
-                );
-                if (res.success) {
-                    setList(res.data || []);
+    const getNotifications = useCallback(async () => {
+        try {
+            const res = await makeRequest("/notifications",
+                {
+                    method: "POST",
+                    body: { page: 1 }
                 }
-            } catch (error) {
-                console.log(error);
+            );
+            if (res.success) {
+                setList(res.data || []);
             }
-        }, []);
+        } catch (error) {
+            console.error(error);
+        }
+    }, []);
 
     /* ===================================================
        MARK READ
     =================================================== */
-    const readNotification =
-        async (notification_id) => {
-            try {
-                const res = await makeRequest(`/notifications/read/${notification_id}`,
-                    { method: "GET" }
-                );
-                if (!res.success) return;
-                setList((prev) =>
-                    prev.map((item) => item.notification_id === notification_id
-                        ? { ...item, is_read: "y" }
-                        : item
-                    )
-                );
+    const readNotification = async (notification_id) => {
+        try {
+            const res = await makeRequest(`/notifications/read/${notification_id}`,
+                { method: "GET" }
+            );
+            if (!res.success) return;
+            setList((prev) =>
+                prev.map((item) => item.notification_id === notification_id
+                    ? { ...item, is_read: "y" }
+                    : item
+                )
+            );
 
-                setCount((prev) => prev > 0 ? prev - 1 : 0);
+            setCount((prev) => prev > 0 ? prev - 1 : 0);
 
-            } catch (error) {
-                console.log(error);
-            }
-        };
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const readAllNotification = async () => {
+        try {
+            const res = await makeRequest(`/notifications/read-all`,
+                { method: "GET" }
+            );
+            if (!res.success) return;
+            getCount();
+            getNotifications();
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     /* ===================================================
        KEEP OPEN REF UPDATED
@@ -153,7 +163,7 @@ export default function NotificationBell() {
         socket.emit("join_room", userId);
 
         const onNotification = (data = {}) => {
-            console.log("SOCKET EVENT:", data);
+            console.error("SOCKET EVENT:", data);
 
             /* sound */
             audioRef.current.currentTime = 0;
@@ -184,7 +194,7 @@ export default function NotificationBell() {
 
         /* 🔥 reconnect fix */
         const onConnect = () => {
-            console.log("Socket Reconnected");
+            console.info("Socket Reconnected");
             socket.emit("join_room", userId);
         };
 
@@ -249,13 +259,13 @@ export default function NotificationBell() {
             });
         }
     };
+    const handleMarkAllClick = async () => {
+        await readAllNotification();
+    };
 
     return (
         <div className="relative">
-            <button
-                onClick={openBell}
-                className="topbar-utility topbar-utility-bell"
-            >
+            <button onClick={openBell} className="topbar-utility topbar-utility-bell" >
                 <Bell size={15} />
 
                 {count > 0 && (
@@ -266,56 +276,58 @@ export default function NotificationBell() {
             </button>
 
             {open && (
-                <div
-                    ref={boxRef}
-                    className="absolute right-0 top-12 w-96 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden"
-                >
-                    <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-100">
-                        <h3 className="text-sm font-semibold">
+                <div ref={boxRef} className="absolute right-0 top-9 w-80 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden" >
+                    <div className="flex items-center justify-between px-3 py-2 border-b bg-slate-50">
+                        <h3 className="text-xs font-semibold text-slate-800">
                             Notifications
                         </h3>
+                        
+                        <h3>
+
+                        {!!count &&
+                            <span className="text-xs mr-1 font-light text-blue-800 hover:text-blue-400" onClick={handleMarkAllClick}>
+                                Mark all read
+                            </span>
+                        }
 
                         {!!count && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-[11px] text-slate-500">
                                 {count} unread
                             </span>
                         )}
+                        </h3>
                     </div>
 
-                    <div className="max-h-105 overflow-y-auto">
+                    <div className="max-h-80 overflow-y-auto notification-list-scroll">
                         {list.length ? (
                             list.map((item) => (
-                                <div
-                                    key={item.notification_id || Math.random()}
+                                <div key={item.notification_id || Math.random()}
                                     onClick={() =>
                                         handleNotificationClick(item)
                                     }
-                                    className={`px-4 py-3 border-b cursor-pointer hover:bg-gray-50 ${item.is_read === "n"
-                                        ? "bg-blue-50"
-                                        : ""
-                                        }`}
-                                >
-                                    <h4 className="text-sm font-semibold">
+                                    className={`px-3 py-2 border-b border-slate-100 cursor-pointer hover:bg-slate-50 ${item.is_read === "n" ? "bg-blue-50" : ""}`} >
+                                    <h4 className="text-xs font-semibold text-slate-800 leading-4">
                                         {item.title}
                                     </h4>
 
-                                    <p className="text-sm text-gray-600 mt-1">
+                                    <p className="text-xs text-slate-600 mt-0.5 leading-4 line-clamp-2">
                                         {item.message}
                                     </p>
 
-                                    <p className="text-xs text-gray-400 mt-1">
+                                    <p className="text-[11px] text-slate-400 mt-0.5 leading-4">
                                         {formatRelativeTime(item.created_date)}
                                     </p>
                                 </div>
                             ))
                         ) : (
-                            <div className="p-6 text-center text-sm text-gray-500">
+                            <div className="p-4 text-center text-xs text-slate-500">
                                 No notifications found
                             </div>
                         )}
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }

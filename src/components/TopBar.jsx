@@ -1,42 +1,60 @@
-import {
-  Bell,
-  ChevronDown,
-  Command,
-  Search,
-} from "lucide-react";
-
-import { useState, useEffect } from "react";
+import { Building2, ChevronDown, LogOut, Menu, UserRound, } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Spinner from "./ui/Spinner";
-import { APP_NAME } from "../api/config";
 import NotificationBell from "./ui/NotificationBell";
+import LoadingBar from "./LoadingBar";
+import { useAuth } from "@auth/components/AuthProvider";
+import Clock from "@components/ui/Clock"
 
-function TopBar({ onLogout }) {
+const getCompanyName = (user = {}) => user?.company_name || "";
+
+function TopBar({ onLogout, onMenuToggle, isMenuOpen = false }) {
+  const navigate = useNavigate();
+  const { authSession } = useAuth() || {};
+
   const [isLoggingOut, setLoggingOut] = useState(false);
-  const [user, setUser] = useState(null);
+  const [storedUser, setStoredUser] = useState(null);
+  const [isProfileOpen, setProfileOpen] = useState(false);
+
+  const profileMenuRef = useRef(null);
+
+  const user = useMemo(
+    () => authSession?.user || storedUser || {},
+    [authSession?.user, storedUser]
+  );
+
+  const companyName = getCompanyName(user);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
       if (stored) {
-        setUser(JSON.parse(stored));
+        setStoredUser(JSON.parse(stored));
       }
-    } catch (e) {
-      console.log("User parse error");
+    } catch (error) {
+      console.error("User parse error", error);
     }
   }, []);
 
-  const getInitials = (name = "") =>
-    name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!profileMenuRef.current?.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
 
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  const getInitials = (name = "") => name.split(" ").map((n) => n[0]).join("").toUpperCase();
   const handleLogout = async () => {
     if (isLoggingOut) return;
-
     setLoggingOut(true);
-
     setTimeout(async () => {
       await onLogout?.();
       setLoggingOut(false);
@@ -44,46 +62,108 @@ function TopBar({ onLogout }) {
   };
 
   return (
-    <header className="topbar">
-      <div className="topbar-left">
-        <h1>{APP_NAME}</h1>
-      </div>
-
-      <div className="topbar-center">
-        <div className="search-box">
-          <Search size={16} />
-          <input type="text" value="Search" readOnly />
+    <div className="topbar-shell">
+      <header className="topbar">
+        <div className="topbar-left">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={onMenuToggle}
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMenuOpen}
+          >
+            <Menu size={19} />
+          </button>
+          <div className="topbar-greeting p-2">
+            <h5 className="relative text-slate-600 font-bold text-sm">Welcome back, {user?.name || "User"}
+              <span className="ml-1 absolute animate-bounce">👋</span>
+            </h5>
+            <h5 className="capitalize relative text-xs">
+               {user?.role_slug || "User"}
+            </h5>
+          </div>
         </div>
-      </div>
+        <div className="topbar-right">
+          {companyName && (
+            <span className="topbar-company" title={companyName}>
+              
+              <Building2 size={14} />
+              <span>{companyName}</span>
+            </span>
+          )}
 
-      <div className="topbar-right">
+          <NotificationBell />
 
-        <button
-          className="top-link flex gap-2"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-        >
-          {isLoggingOut && <Spinner classNames={"mx-4"} />}
-          Logout
-        </button>
+          <div className="topbar-profile-menu" ref={profileMenuRef}>
+            <button
+              type="button"
+              className="topbar-profile"
+              onClick={() => setProfileOpen((prev) => !prev)}
+            >
+              <span className="topbar-profile-ring">
+                {getInitials(user?.name)}
+              </span>
 
-        <NotificationBell />
+              <span className="topbar-profile-name">
+                {user?.name || "User"}
+              </span>
 
-        {/* USER */}
-        <button className="topbar-profile flex items-center gap-2">
-          <span className="topbar-profile-ring">
-            {getInitials(user?.name)}
-          </span>
+              <ChevronDown
+                size={13}
+                className={isProfileOpen ? "is-open" : ""}
+              />
+            </button>
 
-          <span className="text-sm font-medium">
-            {user?.name || "User"}
-          </span>
+            {isProfileOpen && (
+              <div className="profile-dropdown">
+                <div className="profile-dropdown-user">
+                  <span className="topbar-profile-ring">
+                    {getInitials(user?.name)}
+                  </span>
 
-          {/* <ChevronDown size={14} /> */}
-        </button>
+                  <div className="profile-dropdown-copy">
+                    <span>{user?.name || "User"}</span>
+                    <small>
+                      {user?.role || user?.role_name || "Account"}
+                    </small>
+                  </div>
+                </div>
 
-      </div>
-    </header>
+                <button
+                  type="button"
+                  className="profile-dropdown-item"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/profile");
+                  }}
+                >
+                  <UserRound size={14} />
+                  Profile
+                </button>
+
+                <button
+                  type="button"
+                  className="profile-dropdown-item danger"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                >
+                  {isLoggingOut ? (
+                    <Spinner classNames="mx-1" />
+                  ) : (
+                    <LogOut size={14} />
+                  )}
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="topbar-clock"><Clock /></div>
+
+        </div>
+      </header>
+
+      <LoadingBar />
+    </div>
   );
 }
 

@@ -1,276 +1,96 @@
-import { toast } from "react-toastify";
-import { useEffect, useMemo, useState } from "react";
-import { makeRequest } from "../../api/httpClient";
-import { useModuleFilters } from "../../store/hooks";
-import {
-  buildFilterFieldsFromStructure,
-  getDefinitions,
-} from "../../utils/moduleStructure";
+import { useEffect, useState } from "react";
 
+import { useModuleFilters } from "../../store/hooks";
 import ModuleControls from "../shared/ModuleControls";
 import ModulePageLayout from "../shared/ModulePageLayout";
-import DynamicFilter from "../../components/DynamicFilter";
+import DynamicFilter from "../../components/dynamic-filter";
 import ActionButton from "../../components/ui/ActionButton";
 import Spinner from "../../components/ui/Spinner";
-import useMenuPermissions from "../../auth/useMenuPermissions";
+import useMenuPermissions from "@auth/utils/useMenuPermissions";
 
 import MenuForm from "./components/MenuForm";
 import MenuList from "./components/MenuList";
-import {
-  menuMasterFallbackColumns,
-  menuMasterSchema,
-} from "./data/module.schema";
+import { menuMasterSchema } from "./data/module.schema";
+import { useMenuMasterFilters } from "./hooks/useMenuMasterFilters";
+import { useMenuMasterModule } from "./hooks/useMenuMasterModule";
 
 function MenuMasterModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || menuMasterSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
-
-  const [fields, setFields] = useState([]);
-  const [menuList, setMenuList] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
-
-  const [loading, setLoading] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [savingSequence, setSavingSequence] = useState(false);
-  const [sequenceDirty, setSequenceDirty] = useState(false);
 
   const {
     filterState,
     setSearchText,
     applyFilterPayload,
     clearFilters,
-  } = useModuleFilters("menu-master", menuList);
+  } = useModuleFilters("menu-master");
 
-  const columnOptions = {
-    skipFields: menuMasterSchema.skipFields,
-    columnMappings: menuMasterSchema.columnMappings,
-    tableCellConfig: menuMasterSchema.tableCellConfig,
-  };
+  const {
+    menuList,
+    loading,
+    deleting,
+    savingSequence,
+    sequenceDirty,
+    getMenus,
+    handleDeleteMenu,
+    handleSortChange,
+    handleSaveSequence,
+  } = useMenuMasterModule({ filterState });
 
-  const resolvedFilterFields = useMemo(
-    () =>
-      buildFilterFieldsFromStructure(
-        fields,
-        menuMasterSchema.defaultColumns.map((key) => ({
-          label:
-            menuMasterFallbackColumns.find(
-              (column) => column.key === key
-            )?.label || key,
-          value: key,
-          type: "text",
-        })),
-        columnOptions
-      ),
-    [fields]
-  );
-
-  // ======================================
-  // GET MENU LIST
-  // ======================================
-  const getMenuList = async () => {
-    setLoading(true);
-
-    const res = await makeRequest(
-      menuMasterSchema.api.list,
-      {
-        method: "POST",
-        body: {
-          status: "active",
-          getAll: "Y",
-          searchText: filterState.searchText,
-          filters: filterState.filters,
-          order: 'ASC',
-          order_by: 'menu_index',
-        },
-      }
-    );
-
-    setLoading(false);
-
-    if (res.success) {
-      setMenuList(res.data || []);
-      setSelectedMenu(null);
-      setSequenceDirty(false);
-      return;
-    }
-
-    toast.error(
-      res?.message || "Error while fetching menus"
-    );
-  };
-
-  // ======================================
-  // GET FIELD DEFINITIONS
-  // ======================================
-  const getColumnList = async () => {
-    const res = await getDefinitions(
-      resolvedMenuID
-    );
-
-    if (res.success) {
-      setFields(res.data || []);
-      return;
-    }
-
-    toast.error(
-      res?.message ||
-      "Error while fetching module fields"
-    );
-  };
-
-  // ======================================
-  // DELETE MENU
-  // ======================================
-  const handleDeleteMenu = async (menu) => {
-    const menuId = menu?.menu_id ?? menu?.id;
-
-    if (!menuId) {
-      toast.error(
-        "Menu id not found."
-      );
-      return;
-    }
-
-    setDeleting(true);
-
-    const res = await makeRequest(
-      menuMasterSchema.api.delete,
-      {
-        method: "POST",
-        body: {
-          action: "delete",
-          ids: [menuId],
-        },
-      }
-    );
-
-    setDeleting(false);
-
-    if (res.success) {
-      toast.success(
-        res?.message ||
-        "Menus deleted successfully."
-      );
-
-      await getMenuList();
-      return;
-    }
-
-    toast.error(
-      res?.message ||
-      "Error while deleting menus"
-    );
-  };
-
-  // ======================================
-  // SORT MENU CARDS
-  // ======================================
-  const handleSortChange = (nextRows) => {
-    setMenuList(nextRows);
-    setSequenceDirty(true);
-  };
-
-  // ======================================
-  // SAVE MENU SEQUENCE
-  // ======================================
-  const handleSaveSequence = async () => {
-    const positions = menuList.map((menu, index) => ({
-      menu_id: menu?.menu_id,
-      menu_index: index + 1,
-    })).filter((item) => item.menu_id);
-
-    if (!positions.length) {
-      toast.error("No menu sequence found to save.");
-      return;
-    }
-
-    setSavingSequence(true);
-
-    const res = await makeRequest("/menus/update-positions", {
-      method: "POST",
-      body: {
-        positions,
-      },
-    });
-
-    setSavingSequence(false);
-
-    if (res.success) {
-      toast.success(res?.message || "Menu sequence saved.");
-      setSequenceDirty(false);
-      await getMenuList();
-      return;
-    }
-
-    toast.error(res?.message || "Unable to save menu sequence.");
-  };
-
-  // ======================================
-  // EFFECTS
-  // ======================================
-  useEffect(() => {
-    getColumnList();
-  }, [resolvedMenuID]);
+  const { resolvedFilterFields } = useMenuMasterFilters({ resolvedMenuID });
 
   useEffect(() => {
-    getMenuList();
+    getMenus();
   }, [
     filterState.searchText,
     filterState.order,
     filterState.order_by,
-    JSON.stringify(
-      filterState.filters
-    ),
+    JSON.stringify(filterState.filters),
   ]);
+
+  const openCreateFlyout = () => {
+    setSelectedMenu(null);
+    setIsFlyoutOpen(true);
+  };
+
+  const openEditFlyout = (menu) => {
+    setSelectedMenu(menu);
+    setIsFlyoutOpen(true);
+  };
+
+  const closeFlyout = () => {
+    setIsFlyoutOpen(false);
+    setSelectedMenu(null);
+  };
 
   return (
     <>
       <ModulePageLayout
         title={menuMasterSchema.title}
-        description={
-          menuMasterSchema.description
-        }
+        description={menuMasterSchema.description}
         controls={
           <ModuleControls
             canCreate={permissions.canAdd}
             canDelete={permissions.canDelete}
             loading={loading}
-            onRefresh={getMenuList}
-            onCreate={() => {
-              setSelectedMenu(null);
-              setIsFlyoutOpen(true);
-            }}
-            onDeleteSelected={
-              undefined
-            }
-            showDelete={
-              false
-            }
-            deleteDisabled={
-              true
-            }
+            onRefresh={getMenus}
+            onCreate={openCreateFlyout}
+            onDeleteSelected={undefined}
+            showDelete={false}
+            deleteDisabled
             deleting={deleting}
             filter={
               <DynamicFilter
-                fields={
-                  resolvedFilterFields
-                }
-                savedFilters={
-                  menuMasterSchema.savedFilters
-                }
-                onSearch={
-                  setSearchText
-                }
-                onApplyFilters={
-                  applyFilterPayload
-                }
-                onSaveFilter={() => { }}
-                onDeleteFilter={() => { }}
-                onSelectSavedFilter={() => { }}
-                onClearFilters={
-                  clearFilters
-                }
+                fields={resolvedFilterFields}
+                savedFilters={menuMasterSchema.savedFilters}
+                onSearch={setSearchText}
+                onApplyFilters={applyFilterPayload}
+                onSaveFilter={() => {}}
+                onDeleteFilter={() => {}}
+                onSelectSavedFilter={() => {}}
+                onClearFilters={clearFilters}
               />
             }
           >
@@ -289,15 +109,9 @@ function MenuMasterModulePage({ menu_id }) {
             canEdit={permissions.canEdit}
             canDelete={permissions.canDelete}
             canSort={permissions.canEdit}
-            onEdit={(menu) => {
-              setSelectedMenu(menu);
-              setIsFlyoutOpen(true);
-            }}
+            onEdit={openEditFlyout}
             onDelete={handleDeleteMenu}
-            onConfigure={(menu) => {
-              setSelectedMenu(menu);
-              setIsFlyoutOpen(true);
-            }}
+            onConfigure={openEditFlyout}
             onSortChange={handleSortChange}
           />
         }
@@ -305,16 +119,10 @@ function MenuMasterModulePage({ menu_id }) {
 
       <MenuForm
         isOpen={isFlyoutOpen}
-        onClose={() =>
-          setIsFlyoutOpen(false)
-        }
-        selectedMenu={
-          selectedMenu
-        }
+        onClose={closeFlyout}
+        selectedMenu={selectedMenu}
         menu_id={resolvedMenuID}
-        onAfterSave={
-          getMenuList
-        }
+        onAfterSave={getMenus}
       />
     </>
   );

@@ -1,11 +1,14 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { getCurrentSession } from "@auth/utils/authStorage";
 
 function ProtectedRoute() {
-  const token = window.localStorage.getItem('_bb_key') || null;
-  
-  if (!token) {
+  const location = useLocation();
+  const session = getCurrentSession();
+
+  if (!session) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
+
   return <Outlet />;
 }
 

@@ -7,20 +7,23 @@ import ValidationError from "./ValidationError";
 const RichTextEditor = ({ field, value, onChange, className = '', modules, error }) => {
   const quillRef = useRef(null);
   const isReadOnly = Boolean(field.disabled || field.readOnly);
-  const handleEditorChange = (content) => {
-    if (isReadOnly) return;
+  const handleEditorChange = (content, delta, source, editor) => {
+    if (isReadOnly || source !== "user") return;
 
     // 👇 simulate normal input event
+    const nextValue = Boolean(field.plain_text) ? editor.getText().trim() : content;
+    if (String(nextValue || "") === String(value || "")) return;
+
     onChange({
       target: {
         name: field.name,
-        value: content,
+        value: nextValue,
       },
     });
   };
 
   return (
-    <div className="bg-white p-1" >
+    <div className="bg-white" >
       
       {field.label && <DefaultLabel label={field.label} required={field.required} />}
       <ReactQuill
