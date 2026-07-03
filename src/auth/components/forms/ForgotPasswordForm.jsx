@@ -61,11 +61,11 @@ function ForgotPasswordForm() {
         </div>
       </div>
 
-      <button type="submit" className="flex h-8 w-full items-center justify-center gap-1.5 rounded bg-[#113d64] text-xs font-semibold text-white shadow-sm transition hover:bg-[#1d5f98] disabled:cursor-not-allowed disabled:opacity-70" disabled={loading}>
+      <button type="submit" className="flex h-8 w-full items-center justify-center gap-1.5 rounded bg-[#2563eb] text-xs font-semibold text-white shadow-sm transition hover:bg-[#1d5f98] disabled:cursor-not-allowed disabled:opacity-70" disabled={loading}>
         {loading ? (<> <Spinner /> Sending... </>) : (<> Send Verification <FiArrowRight size={13} /> </>)}
       </button>
 
-      <button type="button" className="flex h-8 w-full items-center justify-center gap-1.5 rounded border border-slate-200 bg-white text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70" onClick={() => navigate("/login")} disabled={loading}>
+      <button type="button" className="flex h-8 w-full items-center justify-center gap-1.5 rounded border border-slate-200 bg-white text-sm shadow-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70" onClick={() => navigate("/login")} disabled={loading}>
         <FiArrowLeft size={12} />
         Back to Login
       </button>

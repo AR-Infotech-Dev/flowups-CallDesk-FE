@@ -11,6 +11,7 @@ function SmartSelect({ field, value, onSelect, onObjectSelect, config = {}, erro
     status = "false",
     selectFields = "*",
     searchField = "name",
+    isCompanyWise = false,
     slug = null,
     labelKey = "label",
     valueKey = "id",
@@ -25,7 +26,6 @@ function SmartSelect({ field, value, onSelect, onObjectSelect, config = {}, erro
   const fetchOptions = async () => {
     try {
       setLoading(true);
-
       const res = await makeRequest(apiUrl, {
         method: "POST",
         headers: {
@@ -38,6 +38,7 @@ function SmartSelect({ field, value, onSelect, onObjectSelect, config = {}, erro
           list: selectFields,
           slug: slug,
           status: status,
+          isCompanyWise,
         },
       });
 

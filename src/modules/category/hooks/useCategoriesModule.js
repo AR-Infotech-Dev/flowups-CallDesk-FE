@@ -41,7 +41,6 @@ export const useCategoriesModule = ({ filterState }) => {
     const nextSelectedRowIds = checked
       ? [...new Set([...currentSelectedRowIds, rowId])]
       : currentSelectedRowIds.filter((item) => item !== rowId);
-
     dispatch(setCategoriesSelection(nextSelectedRowIds));
   };
 
@@ -52,7 +51,7 @@ export const useCategoriesModule = ({ filterState }) => {
     }
 
     dispatch(setCategoriesSelection(
-      categoryList.map((row) => row?.category_id ?? row?._id ?? row?.id).filter(Boolean)
+      categoryList.map((row) => row?.category_id).filter(Boolean)
     ));
   };
 

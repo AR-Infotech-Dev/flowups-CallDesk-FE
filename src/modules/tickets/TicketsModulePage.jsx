@@ -1,6 +1,6 @@
 import { Columns3, Table2 } from "lucide-react";
 import { useAuth } from "@auth/components/AuthProvider";
-import { useModuleFilters } from "@store/hooks";
+import { useAppSelector, useModuleFilters } from "@store/hooks";
 import { getNextSortConfig } from "@utils/sorting";
 import ModuleControls from "@shared/ModuleControls";
 import ModulePageLayout from "@shared/ModulePageLayout";
@@ -15,20 +15,20 @@ import TicketTableRow from "./components/TicketTableRow";
 import { ticketsModuleSchema } from "./data/module.schema";
 import { useTicketsModule } from "./hooks/useTicketsModule";
 import { useTicketsTableConfig } from "./hooks/useTicketsTableConfig";
-
+import { selectTicketsDefaultFilters } from "./data/tickets.slice";
 function TicketsModulePage({ menu_id }) {
   const { authSession } = useAuth();
   const roleSlug = authSession?.user?.role_slug;
   const resolvedMenuID = menu_id || ticketsModuleSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
-
+  const ticketDefaultFilters = useAppSelector(selectTicketsDefaultFilters);
   const {
     filterState,
     setSearchText,
     applyFilterPayload,
     setSort,
     clearFilters,
-  } = useModuleFilters("tickets", [], ticketsModuleSchema.defaultFilters);
+  } = useModuleFilters("tickets", [], ticketDefaultFilters);
 
   const {
     ticketList,
@@ -61,12 +61,7 @@ function TicketsModulePage({ menu_id }) {
     bumpKanbanReload,
   } = useTicketsModule({ resolvedMenuID, filterState });
 
-  const {
-    sortConfig,
-    resolvedColumns,
-    defaultVisibleColumnKeys,
-    resolvedFilterFields,
-  } = useTicketsTableConfig({ resolvedMenuID, filterState });
+  const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useTicketsTableConfig({ resolvedMenuID, filterState });
 
   const handleSortChange = (columnKey) => {
     const nextSort = getNextSortConfig(sortConfig, columnKey);
@@ -115,15 +110,15 @@ function TicketsModulePage({ menu_id }) {
               filter={
                 <DynamicFilter
                   fields={resolvedFilterFields}
-                  defaultFilters={ticketsModuleSchema.defaultFilters}
+                  defaultFilters={ticketDefaultFilters}
                   savedFilters={ticketsModuleSchema.savedFilters}
                   onSearch={setSearchText}
                   onApplyFilters={applyFilterPayload}
-                  onSaveFilter={() => {}}
-                  onDeleteFilter={() => {}}
-                  onSelectSavedFilter={() => {}}
+                  onSaveFilter={() => { }}
+                  onDeleteFilter={() => { }}
+                  onSelectSavedFilter={() => { }}
                   onClearFilters={handleClearFilters}
-                  // onlySearchText
+                // onlySearchText
                 />
               }
             >

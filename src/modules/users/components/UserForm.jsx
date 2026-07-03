@@ -44,7 +44,7 @@ function UserForm({ isOpen, onClose, selectedUser, onAfterSave, menu_id }) {
         </ActionButton>
       }
     >
-      <div className="flyout-form-shell px-2 py-1">
+      <div className="flyout-form-shell px-4 py-3">
         <div className="ws-main-container">
           {fetchingUser ? (
             <div className="p-5 text-center">

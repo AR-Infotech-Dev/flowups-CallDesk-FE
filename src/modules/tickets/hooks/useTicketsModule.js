@@ -18,6 +18,8 @@ import {
   selectTicketsSelectedRowIds,
   setTicketsPage,
   setTicketsSelection,
+  setTicketsDefualtFilters,
+  selectTicketsDefaultFilters,
 } from "../data/tickets.slice";
 import {
   getTicketIdentifier,
@@ -38,6 +40,7 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
   const loading = useAppSelector(selectTicketsLoading);
   const deleting = useAppSelector(selectTicketsDeleting);
   const selectedRowIds = useAppSelector(selectTicketsSelectedRowIds);
+  const defaultFiltersArr = ticketsModuleSchema.defaultFilters;
 
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
@@ -46,8 +49,8 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
   const [quickFilter, setQuickFilter] = useState("");
   const [quickFilterList, setQuickFilterList] = useState(TICKET_QUICK_FILTERS);
   const [kanbanReloadVersion, setKanbanReloadVersion] = useState(0);
-
   const isKanbanView = viewMode === "kanban";
+
   const activeQuickFilters = useMemo(() => getTicketQuickFilters(quickFilter), [quickFilter]);
   const combinedFilters = useMemo(
     () => mergeTicketFilters({ filterState, quickFilter }),
@@ -65,11 +68,19 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
   useEffect(() => {
     saveViewMode(resolvedMenuID, viewMode);
     if (viewMode === 'kanban') {
+      dispatch(
+        setTicketsDefualtFilters(
+          defaultFiltersArr.filter(
+            item => !["ticket_status"].includes(item.field)
+          )
+        )
+      );
       const removeValues = ["closed", "pending", "open", "in_progress"];
       setQuickFilterList((prev) =>
         prev.filter((item) => !removeValues.includes(item.value))
       );
     } else {
+      dispatch(setTicketsDefualtFilters(defaultFiltersArr));
       setQuickFilterList(TICKET_QUICK_FILTERS);
     }
   }, [resolvedMenuID, viewMode]);
@@ -217,15 +228,7 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
     }
 
     getTicketList();
-  }, [
-    isKanbanView,
-    page,
-    filterState.searchText,
-    filterState.order,
-    filterState.order_by,
-    JSON.stringify(combinedFilters),
-    viewAll,
-  ]);
+  }, [isKanbanView, page, filterState.searchText, filterState.order, filterState.order_by, JSON.stringify(combinedFilters), viewAll,]);
 
   useEffect(() => {
     if (page !== 1) {

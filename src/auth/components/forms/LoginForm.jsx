@@ -72,12 +72,12 @@ function LoginForm() {
     <form onSubmit={handleLogin} className="space-y-2.5">
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <label htmlFor="login-username" className="text-[9px] font-semibold uppercase text-slate-600"> Username </label>
+          <label htmlFor="login-username" className="auth-login-label text-[9px] font-semibold uppercase text-slate-600"> Username </label>
         </div>
         <div className="relative">
           <input
             id="login-username"
-            className="h-8 w-full rounded border border-slate-200 bg-white px-2.5 pr-8 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="auth-login-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 pr-8 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             type="text"
             name="username"
             placeholder="e.g. alex.nexus"
@@ -91,13 +91,13 @@ function LoginForm() {
 
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <label htmlFor="login-password" className="text-[9px] font-semibold uppercase text-slate-600"> Password </label>
-          <Link to="/forgot-password" className="text-[10px] font-medium text-blue-600 hover:underline"> Forgot password? </Link>
+          <label htmlFor="login-password" className="auth-login-label text-[9px] font-semibold uppercase text-slate-600"> Password </label>
+          <Link to="/forgot-password" className="auth-login-link text-[10px] font-medium text-blue-600 hover:underline"> Forgot password? </Link>
         </div>
         <div className="relative">
           <input
             id="login-password"
-            className="h-8 w-full rounded border border-slate-200 bg-white px-2.5 pr-8 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="auth-login-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 pr-8 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             type={showPassword ? "text" : "password"}
             name="password"
             placeholder="Password"
@@ -110,11 +110,11 @@ function LoginForm() {
           }}>{!showPassword ? <FaEye size={12} /> : <FaEyeSlash size={12} />}  </button>
         </div>
       </div>
-      <button type="submit" className="flex h-8 w-full items-center justify-center gap-1.5 rounded bg-[#113d64] text-xs font-semibold text-white shadow-sm transition hover:bg-[#1d5f98] disabled:cursor-not-allowed disabled:opacity-70">
+      <button type="submit" className="flex h-8 w-full items-center justify-center gap-1.5 rounded bg-[#2563eb] text-xs font-semibold text-white shadow-sm transition hover:bg-[#1d5f98] disabled:cursor-not-allowed disabled:opacity-70">
         {loading ? <Spinner /> : <>Sign In <FiArrowRight size={13} /></>}
       </button>
-      <p className="text-center text-[10px] text-slate-500">
-        Don&apos;t have an account? <span className="font-medium text-blue-600">Contact administrator</span>
+      <p className="auth-login-help text-center text-[10px] text-slate-500">
+        Don&apos;t have an account? <span className="auth-login-link font-medium text-blue-600">Contact administrator</span>
       </p>
     </form>
   );

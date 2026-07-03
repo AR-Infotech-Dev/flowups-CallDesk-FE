@@ -53,3 +53,6 @@ export const getDateInputMinValue = (currentExpiry = "") => {
 
   return currentExpiryValue;
 };
+export const getRedirectFilters = ({label = '' , redirectTo = ''})=>{
+  
+}

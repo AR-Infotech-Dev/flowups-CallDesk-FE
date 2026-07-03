@@ -11,7 +11,7 @@ document.documentElement.style.colorScheme = "light";
 document.body.style.colorScheme = "light";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  // <React.StrictMode>
-  // </React.StrictMode>
+  <React.StrictMode>
     <App />
+  </React.StrictMode>
 );

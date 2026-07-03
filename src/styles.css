@@ -228,7 +228,6 @@ button {
   background: var(--primary-50);
   box-shadow: none;
 }
-
 .sidebar-sections {
   display: flex;
   flex: 1;
@@ -236,6 +235,10 @@ button {
   gap: 8px;
   min-height: 0;
   overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+  scrollbar-color: var(--primary-50) transparent;
 }
 
 .sidebar-group {
@@ -1928,6 +1931,7 @@ thead th:hover {
 .table-card .premium-table-header .table-resize-handle::after {
   background: #bfdbfe;
 }
+
 /* PREMIUM TABLE HEADER END */
 
 .table-column-picker {
@@ -4591,7 +4595,7 @@ table input[type="checkbox"]:focus-visible {
   /* padding-bottom: 6px; */
   padding: 10px;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary-200) transparent;
+  scrollbar-color: var(--primary-50) transparent;
 }
 
 .kanban-shell::-webkit-scrollbar {
@@ -4643,7 +4647,7 @@ table input[type="checkbox"]:focus-visible {
   overflow-y: hidden;
   padding-bottom: 6px;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary-200) transparent;
+  scrollbar-color: var(--primary-50) transparent;
 }
 
 .kanban-board::-webkit-scrollbar {
@@ -4743,7 +4747,7 @@ table input[type="checkbox"]:focus-visible {
   overflow-y: auto;
   background: #f8fbff;
   scrollbar-width: none;
-  scrollbar-color: var(--primary-200) transparent;
+  scrollbar-color: var(--primary-50) transparent;
 }
 
 .kanban-column-body.is-over {
@@ -6234,8 +6238,8 @@ table input[type="checkbox"]:focus-visible {
     position: static;
   }
 
-  .dynamic-filter-field-picker > .absolute,
-  .dynamic-filter-chip > .absolute {
+  .dynamic-filter-field-picker>.absolute,
+  .dynamic-filter-chip>.absolute {
     right: auto;
     left: 0;
     width: min(240px, calc(100vw - 32px));
@@ -6326,7 +6330,7 @@ table input[type="checkbox"]:focus-visible {
     display: none;
   }
 
-  .ticket-view-controls > * {
+  .ticket-view-controls>* {
     flex: 0 0 auto;
   }
 
