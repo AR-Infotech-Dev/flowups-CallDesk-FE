@@ -4,7 +4,7 @@ import { defaultSortConfig } from "@utils/sorting";
 import { getDefinitions, buildFilterFieldsFromStructure, buildTableColumnsFromStructure, } from "@utils/moduleStructure";
 import { customerFallbackColumns, customerModuleSchema } from "../data/module.schema";
 
-export const useCustomerTableConfig = ({ resolvedMenuID, filterState }) => {
+export const useCustomerTableConfig = ({ resolvedMenuID, filterState, role_slug }) => {
     const [fields, setFields] = useState([]);
 
     const sortConfig = {
@@ -16,6 +16,7 @@ export const useCustomerTableConfig = ({ resolvedMenuID, filterState }) => {
         skipFields: customerModuleSchema.skipFields,
         columnMappings: customerModuleSchema.columnMappings,
         tableCellConfig: customerModuleSchema.tableCellConfig,
+        filterFieldOptions: customerModuleSchema.filterFieldOptions,
     };
 
     const resolvedColumns = useMemo(
@@ -28,19 +29,22 @@ export const useCustomerTableConfig = ({ resolvedMenuID, filterState }) => {
         []
     );
 
-    const resolvedFilterFields = useMemo(
-        () =>
-            buildFilterFieldsFromStructure(
-                fields,
-                customerModuleSchema.defaultColumns.map((key) => ({
-                    label: customerFallbackColumns.find((column) => column.key === key)?.label || key,
-                    value: key,
-                    type: "text",
-                })),
-                columnOptions
-            ),
-        [fields]
-    );
+    const resolvedFilterFields = useMemo(() => {
+        const filterFields = buildFilterFieldsFromStructure(
+            fields,
+            customerModuleSchema.defaultColumns.map((key) => ({
+                label: customerFallbackColumns.find((column) => column.key === key)?.label || key,
+                value: key,
+                type: "text",
+            })),
+            columnOptions
+        );
+        return role_slug === "super_admin"
+            ? filterFields
+            : filterFields.filter(
+                (field) => field.value !== "company_id"
+            );
+    }, [fields, role_slug]);
 
     const getColumnList = async () => {
         if (!resolvedMenuID) {

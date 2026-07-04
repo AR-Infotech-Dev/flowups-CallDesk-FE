@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { buildFallbackColumnsFromKeys } from "../../../utils/moduleStructure";
-
 const FIXED_TABLE_COLUMNS = [
   { key: "select", className: "check-col", checkbox: true, width: 42, minWidth: 42, resizable: false },
 ];
@@ -15,8 +14,8 @@ const customerContactSchema = z.object({
   customer_id: z.union([z.literal(null), z.coerce.number(), z.string()]).optional(),
   name: z.string().trim().min(1, "Contact name is required"),
   designation: z.string().optional(),
-  mobile_no: z .string() .trim() .min(1, "Mobile number is required") .regex(/^[0-9]\d{9}$/, "Enter valid 10-digit mobile number"),
-  email: z.preprocess( (value) => value ?? "", z.string().trim().min(1, "Email is required").email("Invalid email address") ),
+  mobile_no: z.string().trim().min(1, "Mobile number is required").regex(/^[0-9]\d{9}$/, "Enter valid 10-digit mobile number"),
+  email: z.preprocess((value) => value ?? "", z.string().trim().min(1, "Email is required").email("Invalid email address")),
   department: z.string().optional(),
   is_primary: z.enum(["y", "n"]).optional(),
 });
@@ -49,8 +48,24 @@ export const customerModuleSchema = {
     { column_name: "is_amc", type: "badge" },
     { column_name: "customer_products", type: "customerProducts", width: 320, minWidth: 260 },
   ],
-  defaultColumns: ["name", "email", "mobile_no" , "is_amc"],
-  skipFields: ["company_name","company_id"],
+  defaultColumns: ["name", "email", "mobile_no", "is_amc"],
+  filterFieldOptions: {
+    company_id: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchList",
+        body: {
+          tableName: "company_master",
+          list: "company_id,company_name",
+          wherec: "company_name",
+        },
+        rowsPath: ["data"],
+        valueKey: "company_id",
+        labelKey: "company_name",
+      },
+    },
+  },
+  skipFields: ["company_name"],
   columnMappings: [
     { mobile_no: "Mobile No" },
     { wa_no: "WhatsApp No" },

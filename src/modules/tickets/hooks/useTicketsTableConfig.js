@@ -8,7 +8,7 @@ import {
 import { ticketsFallbackColumns, ticketsModuleSchema } from "../data/module.schema";
 import { TICKET_VISIBILITY_COLUMN } from "../utils/tickets.utils";
 
-export const useTicketsTableConfig = ({ resolvedMenuID, filterState }) => {
+export const useTicketsTableConfig = ({ resolvedMenuID, filterState, role_slug }) => {
   const [fields, setFields] = useState([]);
 
   const sortConfig = {
@@ -35,19 +35,22 @@ export const useTicketsTableConfig = ({ resolvedMenuID, filterState }) => {
     []
   );
 
-  const resolvedFilterFields = useMemo(
-    () =>
-      buildFilterFieldsFromStructure(
-        fields,
-        ticketsModuleSchema.defaultColumns.map((key) => ({
-          label: ticketsFallbackColumns.find((column) => column.key === key)?.label || key,
-          value: key,
-          type: "text",
-        })),
-        columnOptions
-      ),
-    [fields]
-  );
+  const resolvedFilterFields = useMemo(() => {
+    const filterFields = buildFilterFieldsFromStructure(
+      fields,
+      ticketsModuleSchema.defaultColumns.map((key) => ({
+        label: ticketsFallbackColumns.find((column) => column.key === key)?.label || key,
+        value: key,
+        type: "text",
+      })),
+      columnOptions
+    );
+    return role_slug === "super_admin"
+      ? filterFields
+      : filterFields.filter(
+        (field) => field.value !== "company_id"
+      );
+  }, [fields, role_slug]);
 
   const getColumnList = async () => {
     if (!resolvedMenuID) {

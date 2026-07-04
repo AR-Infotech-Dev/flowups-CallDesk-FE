@@ -77,7 +77,8 @@ export const ticketsModuleSchema = {
   skipFields: [],
   columnMappings: [
     { "client_id": "Customer Name" },
-    { "product_add_ons": "Add-on" }
+    { "product_add_ons": "Add-on" },
+    { "company_id": "Company Name" }
   ],
   filterFieldOptions: {
     query_type: {
@@ -153,6 +154,20 @@ export const ticketsModuleSchema = {
         rowsPath: ["data"],
         valueKey: "adminID",
         labelKey: "name",
+      },
+    },
+    company_id: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchList",
+        body: {
+          tableName: "company_master",
+          list: "company_id,company_name",
+          wherec: "company_name",
+        },
+        rowsPath: ["data"],
+        valueKey: "company_id",
+        labelKey: "company_name",
       },
     },
     modified_by: {

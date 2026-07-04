@@ -57,7 +57,7 @@ const menuRouteComponents = {
   "/reports/work-report": WorkReportModulePage,
   "/reports/product-expiry": ProductExpiryReport,
   "/reports/product-expiry-report": ProductExpiryReport,
-  "/reports/user-attendance": UserAttendanceReport,
+  "/reports/attendance": UserAttendanceReport,
 };
 
 function DefaultMenuRedirect() {
