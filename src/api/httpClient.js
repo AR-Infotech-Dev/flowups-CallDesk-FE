@@ -18,8 +18,9 @@ const shouldBypassCompanyIdFilter = (url = "", method = "GET") => {
 
   if (normalizedMethod === "GET") return true;
 
-  if (normalizedMethod === "POST" && ["/users", "/customers", "/products", "/tickets", "/categories", "/companies", "/menus", "/comments",].includes(normalizedPath)) { return true; }
-
+  if (normalizedMethod === "POST" && ["/users", "/products", "/categories", "/companies", "/menus", "/comments",].includes(normalizedPath)) { return true; }
+  // "/customers",
+  // "/tickets",
   return ["/list", "searchlist", "searchsluglist", "getdefinations", "get-menus", "get-permissions", "permissions/", "/dashboard", "get-markers", "/notifications",].some((segment) => normalizedUrl.includes(segment));
 };
 

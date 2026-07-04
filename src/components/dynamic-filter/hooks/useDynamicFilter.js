@@ -76,7 +76,6 @@ const useDynamicFilter = ({
             ),
         [fields, fieldOptionMap]
     );
-
     const defaultFilterKey = useMemo(
         () =>
             JSON.stringify(
@@ -254,17 +253,24 @@ const useDynamicFilter = ({
     }, [fields, fieldOptionMap, resolvedFieldMap]);
 
     useEffect(() => {
-        if (!defaultFilters.length || !fields.length) return;
+        if (!fields.length) return;
+
+        const allowedDefaultFields = new Set(
+            defaultFilters.map((filter) => filter?.field).filter(Boolean)
+        );
 
         setActiveFilters((current) => {
-            const existingFieldSet = new Set(current.map((item) => item.field));
+            const retainedFilters = current.filter(
+                (item) => !item.isDefault || allowedDefaultFields.has(item.field)
+            );
+            const existingFieldSet = new Set(retainedFilters.map((item) => item.field));
             const nextDefaultFilters = defaultFilters
                 .filter((filter) => filter?.field && !existingFieldSet.has(filter.field))
                 .map((filter) => buildFilterItem({ ...filter, isDefault: true }));
 
-            return nextDefaultFilters.length ? [...nextDefaultFilters, ...current] : current;
+            return [...nextDefaultFilters, ...retainedFilters];
         });
-    }, [defaultFilters, fields, fieldOptionMap]);
+    }, [defaultFilterKey, fields.length]);
 
     useEffect(() => {
         if (!defaultFilters.length || autoAppliedDefaultKeyRef.current === defaultFilterKey) return;
@@ -274,6 +280,8 @@ const useDynamicFilter = ({
         );
 
         if (!hasApplicableDefaultFilter) return;
+
+
 
         autoAppliedDefaultKeyRef.current = defaultFilterKey;
         onApplyFilters?.({

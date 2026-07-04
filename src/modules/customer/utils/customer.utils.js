@@ -45,6 +45,67 @@ export const normalizeAddOns = (value = [], { keepEmpty = false } = {}) => {
   return finalize(String(value).split(",").map((item) => item.trim()));
 };
 
+const formatDateInputParts = (year, month, day) => {
+  const numericYear = Number(year);
+  const numericMonth = Number(month);
+  const numericDay = Number(day);
+  const date = new Date(Date.UTC(numericYear, numericMonth - 1, numericDay));
+
+  if (
+    !Number.isInteger(numericYear) ||
+    date.getUTCFullYear() !== numericYear ||
+    date.getUTCMonth() + 1 !== numericMonth ||
+    date.getUTCDate() !== numericDay
+  ) {
+    return "";
+  }
+
+  return `${String(numericYear).padStart(4, "0")}-${String(numericMonth).padStart(2, "0")}-${String(numericDay).padStart(2, "0")}`;
+};
+
+export const toSafeDateInputValue = (value) => {
+  if (value === undefined || value === null || value === "") return "";
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return formatDateInputParts(value.getFullYear(), value.getMonth() + 1, value.getDate());
+  }
+
+  const text = String(value).trim();
+  if (!text) return "";
+
+  const isoMatch = text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (isoMatch) {
+    return formatDateInputParts(isoMatch[1], isoMatch[2], isoMatch[3]);
+  }
+
+  const dayFirstMatch = text.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/);
+  if (dayFirstMatch) {
+    const rawYear = Number(dayFirstMatch[3]);
+    const year = rawYear < 100 ? (rawYear >= 70 ? 1900 + rawYear : 2000 + rawYear) : rawYear;
+    const dayFirstValue = formatDateInputParts(year, dayFirstMatch[2], dayFirstMatch[1]);
+    if (dayFirstValue) return dayFirstValue;
+  }
+
+  const excelSerial = Number(text);
+  if (Number.isInteger(excelSerial) && excelSerial > 0 && excelSerial < 100000) {
+    const serialDate = new Date(Date.UTC(1899, 11, 30) + excelSerial * 86400000);
+    return formatDateInputParts(
+      serialDate.getUTCFullYear(),
+      serialDate.getUTCMonth() + 1,
+      serialDate.getUTCDate()
+    );
+  }
+
+  const parsedDate = new Date(text);
+  if (Number.isNaN(parsedDate.getTime())) return "";
+
+  return formatDateInputParts(
+    parsedDate.getFullYear(),
+    parsedDate.getMonth() + 1,
+    parsedDate.getDate()
+  );
+};
+
 export const normalizeCustomerProducts = (customer = {}) => {
   const rows = customer?.customer_products || customer?.products || [];
   if (!Array.isArray(rows)) return [];
@@ -54,7 +115,7 @@ export const normalizeCustomerProducts = (customer = {}) => {
       product_id: row?.product_id || "",
       product_name: row?.product_name || "",
       serial_number: row?.serial_number || "",
-      expiry_date: row?.expiry_date || "",
+      expiry_date: toSafeDateInputValue(row?.expiry_date),
       add_ons: normalizeAddOns(row?.add_ons || row?.addons || row?.addOns),
     }))
     .filter((row) => row.product_id || row.product_name || row.serial_number || row.expiry_date || row.add_ons.length);

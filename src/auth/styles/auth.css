@@ -46,3 +46,90 @@
     gap: 10px;
     margin-top: 20px
 }
+
+/* LOGIN PREMIUM PALETTE START - remove this block to restore previous colors. */
+.auth-visual-shell {
+  --auth-hero: #10233f;
+  --auth-hero-deep: #09182c;
+  --auth-hero-mid: #12375b;
+  --auth-accent: #22b8cf;
+  --auth-panel: #f7f9fc;
+  --auth-surface: #ffffff;
+  --auth-heading: #172033;
+  --auth-body: #64748b;
+  --auth-muted: #94a3b8;
+  --auth-border: #d7e0ea;
+  --auth-primary: #2563eb;
+  --auth-primary-hover: #1d4ed8;
+}
+
+.auth-visual-panel {
+  background: var(--auth-hero) !important;
+}
+
+.auth-visual-overlay {
+  background: linear-gradient(
+    105deg,
+    rgba(9, 24, 44, 0.97) 0%,
+    rgba(16, 35, 63, 0.88) 48%,
+    rgba(18, 55, 91, 0.62) 100%
+  ) !important;
+}
+
+.auth-visual-title {
+  color: #ffffff;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.2);
+}
+
+.auth-visual-copy {
+  color: #c7d5e5 !important;
+}
+
+.auth-login-panel {
+  background: var(--auth-panel) !important;
+}
+
+.auth-login-title {
+  color: var(--auth-heading) !important;
+}
+
+.auth-login-subtitle,
+.auth-login-help {
+  color: var(--auth-body) !important;
+}
+
+.auth-login-copyright {
+  color: var(--auth-muted) !important;
+}
+
+.auth-login-label {
+  color: #475569 !important;
+}
+
+.auth-login-input {
+  color: var(--auth-heading) !important;
+  border-color: var(--auth-border) !important;
+  background: var(--auth-surface) !important;
+  box-shadow: 0 1px 2px rgba(23, 32, 51, 0.03);
+}
+
+.auth-login-input:focus {
+  border-color: var(--auth-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+.auth-login-link {
+  color: var(--auth-primary) !important;
+}
+
+.auth-login-submit {
+  border: 1px solid var(--auth-primary) !important;
+  background: var(--auth-primary) !important;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.18) !important;
+}
+
+.auth-login-submit:hover:not(:disabled) {
+  border-color: var(--auth-primary-hover) !important;
+  background: var(--auth-primary-hover) !important;
+}
+/* LOGIN PREMIUM PALETTE END */

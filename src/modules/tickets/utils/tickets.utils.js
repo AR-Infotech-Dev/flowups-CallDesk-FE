@@ -13,7 +13,7 @@ export const TICKET_VISIBILITY_COLUMN = {
   minWidth: 110,
   cellType: "badge",
   colorField: "ticket_visibility_color",
-  isAlwaysVisible: true,
+  isAlwaysVisible: false,
 };
 
 export const toDateInputValue = (date = new Date()) => {

@@ -79,11 +79,11 @@ function VerificationForm() {
       <PasswordInput id="verify-password" label="New Password" name="password" value={form.password} onChange={handleChange} placeholder="New password" disabled={loading} visible={visiblePasswords.password} onToggle={() => togglePasswordVisibility("password")} />
       <PasswordInput id="verify-confirm-password" label="Confirm Password" name="confirmPassword" value={form.confirmPassword} onChange={handleChange} placeholder="Confirm password" disabled={loading} visible={visiblePasswords.confirmPassword} onToggle={() => togglePasswordVisibility("confirmPassword")} />
 
-      <button type="submit" className="flex h-8 w-full items-center justify-center gap-1.5 rounded bg-[#113d64] text-xs font-semibold text-white shadow-sm transition hover:bg-[#1d5f98] disabled:cursor-not-allowed disabled:opacity-70" disabled={loading}>
+      <button type="submit" className="flex h-8 w-full items-center justify-center gap-1.5 rounded bg-[#2563eb] text-xs font-semibold text-white shadow-sm transition hover:bg-[#1d5f98] disabled:cursor-not-allowed disabled:opacity-70" disabled={loading}>
         {loading ? (<> <Spinner /> Resetting... </>) : (<> Verify and Reset <FiArrowRight size={13} /> </>)}
       </button>
 
-      <button type="button" className="flex h-8 w-full items-center justify-center gap-1.5 rounded border border-slate-200 bg-white text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70" onClick={() => navigate("/forgot-password")} disabled={loading}>
+      <button type="button"shadow-xs className="flex h-8 w-full items-center justify-center gap-1.5 rounded border border-slate-200 bg-white text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70" onClick={() => navigate("/forgot-password")} disabled={loading}>
         <FiArrowLeft size={12} />
         Back
       </button>

@@ -52,7 +52,6 @@ const DynamicFilter = ({
         onSelectSavedFilter,
         onClearFilters,
     });
-
     return (
         <div ref={filterRootRef} className="dynamic-filter-root flex w-full flex-wrap items-center gap-1.5 text-xs">
             <SearchInput

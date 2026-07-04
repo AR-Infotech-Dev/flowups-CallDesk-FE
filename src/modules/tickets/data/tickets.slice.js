@@ -5,6 +5,7 @@ import { normalizeTicketVisibility } from "../utils/tickets.utils";
 const initialState = {
   rows: [],
   pagination: {},
+  defaultFilters:[],
   page: 1,
   loading: false,
   deleting: false,
@@ -48,6 +49,9 @@ const ticketsSlice = createSlice({
   name: "tickets",
   initialState,
   reducers: {
+    setTicketsDefualtFilters(state, action) {
+      state.defaultFilters = action.payload || [];
+    },
     setTicketsPage(state, action) {
       state.page = action.payload || 1;
     },
@@ -99,10 +103,12 @@ export const {
   resetTicketsTableState,
   setTicketsPage,
   setTicketsSelection,
+  setTicketsDefualtFilters,
 } = ticketsSlice.actions;
 
 export const selectTicketsRows = (state) => state.tickets.rows;
 export const selectTicketsPagination = (state) => state.tickets.pagination;
+export const selectTicketsDefaultFilters = (state) => state.tickets.defaultFilters;
 export const selectTicketsPage = (state) => state.tickets.page;
 export const selectTicketsLoading = (state) => state.tickets.loading;
 export const selectTicketsDeleting = (state) => state.tickets.deleting;

@@ -77,7 +77,8 @@ export const ticketsModuleSchema = {
   skipFields: [],
   columnMappings: [
     { "client_id": "Customer Name" },
-    { "product_add_ons": "Add-on" }
+    { "product_add_ons": "Add-on" },
+    { "company_id": "Company Name" }
   ],
   filterFieldOptions: {
     query_type: {
@@ -118,7 +119,7 @@ export const ticketsModuleSchema = {
           tableName: "customer",
           list: "customer_id,name",
           wherec: "name",
-          status: "true",
+          // status: "true",
         },
         rowsPath: ["data"],
         valueKey: "customer_id",
@@ -133,7 +134,7 @@ export const ticketsModuleSchema = {
           tableName: "admin",
           list: "adminID,name",
           wherec: "name",
-          status: "true",
+          // status: "true",
         },
         rowsPath: ["data"],
         valueKey: "adminID",
@@ -153,6 +154,20 @@ export const ticketsModuleSchema = {
         rowsPath: ["data"],
         valueKey: "adminID",
         labelKey: "name",
+      },
+    },
+    company_id: {
+      type: "select",
+      optionsSource: {
+        apiUrl: "/system/searchList",
+        body: {
+          tableName: "company_master",
+          list: "company_id,company_name",
+          wherec: "company_name",
+        },
+        rowsPath: ["data"],
+        valueKey: "company_id",
+        labelKey: "company_name",
       },
     },
     modified_by: {
@@ -293,6 +308,7 @@ export const ticketsModuleSchema = {
               searchField: "categoryName",
               slug: 'query_types',
               status: 'active',
+              isCompanyWise: true,
               labelKey: "categoryName",
               valueKey: "category_id",
               placeholder: "Select Ticket Type",
@@ -375,6 +391,7 @@ export const ticketsModuleSchema = {
               searchField: "categoryName",
               labelKey: "categoryName",
               slug: 'ticket_priority',
+              isCompanyWise: true,
               status: 'active',
               valueKey: "category_id",
               placeholder: "Select Ticket Priority",

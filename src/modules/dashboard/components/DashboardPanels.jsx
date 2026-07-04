@@ -36,7 +36,7 @@ export function DashboardPanels({
         <TrendChart data={dashboard.trend} />
       </article>
 
-      <article className="dashboard-panel" onClick={onNavigateTickets}>
+      <article className="dashboard-panel">
         <div className="dashboard-panel-head">
           <div>
             <span className="dashboard-section-label">Focus</span>

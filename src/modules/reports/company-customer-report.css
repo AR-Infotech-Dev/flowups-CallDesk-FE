@@ -1,0 +1,323 @@
+.company-ticket-report-page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.company-ticket-report-header,
+.company-ticket-report-filters,
+.company-ticket-report-panel {
+  border: 1px solid var(--border-soft);
+  background: #ffffff;
+}
+
+.company-ticket-report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+}
+
+.company-ticket-report-header span,
+.company-ticket-report-panel-head span {
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.company-ticket-report-header h2,
+.company-ticket-report-panel-head h3 {
+  margin: 2px 0 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.company-ticket-report-header p,
+.company-ticket-report-panel-head p {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.company-ticket-report-company {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--primary-100);
+  color: var(--primary-800);
+  background: var(--primary-50);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.company-ticket-report-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) repeat(2, minmax(135px, 0.7fr)) minmax(190px, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding: 8px 10px;
+}
+
+.company-ticket-report-filters label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.company-ticket-report-filters label > span {
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.company-ticket-report-filters input,
+.company-ticket-report-filters select {
+  width: 100%;
+  height: 30px;
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid var(--border-soft);
+  color: var(--text-primary);
+  background: #ffffff;
+  font-size: 11px;
+  outline: none;
+}
+
+.company-ticket-report-filters input:focus,
+.company-ticket-report-filters select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.company-ticket-report-filter-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.company-ticket-report-filter-actions button {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  background: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.company-ticket-report-filter-actions button.primary {
+  border-color: var(--primary);
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.company-ticket-report-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-50) transparent;
+}
+
+.company-ticket-report-summary {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(105px, 1fr));
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.company-ticket-summary-card {
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--border-soft);
+  border-top: 3px solid var(--card-tone, var(--primary));
+  background: #ffffff;
+}
+
+.company-ticket-summary-card > span {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  color: var(--card-tone, var(--primary));
+  background: var(--card-soft, var(--primary-50));
+}
+
+.company-ticket-summary-card div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.company-ticket-summary-card small {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-ticket-summary-card strong {
+  color: var(--text-primary);
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.company-ticket-summary-card.green { --card-tone: #16a34a; --card-soft: #dcfce7; }
+.company-ticket-summary-card.amber { --card-tone: #d97706; --card-soft: #fef3c7; }
+.company-ticket-summary-card.red { --card-tone: #dc2626; --card-soft: #fee2e2; }
+.company-ticket-summary-card.violet { --card-tone: #7c3aed; --card-soft: #ede9fe; }
+.company-ticket-summary-card.cyan { --card-tone: #0891b2; --card-soft: #cffafe; }
+.company-ticket-summary-card.slate { --card-tone: #64748b; --card-soft: #f1f5f9; }
+
+.company-ticket-report-panel {
+  min-width: 0;
+}
+
+.company-ticket-report-panel-head {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.company-ticket-report-panel-head h3 {
+  font-size: 13px;
+}
+
+.company-ticket-report-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-50) transparent;
+}
+
+.company-ticket-report-table {
+  display: table;
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+}
+
+.company-ticket-report-table thead {
+  display: table-header-group;
+  position: static;
+}
+
+.company-ticket-report-table tbody {
+  display: table-row-group;
+}
+
+.company-ticket-report-table tr {
+  display: table-row;
+}
+
+.company-ticket-report-table th,
+.company-ticket-report-table td {
+  height: 34px;
+  padding: 5px 9px;
+  border-bottom: 1px solid #edf2f7;
+  text-align: left;
+}
+
+.company-ticket-report-table th {
+  position: static;
+  color: var(--primary-800);
+  background: var(--primary-50);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.company-ticket-report-table td {
+  color: var(--text-primary);
+  background: #ffffff;
+  font-size: 11px;
+}
+
+.company-ticket-report-table td strong,
+.company-ticket-report-table td span,
+.company-ticket-report-table td small {
+  display: block;
+}
+
+.company-ticket-report-table td small {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 9px;
+}
+
+.company-ticket-report-table td b {
+  color: var(--primary);
+}
+
+.company-ticket-report-table td.is-overdue {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.company-ticket-report-empty {
+  height: 100px !important;
+  color: var(--text-secondary) !important;
+  text-align: center !important;
+}
+
+.company-ticket-report-panel > .module-pagination {
+  padding: 7px 10px;
+  border-top: 1px solid var(--border-soft);
+}
+
+@media (max-width: 1100px) {
+  .company-ticket-report-summary {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+  }
+
+  .company-ticket-report-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .company-ticket-report-page {
+    padding: 7px;
+  }
+
+  .company-ticket-report-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .company-ticket-report-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .company-ticket-report-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .company-ticket-report-filter-actions button {
+    flex: 1;
+  }
+}

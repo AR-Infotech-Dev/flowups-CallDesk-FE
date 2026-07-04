@@ -45,7 +45,7 @@ function CustomerModulePage({ menu_id }) {
   const customerList = useAppSelector(selectCustomersRows);
   const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters } = useModuleFilters("customer", customerList);
   const { pagination, page, loading, deleting, selectedRowIds, getCustomersList, handlePageChange, handleToggleRow, handleToggleAllRows, handleDeleteSelected, handleDeleteRow, handleExportsExcel } = useCustomersModule({ filterState, exportColumnKeys: visibleColumnKeys });
-  const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useCustomerTableConfig({ resolvedMenuID, filterState });
+  const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useCustomerTableConfig({ resolvedMenuID, filterState, role_slug });
 
   const handleReport = (customer) => {
     const customerId = customer?.customer_id ?? customer?.id;

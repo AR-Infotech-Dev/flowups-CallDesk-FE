@@ -21,6 +21,8 @@ const CompanyMasterModulePage = lazy(() => import("@modules/company-master/Compa
 const AccessControlModulePage = lazy(() => import("@modules/access-control/AccessControlModulePage"));
 const PerformanceReportPage = lazy(() => import("@modules/reports/PerformanceReportPage"));
 const UserPerformancePage = lazy(() => import("@modules/reports/UserPerformancePage"));
+const CompanyCustomerTicketReport = lazy(() => import("@modules/reports/CompanyCustomerTicketReport"));
+const UserAttendanceReport = lazy(() => import("@modules/reports/UserAttendanceReport"));
 const WorkReportModulePage = lazy(() => import("@modules/work-report/WorkReportModulePage"));
 const CustomerReport = lazy(() => import("@modules/customer/components/CustomerReport"));
 const ProductExpiryReport = lazy(() => import("@modules/products/ProductExpiryReport"));
@@ -50,11 +52,12 @@ const menuRouteComponents = {
   "/companyMaster": CompanyMasterModulePage,
   "/company-master": CompanyMasterModulePage,
   "/access-control": AccessControlModulePage,
-  "/reports/performance": PerformanceReportPage,
   "/work-report": WorkReportModulePage,
+  "/reports/performance": PerformanceReportPage,
   "/reports/work-report": WorkReportModulePage,
   "/reports/product-expiry": ProductExpiryReport,
   "/reports/product-expiry-report": ProductExpiryReport,
+  "/reports/attendance": UserAttendanceReport,
 };
 
 function DefaultMenuRedirect() {
@@ -217,6 +220,8 @@ function MainRoutes() {
               }
             />
             <Route path="/customer/report/:customerId" element={<CustomerReport />} />
+            <Route path="/reports/customer-wise" element={<CompanyCustomerTicketReport />} />
+            <Route path="/reports/attendance" element={<UserAttendanceReport />} />
             <Route path="/dashboard/product-expiry" element={<ProductExpiryReport />} />
             {dynamicRoutes.map((route) => (
               <Route key={`${route.path}-${route.menuId}`} path={route.path} element={route.element} />

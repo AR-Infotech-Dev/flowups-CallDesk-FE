@@ -1,4 +1,4 @@
-export const editableProfileFields = new Set(["email", "whatsappNo", "address", "userName"]);
+export const editableProfileFields = new Set(["email", "dateOfBirth", "whatsappNo", "address", "userName"]);
 
 export const getInitials = (name = "") =>
   String(name || "User")
@@ -40,6 +40,7 @@ export const normalizeProfile = (user = {}) => ({
 
 export const buildChangedProfilePayload = (profile = {}) => ({
   email: profile.email,
+  dateOfBirth: profile.dateOfBirth,
   whatsappNo: profile.whatsappNo,
   address: profile.address,
   userName: profile.userName,
@@ -49,6 +50,7 @@ export const buildUpdatedSessionUser = ({ currentUser = {}, responseData = {}, c
   ...currentUser,
   ...responseData,
   email: changedPayload.email,
+  dateOfBirth: changedPayload.dateOfBirth,
   whatsappNo: changedPayload.whatsappNo,
   address: changedPayload.address,
   userName: changedPayload.userName,

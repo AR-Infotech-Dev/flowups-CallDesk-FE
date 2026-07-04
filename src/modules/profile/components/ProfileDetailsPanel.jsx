@@ -24,7 +24,6 @@ export function ProfileDetailsPanel({ profile, onChange }) {
           ]}
         />
 
-        <ProfileField label="Google Location" name="google_location" value={profile.google_location} icon={MapPin} onChange={onChange} />
         <ReadonlySegment
           label="Status"
           value={String(profile.status || "active").toLowerCase()}
