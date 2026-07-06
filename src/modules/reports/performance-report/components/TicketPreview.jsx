@@ -1,23 +1,11 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, Contact, Package, Phone, UserRound, X } from "lucide-react";
-
-const stripHtml = (value = "") =>
-  String(value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-
-const formatDate = (value) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-};
+import { formatReportDate, formatReportMinutesSeconds, stripReportHtml } from "../../report.utils";
 
 const formatResolution = (value, seconds) => {
   if (value === undefined || value === null || value === "") return "-";
-  const totalSeconds = Number.isFinite(Number(seconds))
-    ? Math.max(0, Math.round(Number(seconds)))
-    : Math.max(0, Math.round(Number(value || 0) * 60));
-  return `${Math.floor(totalSeconds / 60)} min ${totalSeconds % 60} sec`;
+  return formatReportMinutesSeconds(value, seconds);
 };
 
 function DetailItem({ icon: Icon, label, value }) {
@@ -94,10 +82,10 @@ function TicketPreview({ isOpen, handleClose, selectedTicket = {} }) {
             <DetailItem icon={Phone} label="Contact Number" value={selectedTicket.contact_no} />
           </div>
           <div>
-            <DetailItem icon={CalendarDays} label="Assigned" value={formatDate(selectedTicket.assigned_date || selectedTicket.created_date)} />
+            <DetailItem icon={CalendarDays} label="Assigned" value={formatReportDate(selectedTicket.assigned_date || selectedTicket.created_date)} />
           </div>
           <div>
-            <DetailItem icon={CalendarDays} label="Due" value={formatDate(selectedTicket.due_date)} />
+            <DetailItem icon={CalendarDays} label="Due" value={formatReportDate(selectedTicket.due_date)} />
           </div>
           <div>
             <DetailItem
@@ -114,7 +102,7 @@ function TicketPreview({ isOpen, handleClose, selectedTicket = {} }) {
         <div className="ticket-preview-description">
           <div>Description</div>
           <p>
-            {stripHtml(selectedTicket.description) || "-"}
+            {stripReportHtml(selectedTicket.description) || "-"}
           </p>
         </div>
       </div>

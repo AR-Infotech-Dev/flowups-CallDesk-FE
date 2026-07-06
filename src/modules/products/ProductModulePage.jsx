@@ -1,4 +1,4 @@
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAppSelector, useModuleFilters } from "../../store/hooks";
 import { getNextSortConfig } from "../../utils/sorting";
@@ -23,7 +23,7 @@ function ProductModulePage({ menu_id }) {
   const permissions = useMenuPermissions(resolvedMenuID);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
+
 
   const productList = useAppSelector(selectProductsRows);
   const { filterState, setSearchText, applyFilterPayload, setSort, clearFilters } = useModuleFilters(
@@ -82,6 +82,7 @@ function ProductModulePage({ menu_id }) {
             createLabel="Add Product"
             filter={
               <DynamicFilter
+                filterState={filterState}
                 fields={resolvedFilterFields}
                 savedFilters={productsModuleSchema.savedFilters}
                 onSearch={setSearchText}

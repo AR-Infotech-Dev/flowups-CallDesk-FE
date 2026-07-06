@@ -12,6 +12,7 @@ import {
 } from "../utils/filterUtils";
 
 const useDynamicFilter = ({
+    filterState={},
     fields = [],
     defaultFilters = [],
     savedFilters = [],
@@ -20,8 +21,8 @@ const useDynamicFilter = ({
     onSaveFilter,
     onSelectSavedFilter,
     onClearFilters,
-}) => {
-    const [searchText, setSearchText] = useState("");
+}) => {    
+    const [searchText, setSearchText] = useState(filterState.searchText);
     const [fieldSearch, setFieldSearch] = useState("");
     const [savedFilterSearch, setSavedFilterSearch] = useState("");
     const [selectedFilterId, setSelectedFilterId] = useState("");

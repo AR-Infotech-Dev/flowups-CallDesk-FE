@@ -1,89 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { Download, FileSpreadsheet, Upload, X } from "lucide-react";
 import { toast } from "react-toastify";
-import { makeRequest } from "../../../api/httpClient";
 import ActionButton from "../../../components/ui/ActionButton";
 import FlyoutPanel from "../../../components/ui/FlyoutPanel";
 import Spinner from "../../../components/ui/Spinner";
+import { downloadBlobResponse } from "../../../utils/download.utils";
+import { downloadCustomerImportTemplate, importCustomerWorkbook } from "../data/customers.service";
 
-const templateColumns = [
-  { label: "Customer Name", key: "name", required: true, sample: "ABC Traders" },
-  { label: "Contact Names", key: "contact_names", required: true, sample: "Rakesh Dhumal|Priya Shah" },
-  { label: "Contact Mobiles", key: "contact_mobiles", required: true, sample: "9876543210|9876543211" },
-  { label: "Contact Emails", key: "contact_emails", sample: "rakesh@example.com|priya@example.com" },
-  { label: "Contact Designations", key: "contact_designations", sample: "Owner|Accountant" },
-  { label: "Contact Departments", key: "contact_departments", sample: "Management|Accounts" },
-  { label: "Primary Contact Mobile", key: "primary_contact_mobile", sample: "9876543210" },
-  { label: "WhatsApp No", key: "wa_no", sample: "9876543210" },
-  { label: "PAN Number", key: "pan_number", sample: "ABCDE1234F" },
-  { label: "GST Number", key: "gst_number", sample: "27ABCDE1234F1Z5" },
-  { label: "Company Name", key: "company_name", sample: "ABC Inc" },
-  { label: "Billing Name", key: "billing_name", sample: "ABC Inc" },
-  { label: "Address", key: "address", sample: "Pune, Maharashtra" },
-  { label: "Billing Address", key: "billing_address", sample: "Pune, Maharashtra" },
-  { label: "Mailing Address", key: "mailing_address", sample: "Pune, Maharashtra" },
-  { label: "Is AMC", key: "is_amc", sample: "yes" },
-  { label: "AMC Term Period", key: "amc_term_period", sample: "yearly" },
-  { label: "AMC Start Date", key: "amc_start_date", sample: "2026-04-02" },
-  { label: "AMC End Date", key: "amc_end_date", sample: "2027-04-01" },
-  { label: "Product IDs", key: "product_ids", sample: "1,2" },
-  { label: "Product Names", key: "product_names", sample: "CRM Basic,CRM Premium" },
-  { label: "Serial Numbers", key: "serial_numbers", sample: "SR-001,SR-002" },
-  { label: "Product Expiry Dates", key: "product_expiry_dates", sample: "2027-04-01,2028-04-01" },
-  { label: "Product Add-ons", key: "product_add_ons", sample: "AgriModule+Payroll|AMC" },
-];
-
-const escapeHtml = (value) =>
-  String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-function downloadCustomerTemplate() {
-  const headerCells = templateColumns
-    .map((column) => `<th>${escapeHtml(column.label)}${column.required ? " *" : ""}</th>`)
-    .join("");
-  const keyCells = templateColumns.map((column) => `<td>${escapeHtml(column.key)}</td>`).join("");
-  const sampleCells = templateColumns.map((column) => `<td>${escapeHtml(column.sample || "")}</td>`).join("");
-
-  const html = `
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { font-family: Calibri, Arial, sans-serif; }
-          table { border-collapse: collapse; width: 100%; }
-          .title { background: #174d80; color: #ffffff; font-size: 20px; font-weight: 700; text-align: center; }
-          .note { background: #eff6ff; color: #31537a; font-weight: 700; }
-          th { background: #143a63; color: #ffffff; border: 1px solid #9fb7cc; padding: 8px; text-align: center; }
-          td { border: 1px solid #d9e2ec; padding: 7px; mso-number-format: "\\@"; }
-          .keys td { background: #f8fafc; color: #64748b; font-weight: 700; }
-          .sample td { background: #ffffff; }
-        </style>
-      </head>
-      <body>
-        <table>
-          <tr><td class="title" colspan="${templateColumns.length}">Customer Import Template</td></tr>
-          <tr><td class="note" colspan="${templateColumns.length}">Fill customer data below. Required columns are marked with *. Use | to separate multiple contacts/products.</td></tr>
-          <tr>${headerCells}</tr>
-          <tr class="keys">${keyCells}</tr>
-          <tr class="sample">${sampleCells}</tr>
-        </table>
-      </body>
-    </html>
-  `;
-
-  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "customer-import-template.xls";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
+const workbookSheets = ["Customers", "Contacts", "Products"];
 
 function CustomerImportFlyout({ isOpen, onClose, onImported }) {
   const fileInputRef = useRef(null);
@@ -92,6 +16,8 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [importStage, setImportStage] = useState("");
   const [result, setResult] = useState(null);
+  const [previewReady, setPreviewReady] = useState(false);
+  const [templateDownloading, setTemplateDownloading] = useState(false);
 
   const fileName = useMemo(() => file?.name || "No file selected", [file]);
 
@@ -101,25 +27,31 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
     setUploadProgress(0);
     setImportStage("");
     setResult(null);
+    setPreviewReady(false);
     onClose?.();
   };
 
-  const handleImport = async () => {
+  const handleTemplateDownload = async () => {
+    setTemplateDownloading(true);
+    const response = await downloadCustomerImportTemplate();
+    setTemplateDownloading(false);
+    if (!response?.success || !downloadBlobResponse(response, "customer-import-template.xlsx")) {
+      toast.error(response?.message || "Unable to download import template.");
+    }
+  };
+
+  const handleImport = async (mode = "preview") => {
     if (!file) {
       toast.error("Please select customer Excel file.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     setImporting(true);
     setUploadProgress(0);
     setImportStage("Uploading file...");
-    const res = await makeRequest("/customers/import", {
-      method: "POST",
-      body: formData,
-      timeout: 300000,
+    const res = await importCustomerWorkbook({
+      file,
+      mode,
       onUploadProgress: (progressEvent) => {
         if (!progressEvent.total) return;
         const nextProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -138,10 +70,12 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
     }
 
     setUploadProgress(100);
-    setImportStage("Import complete");
+    const isPreview = mode === "preview";
+    setImportStage(isPreview ? "Preview ready" : "Import complete");
     setResult(res);
-    toast.success(res.message || "Customers imported successfully.");
-    onImported?.();
+    setPreviewReady(isPreview);
+    toast.success(res.message || (isPreview ? "Import preview generated." : "Customers imported successfully."));
+    if (!isPreview) onImported?.();
   };
 
   return (
@@ -160,9 +94,9 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
           <ActionButton disabled={importing} variant="flyoutSecondary" onClick={handleClose}>
             Cancel
           </ActionButton>
-          <ActionButton disabled={importing || !file} variant="flyoutPrimary" onClick={handleImport}>
+          <ActionButton disabled={importing || !file} variant="flyoutPrimary" onClick={() => handleImport(previewReady ? "commit" : "preview")}>
             {importing ? <Spinner /> : <Upload size={16} />}
-            Import Data
+            {previewReady ? "Apply Changes" : "Preview Import"}
           </ActionButton>
         </>
       }
@@ -176,9 +110,9 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
             <h3>Customer Excel Template</h3>
             <p>Use this exact format for importing customers into database.</p>
           </div>
-          <ActionButton variant="ghostPrimary" onClick={downloadCustomerTemplate}>
-            <Download size={15} />
-            Download
+          <ActionButton disabled={templateDownloading} variant="ghostPrimary" onClick={handleTemplateDownload}>
+            {templateDownloading ? <Spinner /> : <Download size={15} />}
+            {templateDownloading ? "Downloading..." : "Download"}
           </ActionButton>
         </section>
 
@@ -206,6 +140,7 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
               setUploadProgress(0);
               setImportStage("");
               setResult(null);
+              setPreviewReady(false);
             }}
           />
         </section>
@@ -223,11 +158,11 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
         )}
 
         <section className="customer-import-columns">
-          <h3>Template Columns</h3>
+          <h3>Workbook Sheets</h3>
           <div>
-            {templateColumns.map((column) => (
-              <span key={column.key} className={column.required ? "required" : ""}>
-                {column.label}
+            {workbookSheets.map((sheet) => (
+              <span key={sheet} className="required">
+                {sheet}
               </span>
             ))}
           </div>
@@ -240,13 +175,23 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
               <strong>{result.inserted || 0}</strong>
             </div>
             <div>
+              <span>Updated</span>
+              <strong>{result.updated || 0}</strong>
+            </div>
+            <div>
+              <span>Unchanged</span>
+              <strong>{result.unchanged || 0}</strong>
+            </div>
+            <div>
               <span>Skipped</span>
               <strong>{result.skipped || 0}</strong>
             </div>
             {!!result.errors?.length && (
               <ul>
                 {result.errors.slice(0, 5).map((error, index) => (
-                  <li key={`${error.row || index}-${error.message}`}>Row {error.row}: {error.message}</li>
+                  <li key={`${error.sheet || "sheet"}-${error.row || index}-${error.message}`}>
+                    {error.sheet ? `${error.sheet} - ` : ""}Row {error.row}: {error.message}
+                  </li>
                 ))}
               </ul>
             )}

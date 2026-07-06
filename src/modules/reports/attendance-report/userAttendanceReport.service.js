@@ -1,4 +1,5 @@
-import { makeRequest } from "../../api/httpClient";
+import { makeRequest } from "../../../api/httpClient";
+import { downloadBlobResponse } from "../../../utils/download.utils";
 
 export async function fetchUserAttendanceReport(filters = {}, page = 1) {
   const response = await makeRequest("/reports/attendance", {
@@ -29,5 +30,27 @@ export async function fetchUserAttendanceReport(filters = {}, page = 1) {
     attendance: Array.isArray(data.attendance) ? data.attendance : [],
     pagination: data.pagination || {},
     filters: data.filters || {},
+  };
+}
+
+export async function downloadUserAttendanceReport(filters = {}) {
+  const response = await makeRequest("/reports/attendance/export-excel", {
+    method: "POST",
+    body: {
+      user_id: filters.user_id || "",
+      company_id: filters.company_id || "",
+      from_date: filters.from_date || "",
+      to_date: filters.to_date || "",
+    },
+    responseType: "blob",
+    timeout: 30000,
+  });
+
+  if (!response?.success) return response;
+
+  const downloaded = downloadBlobResponse(response, "Attendance-report.xls");
+  return {
+    success: downloaded,
+    message: downloaded ? "" : response?.message || "Unable to download attendance report.",
   };
 }

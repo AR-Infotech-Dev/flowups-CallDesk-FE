@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import ModulePageLayout from "../shared/ModulePageLayout";
-import ModulePagination from "../shared/ModulePagination";
-import ProductExpiryReportFilters from "./components/ProductExpiryReportFilters";
-import ProductExpiryReportSummary from "./components/ProductExpiryReportSummary";
-import ProductExpiryReportTable from "./components/ProductExpiryReportTable";
-import ProductActivityModal from "./components/ProductActivityModal";
-import ProductExpiryCallDescriptionModal from "./components/ProductExpiryCallDescriptionModal";
+import ModulePageLayout from "../../shared/ModulePageLayout";
+import ModulePagination from "../../shared/ModulePagination";
+import ProductExpiryReportFilters from "./ProductExpiryReportFilters";
+import ProductExpiryReportSummary from "./ProductExpiryReportSummary";
+import ProductExpiryReportTable from "./ProductExpiryReportTable";
+import ProductActivityModal from "./ProductActivityModal";
+import ProductExpiryCallDescriptionModal from "./ProductExpiryCallDescriptionModal";
 import {
   defaultProductExpiryFilters,
   fetchProductActivity,
   getDefaultProductExpiryCallDescription,
   getProductExpiryReport,
   makeToCustomer,
-} from "./data/product.report.service";
+} from "./product.report.service";
 import "./product-expiry-report.css";
 
 const defaultSort = { key: "expiry_date", direction: "ASC" };

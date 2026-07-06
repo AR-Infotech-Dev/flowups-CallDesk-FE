@@ -73,7 +73,7 @@ export const useCustomersModule = ({ filterState, exportColumnKeys = [] }) => {
 
         const res = await downloadExcel({ filterState, selectedColumns: exportColumnKeys })
 
-        if (!res?.success || !downloadBlobResponse(res, "customer-export.xls")) {
+        if (!res?.success || !downloadBlobResponse(res, "Customer-Export.xlsx")) {
             toast.error(res?.message || "Unable to export customer report.");
         }
     };

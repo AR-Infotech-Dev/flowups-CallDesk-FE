@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { customerModuleSchema } from "../data/module.schema";
 import {
+  calculateAmcEndDate,
   getCustomerIdentifier,
   normalizeAddOns,
   normalizeCustomerData,
@@ -106,6 +107,12 @@ export const useCustomerForm = ({
         nextState.amc_term_period = null;
         nextState.amc_start_date = null;
         nextState.amc_end_date = null;
+      }
+
+      if (["amc_start_date", "amc_term_period"].includes(name)) {
+        const startDate = name === "amc_start_date" ? value : current.amc_start_date;
+        const termPeriod = name === "amc_term_period" ? value : current.amc_term_period;
+        nextState.amc_end_date = calculateAmcEndDate(startDate, termPeriod) || null;
       }
 
       return nextState;

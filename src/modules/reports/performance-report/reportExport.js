@@ -1,3 +1,5 @@
+import { formatReportDate, stripReportHtml } from "../report.utils";
+
 const escapeHtml = (value) =>
   String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -5,19 +7,9 @@ const escapeHtml = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-const stripHtml = (value = "") =>
-  String(value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-
 const getTicketValue = (ticket = {}, keys = []) => {
   const key = keys.find((item) => ticket[item] !== undefined && ticket[item] !== null && ticket[item] !== "");
   return key ? ticket[key] : "";
-};
-
-const formatDate = (value) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
 const formatFilterLabel = (key = "") =>
@@ -74,10 +66,10 @@ function buildSummaryCards(summary = {}) {
 function buildDetailsRows({ filters = {}, user = {}, tickets = [] }) {
   const details = [
     ["User / Company", user.name || user.userName || user.email || filters.user_name || "Selected User"],
-    ["From Date", filters.from_date ? formatDate(filters.from_date) : "All"],
-    ["To Date", filters.to_date ? formatDate(filters.to_date) : "All"],
+    ["From Date", filters.from_date ? formatReportDate(filters.from_date) : "All"],
+    ["To Date", filters.to_date ? formatReportDate(filters.to_date) : "All"],
     ["Records", tickets.length],
-    ["Generated On", formatDate(new Date())],
+    ["Generated On", formatReportDate(new Date())],
   ];
 
   Object.entries(filters)
@@ -112,7 +104,7 @@ function buildRowsHtml(tickets = []) {
       <tr>
         ${ticketColumns.map(([label, keys]) => {
       const rawValue = getTicketValue(ticket, keys) || "-";
-      const value = label.toLowerCase().includes("date") ? formatDate(rawValue) : stripHtml(rawValue);
+      const value = label.toLowerCase().includes("date") ? formatReportDate(rawValue) : stripReportHtml(rawValue);
 
       if (label === "Ticket Status") {
         return `

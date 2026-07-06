@@ -1,5 +1,5 @@
-import { makeRequest } from "../../api/httpClient";
-import { downloadBlobResponse } from "../../utils/download.utils";
+import { makeRequest } from "../../../api/httpClient";
+import { downloadBlobResponse } from "../../../utils/download.utils";
 
 export async function fetchCompanyCustomerTicketReport(filters = {}, page = 1) {
   const response = await makeRequest("/reports/customer-wise", {

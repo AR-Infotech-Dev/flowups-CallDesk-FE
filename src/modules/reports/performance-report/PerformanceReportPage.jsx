@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@auth/components/AuthProvider";
-import ModulePageLayout from "../shared/ModulePageLayout";
+import ModulePageLayout from "../../shared/ModulePageLayout";
 import PerformanceReportWorkspace from "./PerformanceReportWorkspace";
 import { usePerformanceReportPage } from "./hooks/usePerformanceReportPage";
 import { getPerformanceExportPermission } from "./utils/performanceReport.utils";

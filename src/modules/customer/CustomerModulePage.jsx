@@ -110,6 +110,7 @@ function CustomerModulePage({ menu_id }) {
             createLabel="Add Customer"
             filter={
               <DynamicFilter
+                filterState={filterState}
                 fields={resolvedFilterFields}
                 savedFilters={customerModuleSchema.savedFilters}
                 onSearch={setSearchText}

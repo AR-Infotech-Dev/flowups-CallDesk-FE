@@ -1,5 +1,6 @@
-import { makeRequest } from "../../api/httpClient";
-import { downloadBlobResponse } from "../../utils/download.utils";
+import { makeRequest } from "../../../api/httpClient";
+import { downloadBlobResponse } from "../../../utils/download.utils";
+import { normalizeReportOption, toReportArray } from "../report.utils";
 
 export const defaultPerformanceFilters = {
   user_id: "",
@@ -8,25 +9,6 @@ export const defaultPerformanceFilters = {
   company_id: "",
   ticket_status: "",
 };
-
-const asArray = (value) => {
-  if (Array.isArray(value)) return value;
-  if (Array.isArray(value?.data)) return value.data;
-  if (Array.isArray(value?.rows)) return value.rows;
-  if (Array.isArray(value?.result)) return value.result;
-  if (Array.isArray(value?.list)) return value.list;
-  return [];
-};
-
-const pick = (item = {}, keys = []) => {
-  const matchedKey = keys.find((key) => item[key] !== undefined && item[key] !== null);
-  return matchedKey ? item[matchedKey] : "";
-};
-
-const normalizeOption = (item = {}, valueKeys, labelKeys) => ({
-  value: String(pick(item, valueKeys) || ""),
-  label: String(pick(item, labelKeys) || "Unnamed"),
-});
 
 export async function fetchReportUsers(searchText = "") {
   const response = await makeRequest("/system/searchList", {
@@ -42,8 +24,8 @@ export async function fetchReportUsers(searchText = "") {
 
   if (!response?.success) return [];
 
-  return asArray(response)
-    .map((item) => normalizeOption(item, ["adminID", "adminId", "user_id", "id"], ["name", "userName", "email"]))
+  return toReportArray(response)
+    .map((item) => normalizeReportOption(item, ["adminID", "adminId", "user_id", "id"], ["name", "userName", "email"]))
     .filter((item) => item.value);
 }
 
@@ -61,8 +43,8 @@ export async function fetchReportCompanies(searchText = "") {
 
   if (!response?.success) return [];
 
-  return asArray(response)
-    .map((item) => normalizeOption(item, ["company_id", "id"], ["company_name", "name"]))
+  return toReportArray(response)
+    .map((item) => normalizeReportOption(item, ["company_id", "id"], ["company_name", "name"]))
     .filter((item) => item.value);
 }
 
@@ -81,9 +63,9 @@ export async function fetchTicketStatuses(searchText = "") {
 
   if (!response?.success) return [];
 
-  return asArray(response)
+  return toReportArray(response)
     .map((item) => ({
-      ...normalizeOption(item, ["category_id", "id"], ["categoryName", "name"]),
+      ...normalizeReportOption(item, ["category_id", "id"], ["categoryName", "name"]),
       color: item.cat_color,
     }))
     .filter((item) => item.value);
@@ -97,8 +79,8 @@ export function normalizePerformanceResponse(response = {}) {
     user: data.user || data.user_details || data.userDetails || {},
     summary: data.summary || {},
     charts: data.charts || {},
-    tickets: asArray(data.tickets),
-    activities: asArray(data.activities || data.timeline),
+    tickets: toReportArray(data.tickets),
+    activities: toReportArray(data.activities || data.timeline),
     pagination: data.pagination || response.pagination || {},
   };
 }

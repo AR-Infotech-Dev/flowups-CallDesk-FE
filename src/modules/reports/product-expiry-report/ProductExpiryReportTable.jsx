@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import { sendAlertToCustomer } from "../data/product.report.service"
+import { sendAlertToCustomer } from "./product.report.service"
 import { Phone, Send, MailCheck, History } from "lucide-react"
 
 const statusLabels = {

@@ -1,18 +1,5 @@
 import { X } from "lucide-react";
-
-function formatDateTime(value) {
-    if (!value) return "-";
-    const date = new Date(String(value).replace(" ", "T"));
-    if (Number.isNaN(date.getTime())) return String(value);
-
-    return date.toLocaleString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
+import { formatReportDateTime } from "../report.utils";
 
 function ActivityList({ rows = [], emptyText, render }) {
     if (!rows.length) {
@@ -65,7 +52,7 @@ export function ProductActivityModal({ customer, product, activity, activeTab, o
                             render={(row, index) => (
                                 <div key={row.ticket_id || index} className="amc-activity-item">
                                     <strong>{row.ticket_no || `Ticket #${row.ticket_id}`}</strong>
-                                    <span>{formatDateTime(row.created_date)} | {row.ticket_status || "-"}</span>
+                                    <span>{formatReportDateTime(row.created_date)} | {row.ticket_status || "-"}</span>
                                     <p>{row.description || "-"}</p>
                                 </div>
                             )}
@@ -79,7 +66,7 @@ export function ProductActivityModal({ customer, product, activity, activeTab, o
                             render={(row, index) => (
                                 <div key={row.reminder_id || index} className="amc-activity-item">
                                     <strong>{row.email_subject || "Product Reminder"} | {row.status || "-"}</strong>
-                                    <span>{formatDateTime(row.sent_at)} | Report: {row.include_report || "no"}</span>
+                                    <span>{formatReportDateTime(row.sent_at)} | Report: {row.include_report || "no"}</span>
                                     <p>{row.recipient_email || "-"}</p>
                                 </div>
                             )}

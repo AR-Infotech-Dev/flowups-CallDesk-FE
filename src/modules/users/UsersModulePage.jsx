@@ -71,6 +71,7 @@ function UsersModulePage({ menu_id }) {
             deleting={deleting}
             filter={
               <DynamicFilter
+                filterState={filterState}
                 fields={resolvedFilterFields}
                 savedFilters={usersModuleSchema.savedFilters}
                 onSearch={setSearchText}
