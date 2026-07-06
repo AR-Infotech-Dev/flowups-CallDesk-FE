@@ -3,20 +3,15 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, Download, Send, FileBarChart, Search, Ticket, TriangleAlert } from "lucide-react";
 import { toast } from "react-toastify";
 import { makeRequest } from "../../../api/httpClient";
-import { stripHtml, toDateInputValue } from "../../../utils/excel.utils";
+import { toDateInputValue } from "../../../utils/excel.utils";
 import { downloadBlobResponse } from "../../../utils/download.utils";
+import { formatReportDate, stripReportHtml } from "../report.utils";
 const EMPTY_REPORT = {
     customer: {},
     summary: {},
     products: [],
     tickets: [],
 };
-function formatDate(value) {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value);
-    return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-}
 function getTicketDate(ticket = {}) { return ticket.start_date || ticket.created_date || ticket.createdAt || ticket.assigned_date || ticket.due_date || ""; }
 function getTicketStatus(ticket = {}) {
     return ticket.status_name || ticket.ticket_status_name || ticket.ticket_status || ticket.status || "-";
@@ -244,7 +239,7 @@ function CustomerReport({ customerId: providedCustomerId }) {
                     <InfoItem label="Email" value={report.customer?.email} />
                     <InfoItem label="Mobile" value={report.customer?.mobile_no} />
                     <InfoItem label="Contact Person" value={report.customer?.contact_person} />
-                    <InfoItem label="AMC End Date" value={formatDate(report.customer?.amc_end_date)} />
+                    <InfoItem label="AMC End Date" value={formatReportDate(report.customer?.amc_end_date)} />
                 </section>
 
                 <section className="customer-report-summary">
@@ -261,8 +256,8 @@ function CustomerReport({ customerId: providedCustomerId }) {
                             <h3>Ticket Support Report</h3>
                         </div>
                         <div className="flex gap-2 items-center">
-                            <p>From {generatedFromDate ? formatDate(generatedFromDate) : "-"}</p>
-                            <p>To {generatedToDate ? formatDate(generatedToDate) : "-"}</p>
+                            <p>From {generatedFromDate ? formatReportDate(generatedFromDate) : "-"}</p>
+                            <p>To {generatedToDate ? formatReportDate(generatedToDate) : "-"}</p>
                         </div>
                     </div>
                     <div className="customer-report-table-wrap">
@@ -284,14 +279,14 @@ function CustomerReport({ customerId: providedCustomerId }) {
                                     report.tickets.map((ticket, index) => (
                                         <tr key={ticket.ticket_id || ticket.ticketID || ticket.ticket_no || index}>
                                             <td>{ticket.ticket_no || ticket.ticket_id || "-"}</td>
-                                            <td>{stripHtml(ticket.description || ticket.title || "-")}</td>
+                                            <td>{stripReportHtml(ticket.description || ticket.title || "-")}</td>
                                             <td>{getTicketStatus(ticket)}</td>
                                             <td>{ticket.resolver_name || '-'}</td>
                                             <td>{ticket.priority_name || ticket.ticket_priority_name || ticket.ticket_priority || ticket.priority || "-"}</td>
                                             {/* <td>{`${ticket.priority_name ? ticket.priority_name + '-' + ticket.priority_name : '-'}`}</td> */}
                                             <td> {ticket?.product_name ? `${ticket.product_name}${ticket?.product_serial_number ? ` - ${ticket.product_serial_number}` : ""}` : "-"}</td>
-                                            <td>{formatDate(ticket.start_date || ticket.created_date)}</td>
-                                            <td>{formatDate(ticket.due_date)}</td>
+                                            <td>{formatReportDate(ticket.start_date || ticket.created_date)}</td>
+                                            <td>{formatReportDate(ticket.due_date)}</td>
                                         </tr>
                                     ))
                                 ) : (

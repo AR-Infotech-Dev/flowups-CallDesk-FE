@@ -5785,7 +5785,7 @@ table input[type="checkbox"]:focus-visible {
 .customer-import-shell {
   display: grid;
   gap: 14px;
-  padding: 4px 2px;
+  padding: 8px 16px;
 }
 
 .customer-import-card,

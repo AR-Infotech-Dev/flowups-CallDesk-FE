@@ -61,7 +61,7 @@ function TicketsModulePage({ menu_id }) {
     bumpKanbanReload,
   } = useTicketsModule({ resolvedMenuID, filterState });
 
-  const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useTicketsTableConfig({ resolvedMenuID, filterState,role_slug:roleSlug });
+  const { sortConfig, resolvedColumns, defaultVisibleColumnKeys, resolvedFilterFields, } = useTicketsTableConfig({ resolvedMenuID, filterState, role_slug: roleSlug });
 
   const handleSortChange = (columnKey) => {
     const nextSort = getNextSortConfig(sortConfig, columnKey);
@@ -109,6 +109,7 @@ function TicketsModulePage({ menu_id }) {
               deleting={deleting}
               filter={
                 <DynamicFilter
+                  filterState={filterState}
                   fields={resolvedFilterFields}
                   defaultFilters={ticketDefaultFilters}
                   savedFilters={ticketsModuleSchema.savedFilters}

@@ -102,13 +102,14 @@ function CompanyMasterModulePage({ menu_id }) {
             createLabel="Add Company"
             filter={
               <DynamicFilter
+                filterState={filterState}
                 fields={resolvedFilterFields}
                 savedFilters={companyMasterSchema.savedFilters}
                 onSearch={setSearchText}
                 onApplyFilters={applyFilterPayload}
-                onSaveFilter={() => {}}
-                onDeleteFilter={() => {}}
-                onSelectSavedFilter={() => {}}
+                onSaveFilter={() => { }}
+                onDeleteFilter={() => { }}
+                onSelectSavedFilter={() => { }}
                 onClearFilters={clearFilters}
               />
             }

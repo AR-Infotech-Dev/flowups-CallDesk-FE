@@ -8,7 +8,7 @@ const cards = [
   { key: "pending", label: "Pending Tickets", icon: Clock, tone: "amber", description: "Tickets that are still open or waiting for action.", },
   { key: "delegated", label: "Delegated Tickets", icon: Send, tone: "blue", description: "Tickets reassigned or forwarded to another user.", },
   { key: "overdue", label: "Overdue Tickets", icon: AlertTriangle, tone: "red", description: "Tickets whose due date has already passed.", },
-  { key: "avg_resolution_time", label: "Average Resolution Time", icon: TimerReset, tone: "cyan", suffix: " hrs", description: "Average time taken by the user to resolve a ticket.", },
+  // { key: "avg_resolution_time", label: "Average Resolution Time", icon: TimerReset, tone: "cyan", suffix: " hrs", description: "Average time taken by the user to resolve a ticket.", },
   { key: "productivity_score", label: "Productivity Score", icon: Gauge, tone: "purple", description: "Performance score calculated using closed and overdue tickets.", },
 ];
 

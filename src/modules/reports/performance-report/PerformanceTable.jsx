@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import TicketPreview from "./components/TicketPreview";
+import { formatReportDate, formatReportMinutesSeconds } from "../report.utils";
 
 const columns = [
   { key: "ticket_no", label: "Ticket Number", width: 150 },
@@ -29,25 +30,11 @@ function pick(row = {}, key) {
   return foundKey ? row[foundKey] : "";
 }
 
-function formatDate(value) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function formatDuration(minutes, seconds) {
-  const totalSeconds = Number.isFinite(Number(seconds))
-    ? Math.max(0, Math.round(Number(seconds)))
-    : Math.max(0, Math.round(Number(minutes || 0) * 60));
-  return `${Math.floor(totalSeconds / 60)} min ${totalSeconds % 60} sec`;
-}
-
 function formatValue(row, key) {
   const value = pick(row, key);
-  if (key.includes("date")) return formatDate(value);
+  if (key.includes("date")) return formatReportDate(value);
   if (key === "resolution_time" && value !== "") {
-    return formatDuration(value, row.resolution_time_seconds);
+    return formatReportMinutesSeconds(value, row.resolution_time_seconds);
   }
   return value || "-";
 }
@@ -95,7 +82,7 @@ function PerformanceTable({ rows = [], loading, pagination = {}, searchText, sor
         />
         <table className="performance-table">
           <thead>
-            <tr>
+            <tr style={{ width: "100%" }} >
               {columns.map((column) => {
                 const active = sortConfig?.key === column.key;
                 return (
@@ -112,7 +99,7 @@ function PerformanceTable({ rows = [], loading, pagination = {}, searchText, sor
           <tbody>
             {loading ? (
               Array.from({ length: 6 }).map((_, index) => (
-                <tr key={`loading-${index}`}>
+                <tr style={{ width: "100%" }} key={`loading-${index}`}>
                   {columns.map((column) => (
                     <td key={column.key} style={{ minWidth: column.width, width: column.width }}>
                       <span className="performance-skeleton" />
@@ -123,11 +110,12 @@ function PerformanceTable({ rows = [], loading, pagination = {}, searchText, sor
             ) : rows.length ? (
               rows.map((row, index) => {
                 row.call_direction = row.call_direction === "in" ? "Incomming" : "Outgoing";
-                const isAmc = row.amc_call === "y" ? { backgroundColor : "#14ff142e"} : {};
+                const isAmc = row.amc_call === "y" ? { backgroundColor: "#14ff142e" } : {};
                 return (
                   <tr
                     key={row.ticket_id || row.ticketID || row.id || index}
                     className={`cursor-pointer`}
+                    style={{ width: "100%" }}
                     tabIndex={0}
                     onClick={() => handleOpen(row)}
                     onKeyDown={(event) => {
@@ -138,7 +126,7 @@ function PerformanceTable({ rows = [], loading, pagination = {}, searchText, sor
                     }}
                   >
                     {columns.map((column) => (
-                      <td key={column.key} style={{ ...isAmc,minWidth: column.width, width: column.width }}>{formatValue(row, column.key)}</td>
+                      <td key={column.key} style={{ ...isAmc, minWidth: column.width, width: column.width }}>{formatValue(row, column.key)}</td>
                     ))}
                   </tr>
                 )

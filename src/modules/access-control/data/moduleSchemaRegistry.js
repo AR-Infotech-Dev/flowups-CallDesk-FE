@@ -4,7 +4,7 @@ import { customerModuleSchema } from "../../customer/data/module.schema";
 import { amcReminderModuleSchema } from "../../amc-reminders/data/module.schema";
 import { menuMasterSchema } from "../../menu-master/data/module.schema";
 import { productsModuleSchema } from "../../products/data/module.schema";
-import { performanceReportSchema } from "../../reports/data/module.schema";
+import { performanceReportSchema } from "../../reports/performance-report/data/module.schema";
 import { ticketsModuleSchema } from "../../tickets/data/module.schema";
 import { usersModuleSchema } from "../../users/data/module.schema";
 

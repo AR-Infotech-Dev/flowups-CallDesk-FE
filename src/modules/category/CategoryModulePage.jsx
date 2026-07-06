@@ -93,6 +93,7 @@ function CategoryModulePage({ menu_id }) {
             createLabel="Add Category"
             filter={
               <DynamicFilter
+                filterState={filterState}
                 fields={resolvedFilterFields}
                 savedFilters={categoryModuleSchema.savedFilters}
                 onSearch={setSearchText}

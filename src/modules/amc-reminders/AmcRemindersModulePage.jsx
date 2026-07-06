@@ -111,6 +111,7 @@ function AmcRemindersModulePage({ menu_id }) {
             canDelete={false}
             filter={
               <DynamicFilter
+                filterState={filterState}
                 fields={AMC_REMINDER_FILTER_FIELDS}
                 savedFilters={amcReminderModuleSchema.savedFilters}
                 onSearch={setSearchText}

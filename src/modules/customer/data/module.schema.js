@@ -32,6 +32,8 @@ export const customerModuleSchema = {
     edit: "/customers",
     definitions: "/system/getDefinations",
     downloadExcel: "/customers/download-excel",
+    importTemplate: "/customers/import-template",
+    import: "/customers/import",
     definitionsFallback: "/system/getstructure",
   },
   definitionRequest: {

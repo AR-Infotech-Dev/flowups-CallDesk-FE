@@ -19,13 +19,13 @@ const CategoryModulePage = lazy(() => import("@modules/category/CategoryModulePa
 const ProductModulePage = lazy(() => import("@modules/products/ProductModulePage"));
 const CompanyMasterModulePage = lazy(() => import("@modules/company-master/CompanyMasterModulePage"));
 const AccessControlModulePage = lazy(() => import("@modules/access-control/AccessControlModulePage"));
-const PerformanceReportPage = lazy(() => import("@modules/reports/PerformanceReportPage"));
-const UserPerformancePage = lazy(() => import("@modules/reports/UserPerformancePage"));
-const CompanyCustomerTicketReport = lazy(() => import("@modules/reports/CompanyCustomerTicketReport"));
-const UserAttendanceReport = lazy(() => import("@modules/reports/UserAttendanceReport"));
-const WorkReportModulePage = lazy(() => import("@modules/work-report/WorkReportModulePage"));
-const CustomerReport = lazy(() => import("@modules/customer/components/CustomerReport"));
-const ProductExpiryReport = lazy(() => import("@modules/products/ProductExpiryReport"));
+const PerformanceReportPage = lazy(() => import("@modules/reports/performance-report/PerformanceReportPage"));
+const UserPerformancePage = lazy(() => import("@modules/reports/performance-report/UserPerformancePage"));
+const CompanyCustomerTicketReport = lazy(() => import("@modules/reports/customer-wise-report/CompanyCustomerTicketReport"));
+const UserAttendanceReport = lazy(() => import("@modules/reports/attendance-report/UserAttendanceReport"));
+const WorkReportModulePage = lazy(() => import("@modules/reports/work-report/WorkReportModulePage"));
+const CustomerReport = lazy(() => import("@modules/reports/customer-report/CustomerReport"));
+const ProductExpiryReport = lazy(() => import("@modules/reports/product-expiry-report/ProductExpiryReport"));
 const UserMarkers = lazy(() => import("@modules/dashboard/UserMarkers"));
 const UserProfilePage = lazy(() => import("@modules/profile/UserProfilePage"));
 
@@ -195,14 +195,14 @@ function MainRoutes() {
                   : <PerformanceReportPage menu_id={performanceReportMenuId} />
               }
             />
-            {/* <Route
+            <Route
               path="/reports/performance/:userId"
               element={
                 performanceReportMenuId
                   ? withPermission(performanceReportMenuId, <UserPerformancePage menu_id={performanceReportMenuId} />)
                   : <UserPerformancePage menu_id={performanceReportMenuId} />
               }
-            /> */}
+            />
             <Route
               path="/work-report"
               element={

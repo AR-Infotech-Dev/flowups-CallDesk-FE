@@ -1,5 +1,5 @@
-import ModulePageLayout from "../shared/ModulePageLayout";
-import ModulePagination from "../shared/ModulePagination";
+import ModulePageLayout from "../../shared/ModulePageLayout";
+import ModulePagination from "../../shared/ModulePagination";
 import { WorkReportFilters } from "./components/WorkReportFilters";
 import { WorkReportSummary } from "./components/WorkReportSummary";
 import { WorkReportTable } from "./components/WorkReportTable";

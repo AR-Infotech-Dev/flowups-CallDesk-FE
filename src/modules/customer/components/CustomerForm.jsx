@@ -10,14 +10,7 @@ import CustomerProductsEditor from "./CustomerProductsEditor";
 
 const EMPTY_INITIAL_VALUES = {};
 
-function CustomerForm({
-  isOpen,
-  onClose,
-  selectedCustomer,
-  initialValues = EMPTY_INITIAL_VALUES,
-  onAfterSave,
-  menu_id,
-}) {
+function CustomerForm({ isOpen, onClose, selectedCustomer, initialValues = EMPTY_INITIAL_VALUES, onAfterSave, menu_id, }) {
   const {
     loading,
     fetchingCustomer,

@@ -1,17 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { normalizeAddOns } from "../utils/customer.utils";
 
-function CustomerProductsEditor({
-  productRows,
-  productOptions,
-  loadingProducts,
-  onAddProductRow,
-  onUpdateProductRow,
-  onRemoveProductRow,
-  onAddProductAddon,
-  onUpdateProductAddon,
-  onRemoveProductAddon,
-}) {
+function CustomerProductsEditor({ productRows, productOptions, loadingProducts, onAddProductRow, onUpdateProductRow, onRemoveProductRow, onAddProductAddon, onUpdateProductAddon, onRemoveProductAddon, }) {
   return (
     <>
       <div className={`mt-5 flex text-md font-semibold items-center justify-between mb-1 "mt-4"`}>

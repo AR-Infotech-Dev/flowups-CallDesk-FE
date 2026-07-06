@@ -23,8 +23,7 @@ const RichTextEditor = ({ field, value, onChange, className = '', modules, error
   };
 
   return (
-    <div className="bg-white" >
-      
+    <div className="bg-white relative mb-2" >
       {field.label && <DefaultLabel label={field.label} required={field.required} />}
       <ReactQuill
         ref={quillRef}
@@ -37,7 +36,7 @@ const RichTextEditor = ({ field, value, onChange, className = '', modules, error
         readOnly={isReadOnly}
       />
       {error && (
-        <ValidationError error={error} />
+        <ValidationError error={error} classes={'-bottom-4'} />
       )}
     </div>
   );

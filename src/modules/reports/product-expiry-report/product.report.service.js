@@ -1,4 +1,5 @@
 import { makeRequest } from "../../../api/httpClient";
+import { toReportArray } from "../report.utils";
 
 export const defaultProductExpiryFilters = {
   company_id: "",
@@ -9,25 +10,6 @@ export const defaultProductExpiryFilters = {
   to_date: "",
   expiring_days: 30,
 };
-
-const asArray = (value) => {
-  if (Array.isArray(value)) return value;
-  if (Array.isArray(value?.data)) return value.data;
-  if (Array.isArray(value?.rows)) return value.rows;
-  if (Array.isArray(value?.result)) return value.result;
-  if (Array.isArray(value?.list)) return value.list;
-  return [];
-};
-
-const pick = (item = {}, keys = []) => {
-  const matchedKey = keys.find((key) => item[key] !== undefined && item[key] !== null);
-  return matchedKey ? item[matchedKey] : "";
-};
-
-const normalizeOption = (item = {}, valueKeys, labelKeys) => ({
-  value: String(pick(item, valueKeys) || ""),
-  label: String(pick(item, labelKeys) || "Unnamed"),
-});
 
 export async function getProductExpiryReport(filters = {}, options = {}) {
   const page = options.page || 1;
@@ -54,7 +36,7 @@ export async function getProductExpiryReport(filters = {}, options = {}) {
   return {
     success: response?.success !== false,
     message: response?.message || "",
-    data: asArray(responseData),
+    data: toReportArray(responseData),
     summary: response?.summary || responseData?.summary || {},
     filters: response?.filters || responseData?.filters || {},
     pagination: {

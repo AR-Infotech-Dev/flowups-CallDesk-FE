@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@auth/components/AuthProvider";
-import ModulePageLayout from "../shared/ModulePageLayout";
+import ModulePageLayout from "../../shared/ModulePageLayout";
 import ActivityTimeline from "./ActivityTimeline";
 import PerformanceCards from "./PerformanceCards";
 import PerformanceCharts from "./PerformanceCharts";

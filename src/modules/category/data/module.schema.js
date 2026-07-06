@@ -100,7 +100,7 @@ export const categoryModuleSchema = {
       category_id: null,
       categoryName: null,
       slug: null,
-      is_parent: "yes",
+      is_parent: "no",
       parent_id: null,
       cat_color: null,
       description: null,
@@ -188,7 +188,7 @@ export const categoryModuleSchema = {
             label: "Description",
             type: "editor",
             rows: 4,
-            required:false,
+            required: false,
             placeholder: "Enter category description",
             gridSpan: 12,
           },
@@ -212,12 +212,12 @@ export const categoryModuleSchema = {
     ],
   },
   validationSchema: z.object({
-    categoryName: z.string().trim().min(1, "Category name is required"),
+    categoryName: z.preprocess( (value) => value ?? "", z.string().trim().min(1, "Category name is required") ),
     slug: z.string().trim().min(1, "Slug is required"),
     is_parent: z.enum(["yes", "no"]),
     parent_id: z.any().optional(),
-    cat_color: z.string().trim().min(1, "Tag color is required"),
-    description: z.string().optional(),
+    cat_color: z.string().nullable().optional(),
+    description: z.string().nullish(),
     status: z.enum(["active", "inactive"]),
   }).superRefine((data, ctx) => {
     if (data.is_parent === "no" && !data.parent_id) {

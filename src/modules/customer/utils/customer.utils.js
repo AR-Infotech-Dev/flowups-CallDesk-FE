@@ -106,6 +106,37 @@ export const toSafeDateInputValue = (value) => {
   );
 };
 
+export const calculateAmcEndDate = (startDate, termPeriod) => {
+  const normalizedStartDate = toSafeDateInputValue(startDate);
+  const months = {
+    "3_month": 3,
+    "6_month": 6,
+    yearly: 12,
+  }[termPeriod];
+
+  if (!normalizedStartDate || !months) return "";
+
+  const [year, month, day] = normalizedStartDate.split("-").map(Number);
+  const targetMonthIndex = month - 1 + months;
+  const targetYear = year + Math.floor(targetMonthIndex / 12);
+  const targetMonth = targetMonthIndex % 12;
+  const lastDayOfTargetMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+
+  // Keep month-end subscriptions on the final valid day of the target month.
+  if (day > lastDayOfTargetMonth) {
+    return formatDateInputParts(targetYear, targetMonth + 1, lastDayOfTargetMonth);
+  }
+
+  const endDate = new Date(Date.UTC(targetYear, targetMonth, day));
+  endDate.setUTCDate(endDate.getUTCDate() - 1);
+
+  return formatDateInputParts(
+    endDate.getUTCFullYear(),
+    endDate.getUTCMonth() + 1,
+    endDate.getUTCDate()
+  );
+};
+
 export const normalizeCustomerProducts = (customer = {}) => {
   const rows = customer?.customer_products || customer?.products || [];
   if (!Array.isArray(rows)) return [];

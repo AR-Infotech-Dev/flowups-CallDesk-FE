@@ -83,13 +83,14 @@ function MenuMasterModulePage({ menu_id }) {
             deleting={deleting}
             filter={
               <DynamicFilter
+                filterState={filterState}
                 fields={resolvedFilterFields}
                 savedFilters={menuMasterSchema.savedFilters}
                 onSearch={setSearchText}
                 onApplyFilters={applyFilterPayload}
-                onSaveFilter={() => {}}
-                onDeleteFilter={() => {}}
-                onSelectSavedFilter={() => {}}
+                onSaveFilter={() => { }}
+                onDeleteFilter={() => { }}
+                onSelectSavedFilter={() => { }}
                 onClearFilters={clearFilters}
               />
             }

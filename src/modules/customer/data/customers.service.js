@@ -71,3 +71,22 @@ export const downloadExcel = async ({ filterState, selectedColumns = [], skipCol
         timeout: 30000,
     });
 }
+
+export const downloadCustomerImportTemplate = async () => makeRequest(customerModuleSchema.api.importTemplate, {
+    method: "GET",
+    responseType: "blob",
+    timeout: 30000,
+});
+
+export const importCustomerWorkbook = async ({ file, mode = "preview", onUploadProgress }) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("mode", mode);
+
+    return makeRequest(customerModuleSchema.api.import, {
+        method: "POST",
+        body: formData,
+        timeout: 300000,
+        onUploadProgress,
+    });
+};

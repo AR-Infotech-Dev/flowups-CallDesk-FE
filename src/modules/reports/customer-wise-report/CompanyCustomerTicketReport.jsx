@@ -1,26 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, CheckCircle2, Clock3, RotateCcw, Search, Ticket, TriangleAlert, Upload, UserCheck, Users } from "lucide-react";
+import { Building2, CheckCircle2, Clock3, Download, RotateCcw, Search, Ticket, TriangleAlert, UserCheck, Users } from "lucide-react";
 import { toast } from "react-toastify";
-import ModulePagination from "../shared/ModulePagination";
-import { getCurrentSession } from "../../auth/utils/authStorage";
-import { fetchReportCompanies } from "./performance.service";
+import ModulePagination from "../../shared/ModulePagination";
+import { getCurrentSession } from "../../../auth/utils/authStorage";
+import { fetchReportCompanies } from "../performance-report/performance.service";
 import { fetchCompanyCustomerTicketReport, downloadCustomerWiseReport } from "./companyCustomerReport.service";
+import { formatReportDate, toReportDateInput } from "../report.utils";
 import "./company-customer-report.css";
 import { useAuth } from "@/auth/components/AuthProvider";
-const toDateInput = (value) => {
-  const date = new Date(value);
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 10);
-};
-
 const getDefaultFilters = () => {
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
   const user = getCurrentSession()?.user || {};
   return {
     company_id: String(user.company_id || ""),
-    from_date: toDateInput(monthStart),
-    to_date: toDateInput(today),
+    from_date: toReportDateInput(monthStart),
+    to_date: toReportDateInput(today),
     searchText: "",
   };
 };
@@ -30,13 +25,6 @@ const EMPTY_REPORT = {
   summary: {},
   customers: [],
   pagination: {},
-};
-
-const formatDate = (value) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 };
 
 const isAmcCustomer = (value) => ["1", "true", "y", "yes"].includes(String(value || "").toLowerCase());
@@ -173,15 +161,15 @@ function CompanyCustomerTicketReport() {
         </label>
         <div className="company-ticket-report-filter-actions">
           <button type="button" className="primary" disabled={loading} onClick={generateReport}>
-            {/* <Search size={14} /> */}
+            <Search size={14} />
             {loading ? "Loading..." : "Generate"}
-          </button>
-          <button type="button" className="" disabled={loading} title="Export" onClick={handleExport}>
-            <Upload size={14} />
           </button>
           <button type="button" disabled={loading} onClick={resetReport}>
             <RotateCcw size={14} />
             Reset
+          </button>
+          <button type="button" className="" disabled={loading} title="Export" onClick={handleExport}>
+            <Download size={14} />Export Excel
           </button>
         </div>
       </div>
@@ -241,7 +229,7 @@ function CompanyCustomerTicketReport() {
                     <td>
                       <span>{customer.last_ticket_no || "-"}</span>
                       <small>
-                        {[customer.last_ticket_status, formatDate(customer.last_ticket_date)].filter((value) => value && value !== "-").join(" | ") || "-"}
+                        {[customer.last_ticket_status, formatReportDate(customer.last_ticket_date)].filter((value) => value && value !== "-").join(" | ") || "-"}
                       </small>
                     </td>
                   </tr>
