@@ -12,7 +12,7 @@ export const useTicketsTableConfig = ({ resolvedMenuID, filterState, role_slug }
   const [fields, setFields] = useState([]);
 
   const sortConfig = {
-    key: filterState.order_by || defaultSortConfig.key,
+    key: filterState.order_by || "created_date",
     direction: String(filterState.order || defaultSortConfig.direction).toLowerCase(),
   };
 
