@@ -4,7 +4,7 @@ const defaultModuleState = {
   searchText: "",
   filters: [],
   order: "DESC",
-  order_by: "created_by",
+  order_by: "created_date",
   selectedFilterId: "",
 };
 
