@@ -7,6 +7,7 @@ const initialState = {
   pagination: {},
   defaultFilters:[],
   page: 1,
+  viewAll: false,
   loading: false,
   deleting: false,
   selectedRowIds: [],
@@ -54,6 +55,9 @@ const ticketsSlice = createSlice({
     },
     setTicketsPage(state, action) {
       state.page = action.payload || 1;
+    },
+    setTicketsViewAll(state, action) {
+      state.viewAll = Boolean(action.payload);
     },
     setTicketsSelection(state, action) {
       state.selectedRowIds = Array.isArray(action.payload) ? action.payload : [];
@@ -103,11 +107,13 @@ export const {
   resetTicketsTableState,
   setTicketsPage,
   setTicketsSelection,
+  setTicketsViewAll,
   setTicketsDefualtFilters,
 } = ticketsSlice.actions;
 
 export const selectTicketsRows = (state) => state.tickets.rows;
 export const selectTicketsPagination = (state) => state.tickets.pagination;
+export const selectTicketsViewAll = (state) => state.tickets.viewAll;
 export const selectTicketsDefaultFilters = (state) => state.tickets.defaultFilters;
 export const selectTicketsPage = (state) => state.tickets.page;
 export const selectTicketsLoading = (state) => state.tickets.loading;

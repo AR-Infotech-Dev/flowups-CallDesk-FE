@@ -88,6 +88,18 @@ const useDynamicFilter = ({
             ),
         [defaultFilters]
     );
+    const appliedFilterKey = useMemo(
+        () =>
+            JSON.stringify(
+                (filterState.filters || []).map((filter) => ({
+                    field: filter?.field || "",
+                    condition: filter?.condition || "",
+                    value: filter?.value ?? "",
+                    type: filter?.type || "",
+                }))
+            ),
+        [filterState.filters]
+    );
 
     const buildFilterItem = (filter, fallbackField = {}) => {
         const field = fallbackField.value ? fallbackField : resolvedFieldMap.get(filter.field);
@@ -272,6 +284,39 @@ const useDynamicFilter = ({
             return [...nextDefaultFilters, ...retainedFilters];
         });
     }, [defaultFilterKey, fields.length]);
+
+    useEffect(() => {
+        if (!fields.length) return;
+
+        const appliedFilters = Array.isArray(filterState.filters)
+            ? filterState.filters.filter((filter) => filter?.field)
+            : [];
+
+        if (!appliedFilters.length) {
+            setSearchText(filterState.searchText || "");
+            setSelectedFilterId(filterState.selectedFilterId || "");
+            return;
+        }
+
+        const defaultFieldSet = new Set(
+            defaultFilters.map((filter) => filter?.field).filter(Boolean)
+        );
+        const appliedFilterItems = appliedFilters.map((filter) =>
+            buildFilterItem({
+                ...filter,
+                id: `${filter.field}-${defaultFieldSet.has(filter.field) ? "default" : "applied"}`,
+                isDefault: defaultFieldSet.has(filter.field),
+            })
+        );
+        const appliedFieldSet = new Set(appliedFilterItems.map((item) => item.field));
+        const missingDefaultItems = defaultFilters
+            .filter((filter) => filter?.field && !appliedFieldSet.has(filter.field))
+            .map((filter) => buildFilterItem({ ...filter, isDefault: true }));
+
+        setSearchText(filterState.searchText || "");
+        setSelectedFilterId(filterState.selectedFilterId || "");
+        setActiveFilters([...missingDefaultItems, ...appliedFilterItems]);
+    }, [appliedFilterKey, defaultFilterKey, fields.length]);
 
     useEffect(() => {
         if (!defaultFilters.length || autoAppliedDefaultKeyRef.current === defaultFilterKey) return;

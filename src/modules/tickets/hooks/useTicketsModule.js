@@ -16,6 +16,7 @@ import {
   selectTicketsPagination,
   selectTicketsRows,
   selectTicketsSelectedRowIds,
+  selectTicketsViewAll,
   setTicketsPage,
   setTicketsSelection,
   setTicketsDefualtFilters,
@@ -37,6 +38,7 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
   const ticketList = useAppSelector(selectTicketsRows);
   const pagination = useAppSelector(selectTicketsPagination);
   const page = useAppSelector(selectTicketsPage);
+  const viewAll = useAppSelector(selectTicketsViewAll);
   const loading = useAppSelector(selectTicketsLoading);
   const deleting = useAppSelector(selectTicketsDeleting);
   const selectedRowIds = useAppSelector(selectTicketsSelectedRowIds);
@@ -45,7 +47,6 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
   const [viewMode, setViewMode] = useState(getViewMode(resolvedMenuID) || "table");
-  const [viewAll, setViewAll] = useState(false);
   const [quickFilter, setQuickFilter] = useState("");
   const [quickFilterList, setQuickFilterList] = useState(TICKET_QUICK_FILTERS);
   const [kanbanReloadVersion, setKanbanReloadVersion] = useState(0);
@@ -255,7 +256,6 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
     viewMode,
     setViewMode,
     viewAll,
-    setViewAll,
     quickFilter,
     quickFilterList,
     setQuickFilter,

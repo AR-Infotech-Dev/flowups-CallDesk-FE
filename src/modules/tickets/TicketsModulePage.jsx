@@ -1,6 +1,6 @@
 import { Columns3, Table2 } from "lucide-react";
 import { useAuth } from "@auth/components/AuthProvider";
-import { useAppSelector, useModuleFilters } from "@store/hooks";
+import { useAppDispatch, useAppSelector, useModuleFilters } from "@store/hooks";
 import { getNextSortConfig } from "@utils/sorting";
 import ModuleControls from "@shared/ModuleControls";
 import ModulePageLayout from "@shared/ModulePageLayout";
@@ -15,9 +15,10 @@ import TicketTableRow from "./components/TicketTableRow";
 import { ticketsModuleSchema } from "./data/module.schema";
 import { useTicketsModule } from "./hooks/useTicketsModule";
 import { useTicketsTableConfig } from "./hooks/useTicketsTableConfig";
-import { selectTicketsDefaultFilters } from "./data/tickets.slice";
+import { selectTicketsDefaultFilters, setTicketsPage, setTicketsViewAll } from "./data/tickets.slice";
 function TicketsModulePage({ menu_id }) {
   const { authSession } = useAuth();
+  const dispatch = useAppDispatch();
   const roleSlug = authSession?.user?.role_slug;
   const resolvedMenuID = menu_id || ticketsModuleSchema.menu_id || null;
   const permissions = useMenuPermissions(resolvedMenuID);
@@ -42,7 +43,6 @@ function TicketsModulePage({ menu_id }) {
     viewMode,
     setViewMode,
     viewAll,
-    setViewAll,
     quickFilter,
     quickFilterList,
     setQuickFilter,
@@ -85,6 +85,13 @@ function TicketsModulePage({ menu_id }) {
     if (page !== 1) {
       handlePageChange(1);
     }
+  };
+
+  const handleViewAllToggle = () => {
+    if (page !== 1) {
+      dispatch(setTicketsPage(1));
+    }
+    dispatch(setTicketsViewAll(!viewAll));
   };
 
   const canViewAll = roleSlug === "admin" || roleSlug === "super_admin";
@@ -158,7 +165,12 @@ function TicketsModulePage({ menu_id }) {
                 </div>
 
                 {canViewAll ? (
-                  <ActionButton variant={viewAll ? "ghostPrimary" : "ghost"} onClick={() => setViewAll((prev) => !prev)}>
+                  <ActionButton
+                    variant="ghost"
+                    className={viewAll ? "ticket-view-all-button active" : "ticket-view-all-button"}
+                    aria-pressed={viewAll}
+                    onClick={handleViewAllToggle}
+                  >
                     All
                   </ActionButton>
                 ) : null}
