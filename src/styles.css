@@ -1695,6 +1695,18 @@ button {
   background: transparent;
 }
 
+.ticket-view-all-button.active {
+  color: #ffffff;
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.ticket-view-all-button.active:hover {
+  color: #ffffff;
+  border-color: var(--primary-700);
+  background: var(--primary-700);
+}
+
 .module-table-panel {
   display: flex;
   flex: 1;
