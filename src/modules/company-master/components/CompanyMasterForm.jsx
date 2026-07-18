@@ -18,15 +18,20 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
     fetchingCompany,
     formData,
     errors,
-    connectionBadge,
+    connectionEmailBadge,
+    connectionDBBadge,
     handleClose,
     handleChange,
     handleLogoUpload,
     handleRemoveLogo,
     handleSave,
-    handleTestConnection,
+    handleTestEmailConnection,
+    handleTestDBConnection
+
   } = useCompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave });
 
+  const EmailConnectionIcon = connectionEmailBadge.icon;
+  const DBConnectionBadge = connectionDBBadge.icon;
   if (!isOpen) {
     return null;
   }
@@ -37,6 +42,17 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
       onClose={handleClose}
       title={selectedCompany ? "Edit Company" : "Create Company"}
       panelClassName="!w-[640px] max-w-full"
+      subtitle={
+        <>
+          <div className="flex gap-2">
+            <span className={`flex gap-1 items-center rounded-sm  border px-1 py-1 font-semibold ${connectionEmailBadge.className} text-[10px]`} title={connectionEmailBadge.title}><EmailConnectionIcon size={14} className={connectionEmailBadge.spin ? "animate-spin" : ""} /></span>
+            {
+              formData.own_db_enabled === 'yes' &&
+              <span className={`flex gap-1 items-center rounded-sm justify-center  border px-1 py-1 font-semibold ${connectionDBBadge.className} text-[10px]`} title={connectionDBBadge.title}><DBConnectionBadge size={14} className={connectionDBBadge.spin ? "animate-spin" : ""} /></span>
+            }
+          </div>
+        </>
+      }
       closeButton={
         <button className="flyout-close" onClick={handleClose} aria-label="Close panel">
           <X size={18} />
@@ -44,12 +60,15 @@ function CompanyMasterForm({ isOpen, onClose, selectedCompany, onAfterSave, menu
       }
       footer={
         <div className="flex w-full items-center justify-end gap-3">
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${connectionBadge.className}`}>
-            {connectionBadge.label}
-          </span>
-          <ActionButton disabled={loading || fetchingCompany || testingConnection} variant="flyoutSecondary" onClick={handleTestConnection}>
+          <ActionButton disabled={loading || fetchingCompany || testingConnection} variant="flyoutSecondary text-[8px]" onClick={handleTestEmailConnection}>
             {testingConnection ? <Spinner /> : null} Test Connection
           </ActionButton>
+          {
+            formData.own_db_enabled === 'yes' &&
+            <ActionButton disabled={loading || fetchingCompany || testingConnection} variant="flyoutSecondary" onClick={handleTestDBConnection}>
+              {testingConnection ? <Spinner /> : null} Test DB Connection
+            </ActionButton>
+          }
           <ActionButton disabled={loading || fetchingCompany} variant="flyoutSecondary" onClick={handleClose}>
             Cancel
           </ActionButton>

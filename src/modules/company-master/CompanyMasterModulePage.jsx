@@ -14,6 +14,7 @@ import CompanyMasterTableRow from "./components/CompanyMasterTableRow";
 import { companyMasterSchema } from "./data/module.schema";
 import { useCompanyMasterModule } from "./hooks/useCompanyMasterModule";
 import { useCompanyMasterTableConfig } from "./hooks/useCompanyMasterTableConfig";
+import { Upload } from "lucide-react";
 
 function CompanyMasterModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || companyMasterSchema.menu_id || null;
@@ -38,6 +39,7 @@ function CompanyMasterModulePage({ menu_id }) {
     handleToggleAllRows,
     handleDeleteSelected,
     handleDeleteRow,
+    handleDBExport
   } = useCompanyMasterModule({ filterState });
 
   const {
@@ -139,6 +141,15 @@ function CompanyMasterModulePage({ menu_id }) {
                 table={table}
               />
             )}
+            rowActions={[
+              {
+                key: "exportDB",
+                label: "Export DB",
+                icon: Upload,
+                className: "table-action-edit",
+                onClick: handleDBExport,
+              },
+            ]}
           />
         }
         footer={<ModulePagination pagination={pagination} onPageChange={handlePageChange} />}

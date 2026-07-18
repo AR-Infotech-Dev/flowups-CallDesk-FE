@@ -190,10 +190,10 @@ export const buildMenusFromPermissions = (permissions = {}) => {
     .filter(Boolean);
 };
 
-export const fetchUserPermissions = async (userId) => {
+export const fetchUserPermissions = async (userId, companyId = "") => {
   if (!userId) return {};
 
-  const res = await getPermissions(userId);
+  const res = await getPermissions(userId, companyId);
 
   return res?.success ? normalizePermissionMap(res) : {};
 };

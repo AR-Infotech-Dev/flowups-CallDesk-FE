@@ -58,6 +58,8 @@ export const clearAuthSession = () => {
   localStorage.removeItem("user");
   localStorage.removeItem(PERMISSIONS_KEY);
   localStorage.removeItem(MENU_KEY);
+  window.dispatchEvent(new CustomEvent("crm:auth-logout"));
+  window.dispatchEvent(new CustomEvent("crm:menus-updated", { detail: [] }));
 };
 
 export const getCurrentSession = () => {
@@ -78,4 +80,8 @@ export const logoutFromLocalAuth = () => {
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(PERMISSIONS_KEY);
   localStorage.removeItem(MENU_KEY);
+  window.dispatchEvent(new CustomEvent("crm:auth-logout"));
+  window.dispatchEvent(new CustomEvent("crm:menus-updated", { detail: [] }));
 };
+
+

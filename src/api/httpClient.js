@@ -110,9 +110,6 @@ export const makeRequest = async (url, options = {}) => {
     if (error.response) {
       if (error.response.status === 401 && [2006, 2007, 2009].includes(error?.response?.data?.code)) {
         clearAuthSession();
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 2000)
       }
       return {
         ...error.response.data,
@@ -155,3 +152,5 @@ async function parseResponse(response) {
 
   return payload;
 }
+
+

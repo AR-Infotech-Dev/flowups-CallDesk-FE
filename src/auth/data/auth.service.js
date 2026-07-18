@@ -22,6 +22,7 @@ export const getOtp = async ({ email = "" }) => {
         body: { email },
     });
 }
+
 export const verifyOtp = async ({ otp = "", newPassword = "", confirmPassword = "" }) => {
     return await makeRequest("verifyOtp", {
         method: "POST",
@@ -32,11 +33,14 @@ export const verifyOtp = async ({ otp = "", newPassword = "", confirmPassword = 
         },
     });
 }
-export const getPermissions = async (userId) => {
+
+export const getPermissions = async (userId, companyId = "") => {
     return await makeRequest(`/get-permissions/${userId}`, {
-        method: "GET",
+        method: "POST",
+        body: { company_id: companyId },
     });
 }
+
 export const getMenus = async () => {
     return await makeRequest("/get-menus", {
         method: "POST",

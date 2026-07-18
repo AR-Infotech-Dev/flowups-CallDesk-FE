@@ -14,6 +14,7 @@ import {
   setCompanyMasterSelection,
 } from "../data/companyMaster.slice";
 import { getCompanyIdentifier } from "../utils/companyMaster.utils";
+import { exportCompanyDb } from "../data/companyMaster.service";
 
 export const useCompanyMasterModule = ({ filterState }) => {
   const dispatch = useAppDispatch();
@@ -93,6 +94,9 @@ export const useCompanyMasterModule = ({ filterState }) => {
 
     toast.error(action.payload || "Error while deleting company");
   };
+  const handleDBExport = async (row) => {
+    await exportCompanyDb(row);
+  };
 
   return {
     companyList,
@@ -107,5 +111,7 @@ export const useCompanyMasterModule = ({ filterState }) => {
     handleToggleAllRows,
     handleDeleteSelected,
     handleDeleteRow,
+    handleDBExport
   };
+
 };

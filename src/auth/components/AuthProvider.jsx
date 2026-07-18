@@ -12,7 +12,15 @@ function AuthProvider({ children }) {
     if (session) {
       setAuthSession(session);
     }
-  }, []);
+
+    const handleAuthLogout = () => {
+      setAuthSession(null);
+      navigate("/login", { replace: true });
+    };
+
+    window.addEventListener("crm:auth-logout", handleAuthLogout);
+    return () => window.removeEventListener("crm:auth-logout", handleAuthLogout);
+  }, [navigate]);
 
   const value = useMemo(() => ({
     authSession,
@@ -22,11 +30,9 @@ function AuthProvider({ children }) {
     logout() {
       logoutFromLocalAuth();
       setAuthSession(null);
-      setTimeout(()=>{
-        navigate('/login');
-      },2000);
+      navigate("/login", { replace: true });
     }
-  }), [authSession]);
+  }), [authSession, navigate]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -38,3 +44,6 @@ function AuthProvider({ children }) {
 export const useAuth = () => useContext(AuthContext);
 
 export default AuthProvider;
+
+
+

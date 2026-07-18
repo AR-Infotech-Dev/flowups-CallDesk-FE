@@ -10,8 +10,6 @@ document.documentElement.setAttribute("data-theme", "light");
 document.documentElement.style.colorScheme = "light";
 document.body.style.colorScheme = "light";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+

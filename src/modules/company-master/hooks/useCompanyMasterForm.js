@@ -6,12 +6,14 @@ import {
   removeCompanyLogo,
   saveCompany,
   testCompanyMailConnection,
-  uploadCompanyLogo,
+  testCompanyDBConnection,
+  uploadCompanyLogo
 } from "../data/companyMaster.service";
 import {
   buildMailConfigPayload,
   getCompanyIdentifier,
-  getConnectionBadge,
+  getDBConnectionBadge,
+  getEmailConnectionBadge,
   getLogoPathFromResponse,
   MAIL_PROVIDER_DEFAULTS,
   normalizeCompanyData,
@@ -27,8 +29,9 @@ export const useCompanyMasterForm = ({ isOpen, onClose, selectedCompany, onAfter
 
   const mode = selectedCompany ? "edit" : "create";
   const companyId = getCompanyIdentifier(selectedCompany);
-  const connectionBadge = getConnectionBadge(formData.mail_connection_status);
-
+  const connectionEmailBadge = getEmailConnectionBadge(formData.mail_connection_status);
+  const connectionDBBadge = getDBConnectionBadge(formData.db_status);
+  
   useEffect(() => {
     const fetchCompanyDetails = async () => {
       if (!isOpen || !companyId) return;
@@ -171,7 +174,7 @@ export const useCompanyMasterForm = ({ isOpen, onClose, selectedCompany, onAfter
     }
   };
 
-  const handleTestConnection = async () => {
+  const handleTestEmailConnection = async () => {
     const payload = {
       ...formData,
       status: formData.status || "active",
@@ -216,7 +219,50 @@ export const useCompanyMasterForm = ({ isOpen, onClose, selectedCompany, onAfter
       setTestingConnection(false);
     }
   };
+  const handleTestDBConnection = async () => {
+    const payload = {
+      ...formData,
+      status: formData.status || "active",
+    };
 
+    if (!validatePayload(payload)) return;
+
+    try {
+      setTestingConnection(true);
+      const res = await testCompanyDBConnection({
+        company_id: formData.company_id || companyId || null,
+        db_host: formData.db_host,
+        db_name: formData.db_name,
+        db_port: formData.db_port,
+        db_username: formData.db_username,
+        db_password: formData.db_password,
+      });
+
+      if (res.success) {
+        toast.success(res.message || "DB connection successful");
+        setFormData((current) => ({
+          ...current,
+          db_status: "connected",
+        }));
+        return;
+      }
+
+      toast.error(res.message || "DB connection failed");
+      setFormData((current) => ({
+        ...current,
+        db_status: "not_connected",
+      }));
+    } catch (error) {
+      toast.error(error.message || "DB connection failed");
+      setFormData((current) => ({
+        ...current,
+        db_status: "failed",
+      }));
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+  // testCompanyDBConnection
   return {
     companyId,
     loading,
@@ -225,12 +271,14 @@ export const useCompanyMasterForm = ({ isOpen, onClose, selectedCompany, onAfter
     fetchingCompany,
     formData,
     errors,
-    connectionBadge,
+    connectionEmailBadge,
+    connectionDBBadge,
     handleClose,
     handleChange,
     handleLogoUpload,
     handleRemoveLogo,
     handleSave,
-    handleTestConnection,
+    handleTestEmailConnection,
+    handleTestDBConnection
   };
 };

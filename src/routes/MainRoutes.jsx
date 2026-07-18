@@ -11,6 +11,7 @@ import FlowupSLoader from "../components/ui/FlowupsLoader";
 const AppLayout = lazy(() => import("@layouts/AppLayout"));
 const Dashboard = lazy(() => import("@modules/dashboard/Dashboard"));
 const UsersModulePage = lazy(() => import("@modules/users/UsersModulePage"));
+const SubscriptionModulePage = lazy(() => import("@/modules/subscription-plans/SubscriptionsModulePage"));
 const TicketsModulePage = lazy(() => import("@modules/tickets/TicketsModulePage"));
 const MenuMasterModulePage = lazy(() => import("@modules/menu-master/MenuMasterModulePage"));
 const CustomerModulePage = lazy(() => import("@modules/customer/CustomerModulePage"));
@@ -51,13 +52,14 @@ const menuRouteComponents = {
   "/companies": CompanyMasterModulePage,
   "/companyMaster": CompanyMasterModulePage,
   "/company-master": CompanyMasterModulePage,
-  "/access-control": AccessControlModulePage,
   "/work-report": WorkReportModulePage,
   "/reports/performance": PerformanceReportPage,
   "/reports/work-report": WorkReportModulePage,
   "/reports/product-expiry": ProductExpiryReport,
   "/reports/product-expiry-report": ProductExpiryReport,
   "/reports/attendance": UserAttendanceReport,
+  "/access-control": AccessControlModulePage,
+  "/subscriptions": SubscriptionModulePage,
 };
 
 function DefaultMenuRedirect() {
@@ -186,6 +188,7 @@ function MainRoutes() {
         {getAuthRoutes()}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
+            {/* CUSTOM ROUTES */}
             <Route path="/profile" element={<UserProfilePage />} />
             <Route
               path="/reports/performance"
@@ -223,6 +226,7 @@ function MainRoutes() {
             <Route path="/reports/customer-wise" element={<CompanyCustomerTicketReport />} />
             <Route path="/reports/attendance" element={<UserAttendanceReport />} />
             <Route path="/dashboard/product-expiry" element={<ProductExpiryReport />} />
+            {/* ROUTES FROM MENU MASTER */}
             {dynamicRoutes.map((route) => (
               <Route key={`${route.path}-${route.menuId}`} path={route.path} element={route.element} />
             ))}
