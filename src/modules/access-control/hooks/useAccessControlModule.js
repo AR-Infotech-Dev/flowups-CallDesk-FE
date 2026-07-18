@@ -69,7 +69,7 @@ export function useAccessControlModule({ currentUser = {} }) {
 
     try {
       setLoadingPermissions(true);
-      const res = await getIdentityPermissions(identity.id);
+      const res = await getIdentityPermissions(identity.id, identity.company_id);
 
       if (!res?.success) return {};
       return normalizePermissionMap(res);

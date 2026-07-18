@@ -312,7 +312,6 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     const isSelected = multi
       ? internalValue.some(v => v.value === item.value)
       : internalValue?.value === item.value;
-    console.log('item : ', item);
 
     return (
       <div

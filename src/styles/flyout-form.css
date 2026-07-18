@@ -1,4 +1,4 @@
-.flyout-overlay {
+﻿.flyout-overlay {
   position: absolute;
   right: 0;
   bottom: 0px;
@@ -343,6 +343,16 @@
   border-radius: 0px 0px 0 0;
   border-color: var(--border-strong);
 }
+.flowups-rich-text-editor .ql-editor {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
+.flowups-rich-text-editor .ql-editor p {
+  direction: ltr;
+  text-align: left;
+}
 
 
 @media (max-width: 900px) {
@@ -461,3 +471,4 @@
 input .py-2 {
   padding: .3rem;
 }
+

@@ -75,3 +75,24 @@ export const testCompanyMailConnection = async (payload) => {
     body: JSON.stringify(payload),
   });
 };
+export const testCompanyDBConnection = async (payload) => {
+  return await makeRequest(companyMasterSchema.api.testDB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+};
+export const exportCompanyDb = async (company) => {
+  const res = await makeRequest(`/companies/${company.company_id}/export-db`, {
+    method: "GET",
+    responseType: "blob",
+    timeout: 120000,
+  });
+
+  const url = window.URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${company.company_name}(bkp).sql`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+};

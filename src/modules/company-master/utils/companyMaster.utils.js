@@ -8,6 +8,16 @@ export const MAIL_PROVIDER_DEFAULTS = {
   custom: { smtp_host: "", smtp_port: "587", smtp_encryption: "tls", smtp_username: "" },
 };
 
+import {
+  CircleCheck,
+  CircleX,
+  MailCheck,
+  Database,
+  Wifi,
+  LoaderCircle,
+  TriangleAlert,
+} from "lucide-react";
+
 export const getCompanyIdentifier = (company = {}) => company?.company_id;
 
 export const getLogoUrl = (logo = "") => {
@@ -78,14 +88,23 @@ export const normalizeCompanyData = (company = {}) => {
   };
 };
 
-export const getConnectionBadge = (status = "not_tested") => {
+export const getEmailConnectionBadge = (status = "not_tested") => {
+  
   if (status === "connected") {
-    return { label: "Connected", className: "bg-green-50 text-green-700 border-green-200" };
+    return { icon: MailCheck, title: 'Email Connected', label: "Connected", className: "bg-green-50 text-green-700 border-green-200", };
   }
 
   if (status === "failed") {
-    return { label: "Failed", className: "bg-red-50 text-red-700 border-red-200" };
+    return { icon: MailCheck, title: 'Email Failed', label: "Failed", className: "bg-red-50 text-red-700 border-red-200", };
   }
 
-  return { label: "Not Tested", className: "bg-slate-50 text-slate-600 border-slate-200" };
+  return { icon: MailCheck, title: 'Email Not Tested', label: "Not Tested", className: "bg-slate-50 text-slate-600 border-slate-200", };
+};
+
+export const getDBConnectionBadge = (status = "not_connected") => {
+  if (status === "connected") {
+    return { icon: Database, title: 'DB Connected', label: "Connected", className: "bg-green-50 text-green-700 border-green-200", iconClassName: "" };
+  }
+
+  return { icon: Database, title: 'DB Not Connected', label: "Not Connected", className: "bg-amber-50 text-amber-600 border-amber-200", iconClassName: "animate-pulse" };
 };
