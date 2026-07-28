@@ -17,7 +17,7 @@ export function UserPerformanceToolbar({ loading, canExport, onBack, onExportExc
           <Download size={14} />
           Export Excel
         </button>
-        <button
+        {/* <button
           type="button"
           className="performance-button"
           disabled={!canExport || loading}
@@ -25,7 +25,7 @@ export function UserPerformanceToolbar({ loading, canExport, onBack, onExportExc
         >
           <FileText size={14} />
           Export PDF
-        </button>
+        </button> */}
       </div>
     </div>
   );

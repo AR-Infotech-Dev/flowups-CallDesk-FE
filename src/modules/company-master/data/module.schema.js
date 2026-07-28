@@ -154,7 +154,8 @@ export const companyMasterSchema = {
           { name: "sender_email", label: "Sender Email", type: "email", required: true, placeholder: "Enter sender email", gridSpan: 4 },
           { name: "sender_name", label: "Sender Name", type: "text", placeholder: "Enter sender name", gridSpan: 4 },
           { name: "cc_email", label: "CC Email", type: "email", placeholder: "Enter CC email", gridSpan: 4 },
-          { name: "email_app_password", label: "Email App Password", type: "password", placeholder: "Enter email app password", gridSpan: 4 },
+          // { name: "email_app_password", label: "Email App Password", type: "password", placeholder: "Enter email app password", gridSpan: 4 },
+          { name: "email_app_password", label: "Email App Password", type: "text", placeholder: "Enter email app password", gridSpan: 4 },
         ],
       },
       {
