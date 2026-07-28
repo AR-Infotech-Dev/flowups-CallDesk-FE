@@ -29,6 +29,8 @@ const CustomerReport = lazy(() => import("@modules/reports/customer-report/Custo
 const ProductExpiryReport = lazy(() => import("@modules/reports/product-expiry-report/ProductExpiryReport"));
 const UserMarkers = lazy(() => import("@modules/dashboard/UserMarkers"));
 const UserProfilePage = lazy(() => import("@modules/profile/UserProfilePage"));
+const FeedbackModulePage = lazy(() => import("@modules/feedbacks/FeedbacksModulePage"));
+
 
 const withPermission = (menuId, element) => (
   <PermissionRoute menuId={menuId}>{element}</PermissionRoute>
@@ -60,6 +62,7 @@ const menuRouteComponents = {
   "/reports/attendance": UserAttendanceReport,
   "/access-control": AccessControlModulePage,
   "/subscriptions": SubscriptionModulePage,
+  "/feedbacks-reveiw": FeedbackModulePage
 };
 
 function DefaultMenuRedirect() {
