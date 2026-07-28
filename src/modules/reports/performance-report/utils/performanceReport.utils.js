@@ -24,10 +24,10 @@ export const getPerformanceExportPermission = ({ menuId, user }) => {
 
   const permission = getMenuPermission(menuId);
   return Boolean(
-    permission.can_export_reports ||
-    permission.export_reports ||
-    permission.can_export ||
-    hasMenuActionPermission({ menuId, action: "export", user })
+    // permission.can_view ||
+    // permission.export_reports ||
+    // permission.can_export ||
+    hasMenuActionPermission({ menuId, action: "view", user })
   );
 };
 
