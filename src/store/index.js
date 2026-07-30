@@ -9,6 +9,7 @@ import companyMasterReducer from "@modules/company-master/data/companyMaster.sli
 import menuMasterReducer from "@modules/menu-master/data/menuMaster.slice";
 import ticketsReducer from "@modules/tickets/data/tickets.slice";
 import subscriptionsReducer from "@modules/subscription-plans/data/subscriptions.slice";
+import feedbacksReducer from "@modules/feedbacks/data/feedbacks.slice";
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     menuMaster: menuMasterReducer,
     tickets: ticketsReducer,
     subscriptions: subscriptionsReducer,
+    feedbacks: feedbacksReducer,
   },
 });
 
