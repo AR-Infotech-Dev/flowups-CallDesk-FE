@@ -5,6 +5,7 @@ function ModulePageLayout({
   description,
   controls,
   table,
+  cards,
   footer,
   children,
   classNames=""
@@ -21,6 +22,8 @@ function ModulePageLayout({
         {controls}
         {children}
       </div>
+      
+      {cards ? <div className="module-cards-panel">{cards}</div> : null} 
       {table ? <div className="module-table-panel">{table}</div> : null} 
       {footer ? <div className="module-table-footer">{footer}</div> : null}
     </section>
