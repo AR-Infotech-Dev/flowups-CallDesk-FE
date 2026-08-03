@@ -30,6 +30,7 @@ const ProductExpiryReport = lazy(() => import("@modules/reports/product-expiry-r
 const UserMarkers = lazy(() => import("@modules/dashboard/UserMarkers"));
 const UserProfilePage = lazy(() => import("@modules/profile/UserProfilePage"));
 const FeedbackModulePage = lazy(() => import("@modules/feedbacks/FeedbacksModulePage"));
+const AmcticketsModulePage = lazy(() => import("@modules/amc-tickets/AmcticketsModulePage"));
 
 
 const withPermission = (menuId, element) => (
@@ -62,7 +63,8 @@ const menuRouteComponents = {
   "/reports/attendance": UserAttendanceReport,
   "/access-control": AccessControlModulePage,
   "/subscriptions": SubscriptionModulePage,
-  "/feedbacks-reveiw": FeedbackModulePage
+  "/feedbacks-reveiw": FeedbackModulePage,
+  "/amctickets": AmcticketsModulePage
 };
 
 function DefaultMenuRedirect() {
