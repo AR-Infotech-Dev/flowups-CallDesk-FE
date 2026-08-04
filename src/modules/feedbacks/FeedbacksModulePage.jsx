@@ -67,7 +67,7 @@ function FeedbacksModulePage({ menu_id }) {
 
   /*
    * Review rating API call
-   */
+   */ 
   const getReviewRatingData = useCallback(async () => {
     try {
       setRatingLoading(true);
@@ -75,10 +75,7 @@ function FeedbacksModulePage({ menu_id }) {
 
       const response = await fetchReviewRatings();
 
-      console.log(
-        "Review Rating API Response:",
-        response
-      );
+       
 
       /*
        * Axios response:
@@ -147,9 +144,7 @@ function FeedbacksModulePage({ menu_id }) {
     JSON.stringify(filterState.filters),
   ]);
 
-  /*
-   * Search/filter/sort change झाल्यावर page 1
-   */
+  
   useEffect(() => {
     if (page !== 1) {
       handlePageChange(1);
@@ -161,9 +156,7 @@ function FeedbacksModulePage({ menu_id }) {
     JSON.stringify(filterState.filters),
   ]);
 
-  /*
-   * Rating data fetch
-   */
+  
   useEffect(() => {
     getReviewRatingData();
   }, [getReviewRatingData]);
