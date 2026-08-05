@@ -8,8 +8,9 @@ import amcManagementReducer from "@modules/amc-reminders/data/amcReminder.slice"
 import companyMasterReducer from "@modules/company-master/data/companyMaster.slice";
 import menuMasterReducer from "@modules/menu-master/data/menuMaster.slice";
 import ticketsReducer from "@modules/tickets/data/tickets.slice";
+import amcticketsReducer from "@modules/amc-tickets/data/anctickets.slice";
 import subscriptionsReducer from "@modules/subscription-plans/data/subscriptions.slice";
-
+import feedbacksReducer from "@modules/feedbacks/data/feedbacks.slice.js";
 export const store = configureStore({
   reducer: {
     moduleFilters: moduleFiltersReducer,
@@ -21,7 +22,9 @@ export const store = configureStore({
     companyMaster: companyMasterReducer,
     menuMaster: menuMasterReducer,
     tickets: ticketsReducer,
+    amctickets: amcticketsReducer,
     subscriptions: subscriptionsReducer,
+    feedbacks: feedbacksReducer,
   },
 });
 

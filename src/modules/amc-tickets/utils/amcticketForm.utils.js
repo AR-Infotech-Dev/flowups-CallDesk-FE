@@ -1,6 +1,7 @@
 import { ticketsModuleSchema } from "../data/module.schema";
 
-export const getTicketIdentifier = (ticket = {}) => ticket?.ticket_id;
+export const getAmcticketIdentifier = (amcticket = {}) =>
+  amcticket?.ticket_id ?? amcticket?.ticketID ?? amcticket?.id;
 
 export const safeParseJson = (value, fallback) => {
   try {
@@ -50,10 +51,10 @@ export const findCustomerContactByMobile = (contacts = [], mobile = "") => {
   return normalizeCustomerContacts(contacts).find((contact) => normalizeMobileNumber(contact.mobile_no) === normalizedMobile) || null;
 };
 
-export const normalizeTicketAddOns = (source = []) => {
+export const normalizeAmcticketAddOns = (source = []) => {
   if (typeof source === "string") {
     try {
-      return normalizeTicketAddOns(JSON.parse(source));
+      return normalizeAmcticketAddOns(JSON.parse(source));
     } catch {
       return source.split(",").map((item) => item.trim()).filter(Boolean);
     }
@@ -72,53 +73,52 @@ export const normalizeTicketAddOns = (source = []) => {
     .filter(Boolean);
 };
 
-export const normalizeTicketAddOn = (source = "") => normalizeTicketAddOns(source)[0] || "";
+export const normalizeAmcticketAddOn = (source = "") => normalizeAmcticketAddOns(source)[0] || "";
 
 export const isCustomizationQueryName = (value = "") => {
   const normalized = String(value || "").trim().toLowerCase();
   return normalized === "customization" || normalized === "customizations";
 };
 
-export const normalizeTicketData = (ticket = {}) => ({
+export const normalizeAmcticketData = (amcticket = {}) => ({
   ...ticketsModuleSchema.form.initialValues,
-  ...ticket,
-  description: ticket?.description || null,
-  contact_no: ticket?.contact_no || null,
-  start_date: ticket?.start_date
-    ? new Date(ticket.start_date).toISOString().split("T")[0]
+  ...amcticket,
+  amcticket_id: getAmcticketIdentifier(amcticket) || null,
+  description: amcticket?.description || null,
+  contact_no: amcticket?.contact_no || null,
+  start_date: amcticket?.start_date
+    ? new Date(amcticket.start_date).toISOString().split("T")[0]
     : null,
-  due_date: ticket?.due_date
-    ? new Date(ticket.due_date).toISOString().split("T")[0]
+  due_date: amcticket?.due_date
+    ? new Date(amcticket.due_date).toISOString().split("T")[0]
     : null,
-  query_type: ticket?.query_type || null,
-  ticket_status: ticket?.ticket_status || null,
-  ticket_priority: ticket?.ticket_priority || null,
-  product_id: ticket?.product_id || null,
-  product_name: ticket?.product_name || null,
-  product_serial_number: ticket?.product_serial_number || ticket?.serial_number || null,
-  product_add_ons: normalizeTicketAddOn(ticket?.product_add_ons || ticket?.add_ons || ticket?.addons || ""),
-  customer_products: normalizeCustomerProducts(ticket?.customer_products || ticket?.products || []),
-  customer_contacts: normalizeCustomerContacts(ticket?.customer_contacts || ticket?.contact_persons || []),
-  contact_persons: normalizeCustomerContacts(ticket?.contact_persons || ticket?.customer_contacts || []),
-  ratings: ticket?.ratings || null,
-  feedback_submitted: ticket?.feedback_submitted || null,
-  assignee: ticket?.assignee || null,
-  status: ticket?.status || "active",
+  query_type: amcticket?.query_type || null,
+  ticket_status: amcticket?.ticket_status || null,
+  ticket_priority: amcticket?.ticket_priority || null,
+  product_id: amcticket?.product_id || null,
+  product_name: amcticket?.product_name || null,
+  product_serial_number: amcticket?.product_serial_number || amcticket?.serial_number || null,
+  product_add_ons: normalizeAmcticketAddOn(amcticket?.product_add_ons || amcticket?.add_ons || amcticket?.addons || ""),
+  customer_products: normalizeCustomerProducts(amcticket?.customer_products || amcticket?.products || []),
+  customer_contacts: normalizeCustomerContacts(amcticket?.customer_contacts || amcticket?.contact_persons || []),
+  contact_persons: normalizeCustomerContacts(amcticket?.contact_persons || amcticket?.customer_contacts || []),
+  assignee: amcticket?.assignee || null,
+  status: amcticket?.status || "active",
 });
 
-export const normalizeTicketCustomerData = (ticket = {}) => {
+export const normalizeAmcticketCustomerData = (amcticket = {}) => {
   const customer =
-    ticket?.customer ||
-    ticket?.client ||
-    ticket?.customer_details ||
-    ticket?.client_details ||
+    amcticket?.customer ||
+    amcticket?.client ||
+    amcticket?.customer_details ||
+    amcticket?.client_details ||
     {};
 
   const customerId =
     customer?.customer_id ||
     customer?.id ||
-    ticket?.customer_id ||
-    ticket?.client_id;
+    amcticket?.customer_id ||
+    amcticket?.client_id;
 
   if (!customerId) return {};
 
@@ -127,24 +127,24 @@ export const normalizeTicketCustomerData = (ticket = {}) => {
     customer_id: customerId,
     name:
       customer?.name ||
-      ticket?.customer_name ||
-      ticket?.client_name ||
-      ticket?.client ||
+      amcticket?.customer_name ||
+      amcticket?.client_name ||
+      amcticket?.client ||
       "",
     created_date:
       customer?.created_date ||
-      ticket?.customer_created_date ||
-      ticket?.client_created_date ||
+      amcticket?.customer_created_date ||
+      amcticket?.client_created_date ||
       "",
     mobile_no:
       customer?.mobile_no ||
-      ticket?.mobile_no ||
-      ticket?.contact_no ||
+      amcticket?.mobile_no ||
+      amcticket?.contact_no ||
       "",
-    customer_products: normalizeCustomerProducts(customer?.customer_products || customer?.products || ticket?.customer_products || ticket?.products || []),
-    customer_contacts: normalizeCustomerContacts(customer?.customer_contacts || customer?.contact_persons || ticket?.customer_contacts || ticket?.contact_persons || []),
-    contact_persons: normalizeCustomerContacts(customer?.contact_persons || customer?.customer_contacts || ticket?.contact_persons || ticket?.customer_contacts || []),
-    products: normalizeCustomerProducts(customer?.products || ticket?.products || customer?.customer_products || ticket?.customer_products || []),
+    customer_products: normalizeCustomerProducts(customer?.customer_products || customer?.products || amcticket?.customer_products || amcticket?.products || []),
+    customer_contacts: normalizeCustomerContacts(customer?.customer_contacts || customer?.contact_persons || amcticket?.customer_contacts || amcticket?.contact_persons || []),
+    contact_persons: normalizeCustomerContacts(customer?.contact_persons || customer?.customer_contacts || amcticket?.contact_persons || amcticket?.customer_contacts || []),
+    products: normalizeCustomerProducts(customer?.products || amcticket?.products || customer?.customer_products || amcticket?.customer_products || []),
   };
 };
 
@@ -153,33 +153,33 @@ export const getPrimaryCustomerContact = (contacts = []) => {
   return normalizedContacts.find((contact) => contact.is_primary === "y") || normalizedContacts[0] || null;
 };
 
-export const mergeCurrentTicketProduct = (products = [], ticket = {}) => {
+export const mergeCurrentAmcticketProduct = (products = [], amcticket = {}) => {
   const normalizedProducts = normalizeCustomerProducts(products);
-  if (!ticket?.product_id) return normalizedProducts;
+  if (!amcticket?.product_id) return normalizedProducts;
 
-  const hasCurrentProduct = normalizedProducts.some((product) => String(product.product_id) === String(ticket.product_id));
+  const hasCurrentProduct = normalizedProducts.some((product) => String(product.product_id) === String(amcticket.product_id));
   if (hasCurrentProduct) return normalizedProducts;
 
   return [
     {
-      product_id: ticket.product_id,
-      product_name: ticket.product_name || "",
-      serial_number: ticket.product_serial_number || ticket.serial_number || "",
+      product_id: amcticket.product_id,
+      product_name: amcticket.product_name || "",
+      serial_number: amcticket.product_serial_number || amcticket.serial_number || "",
     },
     ...normalizedProducts,
   ];
 };
 
-export const mergeCurrentTicketContact = (contacts = [], ticket = {}) => {
+export const mergeCurrentAmcticketContact = (contacts = [], amcticket = {}) => {
   const normalizedContacts = normalizeCustomerContacts(contacts);
-  const ticketContactName = String(ticket?.contact_person || "").trim();
-  const ticketContactMobile = normalizeMobileNumber(ticket?.contact_no);
+  const amcticketContactName = String(amcticket?.contact_person || "").trim();
+  const amcticketContactMobile = normalizeMobileNumber(amcticket?.contact_no);
 
-  if (!ticketContactName && !ticketContactMobile) return normalizedContacts;
+  if (!amcticketContactName && !amcticketContactMobile) return normalizedContacts;
 
   const hasCurrentContact = normalizedContacts.some((contact) => {
-    const sameMobile = ticketContactMobile && normalizeMobileNumber(contact.mobile_no) === ticketContactMobile;
-    const sameName = ticketContactName && String(contact.name || "").trim() === ticketContactName;
+    const sameMobile = amcticketContactMobile && normalizeMobileNumber(contact.mobile_no) === amcticketContactMobile;
+    const sameName = amcticketContactName && String(contact.name || "").trim() === amcticketContactName;
     return sameMobile || sameName;
   });
 
@@ -188,8 +188,8 @@ export const mergeCurrentTicketContact = (contacts = [], ticket = {}) => {
   return [
     {
       contact_id: "",
-      name: ticketContactName || ticketContactMobile,
-      mobile_no: ticketContactMobile,
+      name: amcticketContactName || amcticketContactMobile,
+      mobile_no: amcticketContactMobile,
       email: "",
       designation: "",
       department: "",
@@ -199,7 +199,7 @@ export const mergeCurrentTicketContact = (contacts = [], ticket = {}) => {
   ];
 };
 
-export const buildTicketSavePayload = (formData = {}) => {
+export const buildAmcticketSavePayload = (formData = {}) => {
   const {
     customer_products,
     customer_contacts,
@@ -209,7 +209,7 @@ export const buildTicketSavePayload = (formData = {}) => {
 
   return {
     ...ticketPayload,
-    product_add_ons: normalizeTicketAddOn(formData.product_add_ons),
+    product_add_ons: normalizeAmcticketAddOn(formData.product_add_ons),
     contact_details: formData.save_contact
       ? {
         ...(formData.contact_details || {}),

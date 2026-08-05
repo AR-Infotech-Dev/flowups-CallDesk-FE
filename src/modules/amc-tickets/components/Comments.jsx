@@ -67,9 +67,9 @@ function normalizeComments(rows = []) {
   }));
 }
 
-function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, endpoints = DEFAULT_ENDPOINTS,}) {
+function Comments({ COMMENTS = [], module = "amctickets", amcticket_id, module_id, endpoints = DEFAULT_ENDPOINTS,}) {
   const user_id = localStorage.getItem("_auth_id")
-  const resolvedId = ticket_id || module_id;
+  const resolvedId = amcticket_id || module_id;
   const api = { ...DEFAULT_ENDPOINTS, ...endpoints };
 
   const [comments, setComments] = useState(() => normalizeComments(COMMENTS));
@@ -92,6 +92,7 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
       setComments(normalizeComments(COMMENTS));
       return;
     }
+
     try {
       setLoading(true);
       const res = await makeRequest(api.list, {
@@ -103,7 +104,7 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
           order: 'DESC',
           user_id: user_id,
           module_id: resolvedId,
-          ticket_id: resolvedId,
+          amcticket_id: resolvedId,
           getAll: "Y",
         }),
       });
@@ -149,7 +150,7 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
 
   const handleSave = async () => {
     if (!resolvedId) {
-      toast.error("Ticket id not found");
+      toast.error("Amcticket id not found");
       return;
     }
 
@@ -169,8 +170,8 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
         body: JSON.stringify({
           module,
           module_id: resolvedId,
-          ticket_id: resolvedId,
-          record_type: "ticket",
+          amcticket_id: resolvedId,
+          record_type: "amcticket",
           comment: commentValue,
           status: "active",
         }),
@@ -208,7 +209,7 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
           comment_id: commentId,
           module,
           module_id: resolvedId,
-          ticket_id: resolvedId,
+          amcticket_id: resolvedId,
         }),
       });
 

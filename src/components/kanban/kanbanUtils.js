@@ -127,3 +127,58 @@ export function isInlineColorValue(value) {
 
   return /^(#|rgb|hsl|var\()/i.test(String(value).trim());
 }
+export function formatFieldValue(field, value) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  if (field?.type === "date") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString("en-IN");
+    }
+  }
+
+  return String(value);
+}
+function formatDateRange(row) {
+  const startDate = row?.start_date ? formatFieldValue({ type: "date" }, row.start_date) : "-";
+  const dueDate = row?.due_date ? formatFieldValue({ type: "date" }, row.due_date) : "-";
+  return `${startDate} - ${dueDate}`;
+}
+export function isOverdue(row, columnId, config) {
+  const dueDateValue = row?.due_date;
+  if (!dueDateValue) {
+    return false;
+  }
+
+  const doneColumns = config?.doneColumnIds || [];
+  if (doneColumns.map(String).includes(String(columnId))) {
+    return false;
+  }
+
+  const columnTitle = String(row?._kanbanColumnTitle || "").toLowerCase();
+  if (/(closed|complete|completed|done)/i.test(columnTitle)) {
+    return false;
+  }
+
+  const dueDate = new Date(dueDateValue);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+
+  return !Number.isNaN(dueDate.getTime()) && dueDate < today;
+}
+export function getAvatarLabel(avatar_text) {
+  const source = avatar_text || "";
+
+  const parts = String(source).trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) {
+    return "?";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
+}

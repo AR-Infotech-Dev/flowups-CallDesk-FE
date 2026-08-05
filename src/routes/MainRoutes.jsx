@@ -23,6 +23,9 @@ const AccessControlModulePage = lazy(() => import("@modules/access-control/Acces
 const PerformanceReportPage = lazy(() => import("@modules/reports/performance-report/PerformanceReportPage"));
 const UserPerformancePage = lazy(() => import("@modules/reports/performance-report/UserPerformancePage"));
 const CompanyCustomerTicketReport = lazy(() => import("@modules/reports/customer-wise-report/CompanyCustomerTicketReport"));
+
+const UserWiseAttendanceTicketReport = lazy(() => import("@modules/reports/user-wise-attendance-report/UserWiseAttendanceTicketReport"));
+
 const UserAttendanceReport = lazy(() => import("@modules/reports/attendance-report/UserAttendanceReport"));
 const WorkReportModulePage = lazy(() => import("@modules/reports/work-report/WorkReportModulePage"));
 const CustomerReport = lazy(() => import("@modules/reports/customer-report/CustomerReport"));
@@ -30,6 +33,7 @@ const ProductExpiryReport = lazy(() => import("@modules/reports/product-expiry-r
 const UserMarkers = lazy(() => import("@modules/dashboard/UserMarkers"));
 const UserProfilePage = lazy(() => import("@modules/profile/UserProfilePage"));
 const FeedbackModulePage = lazy(() => import("@modules/feedbacks/FeedbacksModulePage"));
+const AmcticketsModulePage = lazy(() => import("@modules/amc-tickets/AmcticketsModulePage"));
 
 
 const withPermission = (menuId, element) => (
@@ -62,7 +66,8 @@ const menuRouteComponents = {
   "/reports/attendance": UserAttendanceReport,
   "/access-control": AccessControlModulePage,
   "/subscriptions": SubscriptionModulePage,
-  "/feedbacks-reveiw": FeedbackModulePage
+  "/reviews": FeedbackModulePage,
+  "/amctickets": AmcticketsModulePage
 };
 
 function DefaultMenuRedirect() {
@@ -227,6 +232,9 @@ function MainRoutes() {
             />
             <Route path="/customer/report/:customerId" element={<CustomerReport />} />
             <Route path="/reports/customer-wise" element={<CompanyCustomerTicketReport />} />
+
+            <Route path="/reports/user-wise-attendance"element={<UserWiseAttendanceTicketReport />}/>
+
             <Route path="/reports/attendance" element={<UserAttendanceReport />} />
             <Route path="/dashboard/product-expiry" element={<ProductExpiryReport />} />
             {/* ROUTES FROM MENU MASTER */}

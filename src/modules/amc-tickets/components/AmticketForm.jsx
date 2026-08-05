@@ -5,20 +5,20 @@ import Spinner from "@components/ui/Spinner";
 import DynamicModuleForm from "@components/ui/DynamicModuleForm";
 import CustomerForm from "@modules/customer/components/CustomerForm";
 import { ticketsModuleSchema } from "../data/module.schema";
-import { useTicketForm } from "../hooks/useTicketForm";
+import { useAmcticketForm } from "../hooks/useAmcticketForm";
 import ClientHistory from "./ClientHistory";
 import Comments from "./Comments";
-import TicketHistory from "./TicketHistory";
+import AmcticketHistory from "./AmcticketHistory";
 import Visits from "./Visits";
 import WorkLogs from "./WorkLogs";
-import { findCustomerContactByMobile, normalizeMobileNumber } from "../utils/ticketForm.utils";
-import Ratings from "@/components/ui/Ratings";
+import { findCustomerContactByMobile, normalizeMobileNumber } from "../utils/amcticketForm.utils";
+
 const TAB_ITEMS = [
   ["client", "Client History", BriefcaseBusiness],
-  ["comments", "Comments", MessageSquareText],
-  ["work_logs", "Work Log", Clock3],
+  // ["comments", "Comments", MessageSquareText],
+  // ["work_logs", "Work Log", Clock3],
   ["visits", "Visits", Route],
-  ["history", "Ticket History", History],
+  ["history", "ticket History", History],
 ];
 
 const CONTACT_SECTION_INDEX = ticketsModuleSchema.form.sections.findIndex((section) =>
@@ -35,7 +35,7 @@ function QuickAddContactPanel({ formData = {}, errors = {}, onChange }) {
   const mobile = normalizeMobileNumber(formData.contact_no);
   const hasCustomer = Boolean(formData.client_id);
   const matchedContact = findCustomerContactByMobile(formData.customer_contacts || formData.contact_persons, mobile);
-  const shouldShow = hasCustomer && mobile.length === 10 && !matchedContact && !formData.ticket_id;
+  const shouldShow = hasCustomer && mobile.length === 10 && !matchedContact && !formData.amcticket_id;
 
   if (!shouldShow) return null;
 
@@ -51,7 +51,7 @@ function QuickAddContactPanel({ formData = {}, errors = {}, onChange }) {
           </span>
           <div>
             <p className="text-sm font-semibold text-slate-800">New contact for this customer</p>
-            <p className="text-xs text-slate-500">No contact found for {mobile}. It will be saved after ticket create.</p>
+            <p className="text-xs text-slate-500">No contact found for {mobile}. It will be saved after amcticket create.</p>
           </div>
         </div>
         <label className="flex items-center gap-2 whitespace-nowrap text-xs font-medium text-slate-600">
@@ -123,11 +123,11 @@ function QuickAddContactPanel({ formData = {}, errors = {}, onChange }) {
   );
 }
 
-function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
+function AmcticketForm({ isOpen, onClose, selectedAmcticket, onAfterSave, menu_id }) {
   const {
     customerMenuId,
     loading,
-    fetchingTicket,
+    fetchingAmcticket,
     formData,
     oldformData,
     selectedCustomer,
@@ -146,12 +146,12 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
     handleCustomerSaved,
     handleSave,
     closeCustomerForm,
-    fetchTicketDetails
-  } = useTicketForm({ isOpen, onClose, selectedTicket, onAfterSave });
+    fetchAmcticketDetails
+  } = useAmcticketForm({ isOpen, onClose, selectedAmcticket, onAfterSave });
 
   const afterWorkLogSave = () => {
     onAfterSave();
-    fetchTicketDetails()
+    fetchAmcticketDetails()
   }
   const visibleTabs =
     mode === "edit"
@@ -164,20 +164,14 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
       : TAB_ITEMS.filter(([key]) => key === "client");
 
   if (!isOpen) return null;
-  console.log(formData);
 
   return (
     <>
       <FlyoutPanel
         isOpen={isOpen}
         onClose={handleClose}
-        title={selectedTicket ? "Edit Ticket" : "Create Ticket"}
-        subtitle={
-          <div className="flex gap-1.5">
-            {formData.ticket_no && <span className="block w-full text-end text-[14px] text-slate-500"><span className="bg-gray-50 p-1">#{formData.ticket_no}</span></span>}
-            {formData.ratings && formData.feedback_submitted == "y" ? <Ratings ratings={formData.ratings || 0} /> : null}
-          </div>
-        }
+        title={selectedAmcticket ? "Edit ticket" : "Create ticket"}
+        subtitle={formData.amcticket_no && <span className="block w-full text-end text-[14px] text-slate-500"><span className="bg-gray-50 p-1">#{formData.amcticket_no}</span></span>}
         closeButton={
           <button className="flyout-close" onClick={handleClose} aria-label="Close panel">
             <X size={18} />
@@ -186,32 +180,32 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
         footer={
           <div className="flex w-full items-center justify-end gap-3">
             <ActionButton
-              disabled={loading || fetchingTicket}
+              disabled={loading || fetchingAmcticket}
               variant="flyoutSecondary"
               onClick={handleClose}
             >
               Cancel
             </ActionButton>
-            <ActionButton
+            {/* <ActionButton
               className={loading ? "bg-purple-200 cursor-not-allowed" : ""}
-              disabled={loading || fetchingTicket}
+              disabled={loading || fetchingAmcticket}
               variant="flyoutSecondary"
               onClick={handleSave}
             >
-              {loading || fetchingTicket ? <Spinner /> : null} Save
-            </ActionButton>
+              {loading || fetchingAmcticket ? <Spinner /> : null} Save
+            </ActionButton> */}
           </div>
         }
       >
-        <div className="flyout-form-shell ticket-form-shell">
+        <div className="flyout-form-shell amcticket-form-shell">
           <div className="ws-main-container">
-            {fetchingTicket ? (
+            {fetchingAmcticket ? (
               <div className="p-5 text-center">
                 <Spinner />
               </div>
             ) : (
-              <div className="ticket-drawer-layout grid grid-cols-12 overflow-hidden rounded-xl bg-white">
-                <div className="ticket-scroll-pane col-span-12 min-w-0 overflow-y-auto border-r border-slate-200 px-4 py-2 lg:col-span-6 xl:col-span-7">
+              <div className="amcticket-drawer-layout grid grid-cols-12 overflow-hidden rounded-xl bg-white">
+                <div className="amcticket-scroll-pane col-span-12 min-w-0 overflow-y-auto border-r border-slate-200 px-4 py-2 lg:col-span-6 xl:col-span-7">
                   <DynamicModuleForm
                     sections={FORM_SECTIONS_BEFORE_CONTACT}
                     values={formData}
@@ -271,17 +265,17 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
                         </div>
                       </div>
                     )}
-                    {tab === "history" && mode === "edit" && <TicketHistory ticket_id={ticketId} />}
-                    {tab === "comments" && mode === "edit" && <Comments module="tickets" client={selectedCustomer} ticket_id={ticketId} />}
-                    {tab === "work_logs" && mode === "edit" && <WorkLogs ticket={formData} ticket_id={ticketId} onAfterSave={afterWorkLogSave} />}
-                    {tab === "visits" && mode === "edit" && formData.visit_required === "y" && <Visits ticket={formData} ticket_id={ticketId} />}
+                    {tab === "history" && mode === "edit" && <AmcticketHistory amcticket_id={ticketId} />}
+                    {tab === "comments" && mode === "edit" && <Comments module="amctickets" client={selectedCustomer} amcticket_id={ticketId} />}
+                    {tab === "work_logs" && mode === "edit" && <WorkLogs amcticket={formData} amcticket_id={ticketId} onAfterSave={afterWorkLogSave} />}
+                    {tab === "visits" && mode === "edit" && formData.visit_required === "y" && <Visits amcticket={formData} amcticket_id={ticketId} />}
                   </div>
                 </div>
               </div>
             )}
           </div>
         </div>
-      </FlyoutPanel >
+      </FlyoutPanel>
       <CustomerForm
         isOpen={isCustomerFormOpen}
         onClose={closeCustomerForm}
@@ -294,4 +288,4 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
   );
 }
 
-export default TicketForm;
+export default AmcticketForm;
