@@ -66,7 +66,7 @@ const menuRouteComponents = {
   "/reports/attendance": UserAttendanceReport,
   "/access-control": AccessControlModulePage,
   "/subscriptions": SubscriptionModulePage,
-  "/feedbacks-reveiw": FeedbackModulePage,
+  "/reviews": FeedbackModulePage,
   "/amctickets": AmcticketsModulePage
 };
 

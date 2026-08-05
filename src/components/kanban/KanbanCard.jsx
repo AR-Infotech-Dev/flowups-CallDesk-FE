@@ -5,24 +5,11 @@ import { CalendarDays, GripVertical, UserRound } from "lucide-react";
 import { useAuth } from "@auth/components/AuthProvider";
 import { hasFieldVisiblePermission } from "@auth/utils/permissions";
 import { useKanbanContext } from "./KanbanContext";
-import { isInlineColorValue, resolveCardValue } from "./kanbanUtils";
+import { formatFieldValue, getAvatarLabel, isInlineColorValue, isOverdue, resolveCardValue } from "./kanbanUtils";
 import { isAmcActive } from "@utils/amc";
 import { getRandomAvatarColor } from "@/utils/common";
+import Ratings from "@components/ui/Ratings"
 
-function formatFieldValue(field, value) {
-  if (value === null || value === undefined || value === "") {
-    return "-";
-  }
-
-  if (field?.type === "date") {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed.toLocaleDateString("en-IN");
-    }
-  }
-
-  return String(value);
-}
 
 function FieldIcon({ type }) {
   if (type === "date") {
@@ -31,7 +18,6 @@ function FieldIcon({ type }) {
 
   return <UserRound size={12} />;
 }
-
 function AccentPill({ field, value, row }) {
   const colorValue = field?.colorField ? row?.[field.colorField] : "";
   const baseClassName = field?.type === "tag" ? "tag" : field?.type === "badge" ? "status-pill" : "kanban-card-pill";
@@ -49,50 +35,6 @@ function AccentPill({ field, value, row }) {
   );
 }
 
-function formatDateRange(row) {
-  const startDate = row?.start_date ? formatFieldValue({ type: "date" }, row.start_date) : "-";
-  const dueDate = row?.due_date ? formatFieldValue({ type: "date" }, row.due_date) : "-";
-  return `${startDate} - ${dueDate}`;
-}
-
-function isOverdue(row, columnId, config) {
-  const dueDateValue = row?.due_date;
-  if (!dueDateValue) {
-    return false;
-  }
-
-  const doneColumns = config?.doneColumnIds || [];
-  if (doneColumns.map(String).includes(String(columnId))) {
-    return false;
-  }
-
-  const columnTitle = String(row?._kanbanColumnTitle || "").toLowerCase();
-  if (/(closed|complete|completed|done)/i.test(columnTitle)) {
-    return false;
-  }
-
-  const dueDate = new Date(dueDateValue);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
-
-  return !Number.isNaN(dueDate.getTime()) && dueDate < today;
-}
-
-function getAvatarLabel(avatar_text) {
-  const source = avatar_text || "";
-
-  const parts = String(source).trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) {
-    return "?";
-  }
-
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("");
-}
-
 function KanbanCardView({ row, columnId, config, style, className = "kanban-card", dragHandleProps = {}, onOpen, interactive = true, }) {
   const { authSession } = useAuth();
   const { menuId } = useKanbanContext();
@@ -104,7 +46,11 @@ function KanbanCardView({ row, columnId, config, style, className = "kanban-card
   );
   const tagFields = cardFields.filter((field) => field?.type === "tag" || field?.type === "badge");
   const personFields = cardFields.filter((field) => field?.type === "person");
-  const detailFields = cardFields.filter((field) => field?.type !== "tag" && field?.type !== "badge" && field?.type !== "person");
+  const detailFields = cardFields.filter((field) => field?.type !== "ratings" && field?.type !== "tag" && field?.type !== "badge" && field?.type !== "person");
+  // const ratings = cardFields.filter((field) => field?.type === "ratings");
+  const ratings = cardFields.find((field) => field?.type === "ratings")
+
+
   const showStartDate = hasFieldVisiblePermission({ menuId, field: { key: "start_date", name: "start_date" }, user });
   const showDueDate = hasFieldVisiblePermission({ menuId, field: { key: "due_date", name: "due_date" }, user });
   const showDateRange = showStartDate || showDueDate;
@@ -114,15 +60,12 @@ function KanbanCardView({ row, columnId, config, style, className = "kanban-card
 
   const handleCardKeyDown = (event) => {
     onDragKeyDown?.(event);
-
     if (event.defaultPrevented) {
       return;
     }
-
     if (!interactive) {
       return;
     }
-
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onOpen?.();
@@ -139,7 +82,7 @@ function KanbanCardView({ row, columnId, config, style, className = "kanban-card
       tabIndex={interactive ? 0 : undefined}
       {...cardDragProps}
     >
-      <div className="kanban-card-head">
+      <div className="kanban-card-head relative">
         <button
           type="button"
           className="kanban-card-grip"
@@ -153,6 +96,7 @@ function KanbanCardView({ row, columnId, config, style, className = "kanban-card
         </div>
         {activeAmc ? <span className="kanban-card-amc-badge">AMC</span> : null}
         {overdue ? <span className="kanban-card-alert">Overdue</span> : null}
+        {ratings && ratings.visibleWhen(row) ? <Ratings className="absolute -top-0.5 -right-0.5 " ratings={row[ratings.key] || 0} /> : null}
       </div>
 
       <div className="kanban-card-body">
@@ -231,7 +175,6 @@ function KanbanCardView({ row, columnId, config, style, className = "kanban-card
     </article>
   );
 }
-
 function KanbanCard({ row, columnId, isActiveDrag = false }) {
   const { config, editRow } = useKanbanContext();
   const cardId = row._kanbanId;
@@ -274,7 +217,6 @@ function KanbanCard({ row, columnId, isActiveDrag = false }) {
     </div>
   );
 }
-
 export function KanbanCardPreview({ row, columnId }) {
   const { config } = useKanbanContext();
 
@@ -288,5 +230,4 @@ export function KanbanCardPreview({ row, columnId }) {
     />
   );
 }
-
 export default KanbanCard;

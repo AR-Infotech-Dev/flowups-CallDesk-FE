@@ -123,6 +123,7 @@ function ResizableTable({
   menuId,
   onVisibleColumnsChange,
 }) {
+  
   const { authSession } = useAuth();
   const user = authSession?.user;
   const [columnWidths, setColumnWidths] = useState(() => getStoredWidths(storageKey));

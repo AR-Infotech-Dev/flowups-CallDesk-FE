@@ -1,14 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { deleteFeedback, getFeedbacksList } from "./feedbacks.service";
+import { fetchReviewRatings, getFeedbacksList } from "./feedbacks.service";
 
 const initialState = {
     rows: [],           // -> list
+    reviewRatings: {},           // -> list
     pagination: {},     // -> API pagination info
     page: 1,            // -> current page
     loading: false,     // -> feedbacks fetch चालू आहे का
+    ratings_loading: false,     // -> feedbacks fetch चालू आहे का
     deleting: false,    // -> delete चालू आहे का
     selectedRowIds: [], // -> selected user ids
     error: "",          // -> API error message
+    ratingserror: "",          // -> API error message
 }
 
 export const fetchFeedbacks = createAsyncThunk(
@@ -26,18 +29,18 @@ export const fetchFeedbacks = createAsyncThunk(
         };
     }
 );
-export const deleteFeedbacks = createAsyncThunk(
-    "feedbacks/deleteFeedbacks",
-    async (selectedRowIds, { rejectWithValue }) => {
-        const res = await deleteFeedback(selectedRowIds);
+export const fetchReviews = createAsyncThunk(
+    "feedbacks/fetchReviewRatings",
+    async ({}, { rejectWithValue }) => {
+        const res = await fetchReviewRatings({});
 
         if (!res.success) {
-            return rejectWithValue(res?.message || "Error while deleting feedbacks");
+            return rejectWithValue(res?.message || "Error while fetching review ratings.");
         }
 
         return {
-            message: res?.message || "Feedbacks deleted successfully",
-            deletedIds: selectedRowIds,
+            message: res?.message || "Ratings fetched successfully",
+            reviewRatings: res.data || {},
         };
     }
 );
@@ -84,18 +87,18 @@ const feedbacksSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload || "Error while fetching feedbacks";
             })
-            .addCase(deleteFeedbacks.pending, (state) => {
-                state.deleting = true;
-                state.error = "";
+            .addCase(fetchReviews.pending, (state) => {
+                state.ratings_loading = true;
+                state.ratingserror = "";
             })
-            .addCase(deleteFeedbacks.fulfilled, (state, action) => {
-                state.deleting = false;
-                state.selectedRowIds = [];
+            .addCase(fetchReviews.fulfilled, (state, action) => {
+                state.ratings_loading = false;
+                state.reviewRatings = action.payload.reviewRatings;                
             })
-            .addCase(deleteFeedbacks.rejected, (state, action) => {
-                state.deleting = false;
-                state.error = action.payload || "Error while deleting feedbacks";
-            });
+            .addCase(fetchReviews.rejected, (state, action) => {
+                state.ratings_loading = false;
+                state.ratingserror = action.payload || "Error while fetching ratings";
+            })
     }
 });
 
@@ -112,9 +115,12 @@ export const {
 export default feedbacksSlice.reducer;
 
 export const selectFeedbacksRows = (state) => state.feedbacks.rows;
+export const selectReviewRatings = (state) => state.feedbacks.reviewRatings;
 export const selectFeedbacksPagination = (state) => state.feedbacks.pagination;
 export const selectFeedbacksPage = (state) => state.feedbacks.page;
 export const selectFeedbacksLoading = (state) => state.feedbacks.loading;
+export const selectRatingsLoading = (state) => state.feedbacks.ratings_loading;
 export const selectFeedbacksDeleting = (state) => state.feedbacks.deleting;
 export const selectFeedbacksSelectedRowIds = (state) => state.feedbacks.selectedRowIds;
 export const selectFeedbacksError = (state) => state.feedbacks.error;
+export const selectRatingsError = (state) => state.feedbacks.ratingserror;

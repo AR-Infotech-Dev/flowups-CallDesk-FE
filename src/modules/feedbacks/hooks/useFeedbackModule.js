@@ -2,7 +2,7 @@ import { toast } from "react-toastify";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
     fetchFeedbacks,
-    deleteFeedbacks,
+    fetchReviews,
     selectFeedbacksPagination,
     selectFeedbacksPage,
     selectFeedbacksLoading,
@@ -12,7 +12,7 @@ import {
 } from "../data/feedbacks.slice";
 import * as feedbacksActions from "../data/feedbacks.slice";
 
-export const useFeedbacksModule = ({ filterState }) => {
+export const useFeedbackModule = ({ filterState }) => {
     const dispatch = useAppDispatch();
 
     const selectedRowIds = useAppSelector(selectFeedbacksSelectedRowIds);
@@ -26,6 +26,13 @@ export const useFeedbacksModule = ({ filterState }) => {
         const action = await dispatch(fetchFeedbacks({ filterState, page }));
 
         if (fetchFeedbacks.rejected.match(action)) {
+            toast.error(action.payload || "Error while fetching feedbacks");
+        }
+    };
+    const getReviewRatings = async () => {
+        const action = await dispatch(fetchReviews({}));
+
+        if (fetchReviews.rejected.match(action)) {
             toast.error(action.payload || "Error while fetching feedbacks");
         }
     };
@@ -53,38 +60,6 @@ export const useFeedbacksModule = ({ filterState }) => {
         ))
     };
 
-    const handleDeleteSelected = async () => {
-        if (!selectedRowIds.length) {
-            toast.error("Please select at least one feedback to delete.");
-            return;
-        }
-        const action = await dispatch(deleteFeedbacks(selectedRowIds));
-
-        if (deleteFeedbacks.fulfilled.match(action)) {
-            toast.success(action.payload.message);
-            await getFeedbackList();
-        }
-        if (deleteFeedbacks.rejected.match(action)) {
-            toast.error(action.payload);
-        }
-    };
-
-    const handleDeleteRow = async (row) => {
-        const rowId = row?._id ?? row?.id ?? row?.adminID;
-        if (!rowId) { toast.error("Feedback id not found."); return; }
-        if (!window.confirm("Delete this feedback?")) return;
-
-        const action = await dispatch(deleteFeedbacks([rowId]));
-
-        if (deleteFeedbacks.fulfilled.match(action)) {
-            toast.success(action.payload.message);
-            await getFeedbackList();
-        }
-        if (deleteFeedbacks.rejected.match(action)) {
-            toast.error(action.payload);
-        }
-    };
-
     return {
         pagination,
         page,
@@ -92,10 +67,9 @@ export const useFeedbacksModule = ({ filterState }) => {
         deleting,
         selectedRowIds,
         handlePageChange,
+        getReviewRatings,
         getFeedbackList,
         handleToggleRow,
         handleToggleAllRows,
-        handleDeleteSelected,
-        handleDeleteRow,
     }
 }

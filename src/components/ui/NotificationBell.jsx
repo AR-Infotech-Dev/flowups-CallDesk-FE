@@ -262,14 +262,14 @@ export default function NotificationBell() {
     const handleMarkAllClick = async () => {
         await readAllNotification();
     };
-
+    
     return (
         <div className="relative">
             <button onClick={openBell} className="topbar-utility topbar-utility-bell" >
                 <Bell size={15} />
 
                 {count > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-semibold">
+                    <span className="absolute -top-1 -right-1 min-w-2 h-2 w-2 px-1 rounded-full bg-red-500 text-white text-[5px] flex items-center justify-center font-light animate-ping">
                         {count > 99 ? "99+" : count}
                     </span>
                 )}

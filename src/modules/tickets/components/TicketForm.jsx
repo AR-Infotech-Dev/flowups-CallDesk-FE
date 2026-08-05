@@ -12,7 +12,7 @@ import TicketHistory from "./TicketHistory";
 import Visits from "./Visits";
 import WorkLogs from "./WorkLogs";
 import { findCustomerContactByMobile, normalizeMobileNumber } from "../utils/ticketForm.utils";
-
+import Ratings from "@/components/ui/Ratings";
 const TAB_ITEMS = [
   ["client", "Client History", BriefcaseBusiness],
   ["comments", "Comments", MessageSquareText],
@@ -164,6 +164,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
       : TAB_ITEMS.filter(([key]) => key === "client");
 
   if (!isOpen) return null;
+  console.log(formData);
 
   return (
     <>
@@ -171,7 +172,12 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
         isOpen={isOpen}
         onClose={handleClose}
         title={selectedTicket ? "Edit Ticket" : "Create Ticket"}
-        subtitle={formData.ticket_no && <span className="block w-full text-end text-[14px] text-slate-500"><span className="bg-gray-50 p-1">#{formData.ticket_no}</span></span>}
+        subtitle={
+          <div className="flex gap-1.5">
+            {formData.ticket_no && <span className="block w-full text-end text-[14px] text-slate-500"><span className="bg-gray-50 p-1">#{formData.ticket_no}</span></span>}
+            {formData.ratings && formData.feedback_submitted == "y" ? <Ratings ratings={formData.ratings || 0} /> : null}
+          </div>
+        }
         closeButton={
           <button className="flyout-close" onClick={handleClose} aria-label="Close panel">
             <X size={18} />
@@ -275,7 +281,7 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
             )}
           </div>
         </div>
-      </FlyoutPanel>
+      </FlyoutPanel >
       <CustomerForm
         isOpen={isCustomerFormOpen}
         onClose={closeCustomerForm}

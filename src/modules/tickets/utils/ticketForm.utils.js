@@ -100,6 +100,8 @@ export const normalizeTicketData = (ticket = {}) => ({
   customer_products: normalizeCustomerProducts(ticket?.customer_products || ticket?.products || []),
   customer_contacts: normalizeCustomerContacts(ticket?.customer_contacts || ticket?.contact_persons || []),
   contact_persons: normalizeCustomerContacts(ticket?.contact_persons || ticket?.customer_contacts || []),
+  ratings: ticket?.ratings || null,
+  feedback_submitted: ticket?.feedback_submitted || null,
   assignee: ticket?.assignee || null,
   status: ticket?.status || "active",
 });

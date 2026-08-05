@@ -10,8 +10,7 @@ import menuMasterReducer from "@modules/menu-master/data/menuMaster.slice";
 import ticketsReducer from "@modules/tickets/data/tickets.slice";
 import amcticketsReducer from "@modules/amc-tickets/data/anctickets.slice";
 import subscriptionsReducer from "@modules/subscription-plans/data/subscriptions.slice";
-import feedbacksReducer from "@modules/feedbacks/data/feedbacks.slice";
-
+import feedbacksReducer from "@modules/feedbacks/data/feedbacks.slice.js";
 export const store = configureStore({
   reducer: {
     moduleFilters: moduleFiltersReducer,

@@ -92,7 +92,6 @@ function Comments({ COMMENTS = [], module = "tickets", ticket_id, module_id, end
       setComments(normalizeComments(COMMENTS));
       return;
     }
-
     try {
       setLoading(true);
       const res = await makeRequest(api.list, {

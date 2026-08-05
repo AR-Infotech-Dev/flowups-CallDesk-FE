@@ -4,7 +4,7 @@ import { defaultSortConfig } from "@utils/sorting";
 import { getDefinitions, buildFilterFieldsFromStructure, buildTableColumnsFromStructure, } from "@utils/moduleStructure";
 import { feedbacksFallbackColumns, feedbacksModuleSchema } from "../data/module.schema";
 
-export const useFeedbacksTableConfig = ({ resolvedMenuID, filterState }) => {
+export const useFeedbackTableConfig = ({ resolvedMenuID, filterState }) => {
 
     const [fields, setFields] = useState([]);
 
@@ -33,8 +33,7 @@ export const useFeedbacksTableConfig = ({ resolvedMenuID, filterState }) => {
         buildFilterFieldsFromStructure(
             fields,
             feedbacksModuleSchema.defaultColumns.map((key) => ({
-                label:
-                    feedbacksFallbackColumns.find((column) => column.key === key)?.label || key,
+                label: feedbacksFallbackColumns.find((column) => column.key === key)?.label || key,
                 value: key,
                 type: "text",
             })),
