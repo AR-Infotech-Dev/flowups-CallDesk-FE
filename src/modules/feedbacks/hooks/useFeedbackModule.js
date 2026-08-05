@@ -11,16 +11,18 @@ import {
     selectFeedbacksRows,
 } from "../data/feedbacks.slice";
 import * as feedbacksActions from "../data/feedbacks.slice";
+import { useState } from "react";
 
 export const useFeedbackModule = ({ filterState }) => {
     const dispatch = useAppDispatch();
-
     const selectedRowIds = useAppSelector(selectFeedbacksSelectedRowIds);
     const pagination = useAppSelector(selectFeedbacksPagination);
     const loading = useAppSelector(selectFeedbacksLoading);
     const deleting = useAppSelector(selectFeedbacksDeleting);
     const page = useAppSelector(selectFeedbacksPage);
     const feedbackList = useAppSelector(selectFeedbacksRows);
+    const [selectedTicket, setSelectedTicket] = useState(null);
+    const [isFlyoutOpen, setIsFlyoutOpen] = useState(false);
 
     const getFeedbackList = async () => {
         const action = await dispatch(fetchFeedbacks({ filterState, page }));
@@ -59,8 +61,18 @@ export const useFeedbackModule = ({ filterState }) => {
             feedbackList.map((row) => row?._id ?? row?.id ?? row?.adminID).filter(Boolean)
         ))
     };
-
+    const openEditFlyout = (ticket) => {
+        setSelectedTicket(ticket);
+        setIsFlyoutOpen(true);
+    };
+    const closeFlyout = () => {
+        setIsFlyoutOpen(false);
+        setSelectedTicket(null);
+    };
     return {
+        isFlyoutOpen,
+        selectedTicket,
+        setIsFlyoutOpen,
         pagination,
         page,
         loading,
@@ -71,5 +83,7 @@ export const useFeedbackModule = ({ filterState }) => {
         getFeedbackList,
         handleToggleRow,
         handleToggleAllRows,
+        openEditFlyout,
+        closeFlyout,
     }
 }

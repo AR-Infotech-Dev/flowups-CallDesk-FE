@@ -208,7 +208,7 @@ export const useTicketsModule = ({ resolvedMenuID, filterState }) => {
     setIsFlyoutOpen(true);
   };
 
-  const openEditFlyout = (ticket) => {
+  const openEditFlyout = (ticket) => {    
     setSelectedTicket(ticket);
     setIsFlyoutOpen(true);
   };

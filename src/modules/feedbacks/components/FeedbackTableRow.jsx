@@ -12,6 +12,8 @@ function FeedbackTableRow({ row, index, columns, table }) {
               ? null
               : column.key === "rating"
                 ? <Ratings ratings={row[column.key]} showValue />
+                : column.key === "ticket_id"
+                  ? <span className="font-medium text-slate-700">{row.ticket_no || row.ticket_id || "-"}</span>
                 : table.renderCell(column, row, index)
           }
         </td>

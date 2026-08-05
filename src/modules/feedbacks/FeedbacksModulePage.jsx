@@ -18,6 +18,7 @@ import {
 import { feedbacksModuleSchema } from "./data/module.schema";
 import { useFeedbackModule } from "./hooks/useFeedbackModule";
 import { useFeedbackTableConfig } from "./hooks/useFeedbackTableConfig";
+import TicketForm from "../tickets/components/TicketForm";
 
 function FeedbackModulePage({ menu_id }) {
   const resolvedMenuID = menu_id || feedbacksModuleSchema.menu_id || null;
@@ -25,7 +26,6 @@ function FeedbackModulePage({ menu_id }) {
   const ratingSummary = useAppSelector(selectReviewRatings);
   const ratingLoading = useAppSelector(selectRatingsLoading);
   const ratingError = useAppSelector(selectRatingsError);
-
   const {
     filterState,
     setSearchText,
@@ -34,11 +34,15 @@ function FeedbackModulePage({ menu_id }) {
     clearFilters,
   } = useModuleFilters("feedback-master", feedbackList);
   const {
-    getReviewRatings,
+    isFlyoutOpen,
     pagination,
     page,
+    selectedTicket,
     loading,
+    getReviewRatings,
     getFeedbackList,
+    openEditFlyout,
+    closeFlyout,
     handlePageChange,
   } = useFeedbackModule({ filterState });
   const {
@@ -71,66 +75,75 @@ function FeedbackModulePage({ menu_id }) {
   }, [filterState.searchText, filterState.order, filterState.order_by, JSON.stringify(filterState.filters)]);
 
   return (
-    <ModulePageLayout
-      title={feedbacksModuleSchema.title}
-      description={feedbacksModuleSchema.description}
-      controls={
-        <ModuleControls
-          canCreate={false}
-          canDelete={false}
-          loading={loading || ratingLoading}
-          onRefresh={() => {
-            getFeedbackList();
-            getReviewRatings();
-          }}
-          filter={
-            <DynamicFilter
-              filterState={filterState}
-              fields={resolvedFilterFields}
-              savedFilters={feedbacksModuleSchema.savedFilters}
-              onSearch={setSearchText}
-              onApplyFilters={applyFilterPayload}
-              onClearFilters={clearFilters}
-            />
-          }
-        />
-      }
-      cards={<FeedbackCards ratingSummary={ratingSummary} loading={ratingLoading} />}
-      table={
-        <div className="grid w-full grid-cols-12 items-stretch gap-3 px-3 pb-3">
-          <ReviewRatingCard
-            ratingSummary={ratingSummary}
-            loading={ratingLoading}
-            error={ratingError}
-            className="col-span-12 min-w-0 xl:col-span-4"
+    <>
+      <ModulePageLayout
+        title={feedbacksModuleSchema.title}
+        description={feedbacksModuleSchema.description}
+        controls={
+          <ModuleControls
+            canCreate={false}
+            canDelete={false}
+            loading={loading || ratingLoading}
+            onRefresh={() => {
+              getFeedbackList();
+              getReviewRatings();
+            }}
+            filter={
+              <DynamicFilter
+                filterState={filterState}
+                fields={resolvedFilterFields}
+                savedFilters={feedbacksModuleSchema.savedFilters}
+                onSearch={setSearchText}
+                onApplyFilters={applyFilterPayload}
+                onClearFilters={clearFilters}
+              />
+            }
           />
-
-          <section
-            aria-label="Customer reviews"
-            className="relative col-span-12 min-w-0 overflow-hidden rounded-sm border border-slate-200 bg-white xl:col-span-8"
-          >
-            <ResizableTable
-              loading={loading}
-              menuId={resolvedMenuID}
-              columns={resolvedColumns}
-              rows={feedbackList}
-              storageKey="feedbacks-module-column-widths"
-              defaultVisibleColumnKeys={defaultVisibleColumnKeys}
-              sortConfig={sortConfig}
-              onSortChange={handleSortChange}
-              allowSelection={false}
-              showActions={false}
-              renderRow={(row, index, columns, table) => (
-                <FeedbackTableRow row={row} index={index} columns={columns} table={table} />
-              )}
+        }
+        cards={<FeedbackCards ratingSummary={ratingSummary} loading={ratingLoading} />}
+        table={
+          <div className="grid w-full grid-cols-12 items-stretch gap-3 px-3 pb-3">
+            <ReviewRatingCard
+              ratingSummary={ratingSummary}
+              loading={ratingLoading}
+              error={ratingError}
+              className="col-span-12 min-w-0 xl:col-span-4"
             />
-            <div className="border-t border-slate-100 px-2 py-2">
-              <ModulePagination pagination={pagination} onPageChange={handlePageChange} />
-            </div>
-          </section>
-        </div>
-      }
-    />
+
+            <section
+              aria-label="Customer reviews"
+              className="relative col-span-12 min-w-0 overflow-hidden rounded-sm border border-slate-200 bg-white xl:col-span-8"
+            >
+              <ResizableTable
+                loading={loading}
+                menuId={resolvedMenuID}
+                columns={resolvedColumns}
+                onEditRow={openEditFlyout}
+                rows={feedbackList}
+                storageKey="feedbacks-module-column-widths"
+                defaultVisibleColumnKeys={defaultVisibleColumnKeys}
+                sortConfig={sortConfig}
+                onSortChange={handleSortChange}
+                allowSelection={false}
+                showActions={false}
+                renderRow={(row, index, columns, table) => (
+                  <FeedbackTableRow row={row} index={index} columns={columns} table={table} />
+                )}
+              />
+              <div className="border-t border-slate-100 px-2 py-2 pb-5">
+                <ModulePagination pagination={pagination} onPageChange={handlePageChange} />
+              </div>
+            </section>
+          </div>
+        }
+      />
+      <TicketForm
+        isOpen={isFlyoutOpen}
+        onClose={closeFlyout}
+        selectedTicket={selectedTicket}
+        menu_id={resolvedMenuID}
+      />
+    </>
   );
 }
 
