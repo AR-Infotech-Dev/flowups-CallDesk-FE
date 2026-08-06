@@ -102,17 +102,17 @@ function FeedbackModulePage({ menu_id }) {
         }
         cards={<FeedbackCards ratingSummary={ratingSummary} loading={ratingLoading} />}
         table={
-          <div className="grid w-full grid-cols-12 items-stretch gap-3 px-3 pb-3">
+          <div className="grid h-full min-h-0 w-full grid-cols-12 items-stretch gap-3 px-3 pb-3">
             <ReviewRatingCard
               ratingSummary={ratingSummary}
               loading={ratingLoading}
               error={ratingError}
-              className="col-span-12 min-w-0 xl:col-span-4"
+              className="col-span-12 min-w-0 overflow-hidden xl:col-span-4 xl:h-full"
             />
 
             <section
               aria-label="Customer reviews"
-              className="relative col-span-12 min-w-0 overflow-hidden rounded-sm border border-slate-200 bg-white xl:col-span-8"
+              className="relative col-span-12 flex min-h-[360px] min-w-0 flex-col overflow-hidden rounded-sm border border-slate-200 bg-white xl:col-span-8 xl:h-full xl:min-h-0"
             >
               <ResizableTable
                 loading={loading}
@@ -130,7 +130,7 @@ function FeedbackModulePage({ menu_id }) {
                   <FeedbackTableRow row={row} index={index} columns={columns} table={table} />
                 )}
               />
-              <div className="border-t border-slate-100 px-2 py-2 pb-5">
+              <div className="shrink-0 border-t border-slate-100 bg-white px-2 py-2">
                 <ModulePagination pagination={pagination} onPageChange={handlePageChange} />
               </div>
             </section>

@@ -4,7 +4,7 @@ function FeedbackTableRow({ row, index, columns, table }) {
   const rowKey = table.getRowIdentifier(row) ?? row?.name ?? index;
 
   return (
-    <tr key={rowKey} className="group h-10">
+    <tr key={rowKey} className="group h-3">
       {columns.map((column) => (
         <td key={column.key} className={`${column.className || ""} ${column.isActionsColumn ? "table-actions-cell" : ""}`.trim()} style={table.getCellStyle(column)} onClick={table.getRowClick(column, row) } >
           {
