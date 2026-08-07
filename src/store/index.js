@@ -11,6 +11,7 @@ import ticketsReducer from "@modules/tickets/data/tickets.slice";
 import amcticketsReducer from "@modules/amc-tickets/data/anctickets.slice";
 import subscriptionsReducer from "@modules/subscription-plans/data/subscriptions.slice";
 import feedbacksReducer from "@modules/feedbacks/data/feedbacks.slice.js";
+import performanceReportReducer from "@modules/reports/performance-report/data/performanceReport.slice.js";
 export const store = configureStore({
   reducer: {
     moduleFilters: moduleFiltersReducer,
@@ -25,6 +26,7 @@ export const store = configureStore({
     amctickets: amcticketsReducer,
     subscriptions: subscriptionsReducer,
     feedbacks: feedbacksReducer,
+    performanceReport: performanceReportReducer,
   },
 });
 

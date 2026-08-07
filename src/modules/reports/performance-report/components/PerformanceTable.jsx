@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
-import TicketPreview from "./components/TicketPreview";
-import { formatReportDate, formatReportMinutesSeconds } from "../report.utils";
+import TicketPreview from "./TicketPreview";
+import { formatReportDate, formatReportMinutesSeconds } from "../../report.utils";
 
 const columns = [
   { key: "ticket_no", label: "Ticket Number", width: 150 },

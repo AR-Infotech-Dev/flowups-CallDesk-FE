@@ -23,9 +23,7 @@ const AccessControlModulePage = lazy(() => import("@modules/access-control/Acces
 const PerformanceReportPage = lazy(() => import("@modules/reports/performance-report/PerformanceReportPage"));
 const UserPerformancePage = lazy(() => import("@modules/reports/performance-report/UserPerformancePage"));
 const CompanyCustomerTicketReport = lazy(() => import("@modules/reports/customer-wise-report/CompanyCustomerTicketReport"));
-
-const UserWiseAttendanceTicketReport = lazy(() => import("@modules/reports/user-wise-attendance-report/UserWiseAttendanceTicketReport"));
-
+const UserWiseAttendanceReport = lazy(() => import("@modules/reports/user-wise-attendance-report/UserWiseAttendanceReport"));
 const UserAttendanceReport = lazy(() => import("@modules/reports/attendance-report/UserAttendanceReport"));
 const WorkReportModulePage = lazy(() => import("@modules/reports/work-report/WorkReportModulePage"));
 const CustomerReport = lazy(() => import("@modules/reports/customer-report/CustomerReport"));
@@ -64,6 +62,7 @@ const menuRouteComponents = {
   "/reports/product-expiry": ProductExpiryReport,
   "/reports/product-expiry-report": ProductExpiryReport,
   "/reports/attendance": UserAttendanceReport,
+  "/reports/attendance-user-wise": UserWiseAttendanceReport,
   "/access-control": AccessControlModulePage,
   "/subscriptions": SubscriptionModulePage,
   "/reviews": FeedbackModulePage,
@@ -184,6 +183,7 @@ function MainRoutes() {
     const reportMenu = flattenMenus(menus).find((menu) => normalizePath(getMenuLink(menu)) === "/reports/performance");
     return getMenuId(reportMenu);
   }, [menus]);
+  
   const workReportMenuId = useMemo(() => {
     const reportMenu = flattenMenus(menus).find((menu) => ["/work-report", "/reports/work-report"].includes(normalizePath(getMenuLink(menu))));
     return getMenuId(reportMenu);
@@ -232,9 +232,7 @@ function MainRoutes() {
             />
             <Route path="/customer/report/:customerId" element={<CustomerReport />} />
             <Route path="/reports/customer-wise" element={<CompanyCustomerTicketReport />} />
-
-            <Route path="/reports/user-wise-attendance"element={<UserWiseAttendanceTicketReport />}/>
-
+            {/* <Route path="/reports/user-wise-attendance"element={<UserWiseAttendanceTicketReport />}/> */}
             <Route path="/reports/attendance" element={<UserAttendanceReport />} />
             <Route path="/dashboard/product-expiry" element={<ProductExpiryReport />} />
             {/* ROUTES FROM MENU MASTER */}

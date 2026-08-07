@@ -3,7 +3,7 @@ import { Building2, CheckCircle2, Clock3, Download, RotateCcw, Search, Ticket, T
 import { toast } from "react-toastify";
 import ModulePagination from "../../shared/ModulePagination";
 import { getCurrentSession } from "../../../auth/utils/authStorage";
-import { fetchReportCompanies } from "../performance-report/performance.service";
+import { fetchReportCompanies } from "../performance-report/data/performance.service";
 import { fetchCompanyCustomerTicketReport, downloadCustomerWiseReport } from "./companyCustomerReport.service";
 import { formatReportDate, toReportDateInput } from "../report.utils";
 import "./company-customer-report.css";

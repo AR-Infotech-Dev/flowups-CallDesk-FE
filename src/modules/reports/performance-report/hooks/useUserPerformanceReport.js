@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { defaultPerformanceFilters, downloadUserPerformanceExcel, fetchUserPerformance } from "../performance.service";
+import { downloadUserPerformanceExcel, fetchUserPerformance } from "../data/performance.service";
 import { exportPerformancePdf } from "../reportExport";
 import {
   defaultPerformanceSort,
@@ -9,6 +9,8 @@ import {
   getPerformanceRating,
   getUserReportName,
 } from "../utils/performanceReport.utils";
+import { selectAppliedPerformanceFilters } from "../data/performanceReport.slice";
+import { useAppSelector } from "@/store/hooks";
 
 export const useUserPerformanceReport = ({ userId }) => {
   const [report, setReport] = useState(emptyPerformanceReport);
@@ -17,16 +19,18 @@ export const useUserPerformanceReport = ({ userId }) => {
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
   const [sortConfig, setSortConfig] = useState(defaultPerformanceSort);
-
+  const appliedFilters = useAppSelector(selectAppliedPerformanceFilters);
+  const filters = useMemo(
+    () => ({
+      ...appliedFilters,
+      user_id: userId || appliedFilters.user_id,
+    }),
+    [appliedFilters, userId]
+  );
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchText(searchText), 350);
     return () => clearTimeout(timer);
   }, [searchText]);
-
-  const filters = {
-    ...defaultPerformanceFilters,
-    user_id: userId,
-  };
 
   const loadReport = useCallback(async () => {
     setLoading(true);
@@ -44,7 +48,7 @@ export const useUserPerformanceReport = ({ userId }) => {
     }
 
     setReport(response);
-  }, [debouncedSearchText, page, sortConfig, userId]);
+  }, [filters, debouncedSearchText, page, sortConfig]);
 
   useEffect(() => {
     loadReport();

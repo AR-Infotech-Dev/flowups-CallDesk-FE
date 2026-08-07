@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { defaultPerformanceFilters, downloadUserPerformanceExcel, fetchReportCompanies, fetchReportUsers, fetchTicketStatuses, fetchUserPerformance } from "../performance.service";
+import { downloadUserPerformanceExcel, fetchReportCompanies, fetchReportUsers, fetchTicketStatuses, fetchUserPerformance } from "../data/performance.service";
 import { exportPerformancePdf } from "../reportExport";
 import {
   defaultPerformanceSort,
@@ -8,10 +8,19 @@ import {
   getNextPerformanceSort,
   getSelectedReportUser,
 } from "../utils/performanceReport.utils";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  applyPerformanceFilters,
+  resetPerformanceFilters,
+  selectAppliedPerformanceFilters,
+  selectPerformanceFilters,
+  setPerformanceFilters,
+} from "../data/performanceReport.slice";
 
 export const usePerformanceReportPage = () => {
-  const [filters, setFilters] = useState(defaultPerformanceFilters);
-  const [appliedFilters, setAppliedFilters] = useState(defaultPerformanceFilters);
+  const dispatch = useAppDispatch();
+  const filters = useAppSelector(selectPerformanceFilters);
+  const appliedFilters = useAppSelector(selectAppliedPerformanceFilters);
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [statuses, setStatuses] = useState([]);
@@ -89,12 +98,11 @@ export const usePerformanceReportPage = () => {
     }
 
     setPage(1);
-    setAppliedFilters(filters);
+    dispatch(applyPerformanceFilters(filters));
   };
 
   const handleReset = () => {
-    setFilters(defaultPerformanceFilters);
-    setAppliedFilters(defaultPerformanceFilters);
+    dispatch(resetPerformanceFilters());
     setSearchText("");
     setPage(1);
     setReport(emptyPerformanceReport);
@@ -148,7 +156,7 @@ export const usePerformanceReportPage = () => {
     searchText,
     sortConfig,
     selectedUser,
-    setFilters,
+    setFilters: (nextFilters) => dispatch(setPerformanceFilters(nextFilters)),
     setPage,
     handleSearch,
     handleReset,
