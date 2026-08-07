@@ -27,9 +27,7 @@ export async function fetchUserWiseAttendanceReport(filters = {}, page = 1) {
   success: true,
   company: data.company || {},
   summary: data.summary || {},
-  attendance: Array.isArray(data.users)
-    ? data.users
-    : [],
+  attendance: Array.isArray(data.users) ? data.users : [],
   pagination: data.pagination || {},
   filters: data.filters || {},
 };
@@ -39,7 +37,7 @@ export async function downloadUserWiseAttendanceReport(
   filters = {},
   options = {}
 ) {
-  const response = await makeRequest("/reports/user-wise-attendence/export-excel",  {
+  const response = await makeRequest("/reports/user-wise-attendance/export-excel",  {
     method: "POST",
     body: {
       company_id: filters.company_id || "",

@@ -71,7 +71,7 @@ export const ticketsModuleSchema = {
       { key: "due_date", label: "Due", type: "date" },
       { key: "query_type", label: "Type", type: "badge", colorField: "type_color" },
       { key: "ticket_priority", label: "Priority", type: "tag", colorField: "priority_color" },
-      { key: "ratings", label: "Rating", type: "ratings" , visibleWhen : (row)=> row.feedback_submitted == "y" },
+      { key: "ratings", label: "Rating", type: "ratings", visibleWhen: (row) => row.feedback_submitted == "y" },
     ],
   },
   defaultColumns: ["client_id", "query_type", "ticket_status", "assignee", "ticket_priority", "start_date", "due_date"],
@@ -278,17 +278,19 @@ export const ticketsModuleSchema = {
         columns: 2,
         fields: [
           {
-            name: "product_id",
+            name: "product_serial_number",
             label: "Product",
             type: "select",
             placeholder: "Select product",
             gridSpan: 12,
             visibleWhen: (values) => Boolean(values.client_id),
-            options: (values) => (Array.isArray(values.customer_products) ? values.customer_products : []).map((product) => ({
-              key: `${product.product_id || "product"}-${product.serial_number || product.product_serial_number || "serial"}`,
-              value: product.product_id,
-              label: `${product.product_name || "Unnamed Product"}${product.serial_number ? ` - ${product.serial_number}` : ""}`,
-            })),
+            options: (values) => (Array.isArray(values.customer_products) ? values.customer_products : []).map((product) => {
+              return ({
+                key: `${product.product_id || "product"}-${product.serial_number || product.product_serial_number || "serial"}`,
+                value: product.serial_number,
+                label: `${product.product_name || "Unnamed Product"}${product.serial_number ? ` - ${product.serial_number}` : ""}`,
+              })
+            }),
           },
         ],
       },
@@ -322,7 +324,7 @@ export const ticketsModuleSchema = {
             type: "select",
             placeholder: "Select add-on",
             gridSpan: 6,
-            visibleWhen: (values) => Boolean(values.client_id && values.product_id && isCustomizationQuery(values) && getSelectedProductAddOns(values).length),
+            visibleWhen: (values) => Boolean(values.client_id && values.product_serial_number && isCustomizationQuery(values) && getSelectedProductAddOns(values).length),
             options: (values) => getSelectedProductAddOns(values).map((addOn) => ({
               value: addOn,
               label: addOn,

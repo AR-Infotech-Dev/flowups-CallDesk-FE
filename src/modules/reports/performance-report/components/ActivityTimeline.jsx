@@ -1,5 +1,5 @@
 import { Clock3 } from "lucide-react";
-import { formatReportDateTime } from "../report.utils";
+import { formatReportDateTime } from "../../report.utils";
 
 function getActivityText(activity = {}) {
   return activity.text || activity.message || activity.title || activity.action || "Activity recorded";

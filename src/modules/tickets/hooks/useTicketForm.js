@@ -162,9 +162,9 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
     setFormData((current) => ({
       ...current,
       [name]: value,
-      ...(name === "product_id"
+      ...(name === "product_serial_number"
         ? (() => {
-          const product = normalizeCustomerProducts(current.customer_products).find((item) => String(item.product_id) === String(value));
+          const product = normalizeCustomerProducts(current.customer_products).find((item) => String(item.serial_number).trim() === String(value).trim());
           return {
             product_name: product?.product_name || null,
             product_serial_number: product?.serial_number || null,

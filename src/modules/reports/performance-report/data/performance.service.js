@@ -1,6 +1,6 @@
-import { makeRequest } from "../../../api/httpClient";
-import { downloadBlobResponse } from "../../../utils/download.utils";
-import { normalizeReportOption, toReportArray } from "../report.utils";
+import { makeRequest } from "@api/httpClient";
+import { downloadBlobResponse } from "@utils/download.utils";
+import { normalizeReportOption, toReportArray } from "../../report.utils";
 
 export const defaultPerformanceFilters = {
   user_id: "",

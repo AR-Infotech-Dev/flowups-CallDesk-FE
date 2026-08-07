@@ -1,10 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@auth/components/AuthProvider";
 import ModulePageLayout from "../../shared/ModulePageLayout";
-import ActivityTimeline from "./ActivityTimeline";
-import PerformanceCards from "./PerformanceCards";
-import PerformanceCharts from "./PerformanceCharts";
-import PerformanceTable from "./PerformanceTable";
+import ActivityTimeline from "./components/ActivityTimeline";
+import PerformanceCards from "./components/PerformanceCards";
+import PerformanceCharts from "./components/PerformanceCharts";
+import PerformanceTable from "./components/PerformanceTable";
 import { UserPerformanceToolbar } from "./components/UserPerformanceHeader";
 import { UserPerformanceHero } from "./components/UserPerformanceHero";
 import { useUserPerformanceReport } from "./hooks/useUserPerformanceReport";

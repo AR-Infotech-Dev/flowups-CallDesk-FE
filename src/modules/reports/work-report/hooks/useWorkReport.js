@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { fetchReportCompanies, fetchReportUsers } from "../../performance-report/performance.service";
+import { fetchReportCompanies, fetchReportUsers } from "../../performance-report/data/performance.service";
 import { defaultWorkReportFilters, defaultWorkReportSort, fetchWorkReport } from "../data/workReport.service";
 import { buildWorkReportSummaryCards, getNextWorkReportSort } from "../utils/workReport.utils";
 

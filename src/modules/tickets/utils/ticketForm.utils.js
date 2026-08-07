@@ -14,12 +14,14 @@ export const normalizeCustomerProducts = (source = []) => {
   const rows = typeof source === "string" ? safeParseJson(source, []) : source;
   return Array.isArray(rows)
     ? rows
-      .map((row) => ({
-        product_id: row?.product_id || "",
-        product_name: row?.product_name || "",
-        serial_number: row?.serial_number || row?.product_serial_number || "",
-        add_ons: Array.isArray(row?.add_ons) ? row.add_ons.filter(Boolean) : [],
-      }))
+      .map((row) => {
+        return ({
+          product_id: row?.product_id || "",
+          product_name: row?.product_name || "",
+          serial_number: (row?.serial_number || row?.product_serial_number || "").trim(),
+          add_ons: Array.isArray(row?.add_ons) ? row.add_ons.filter(Boolean) : [],
+        })
+      })
       .filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length)
     : [];
 };

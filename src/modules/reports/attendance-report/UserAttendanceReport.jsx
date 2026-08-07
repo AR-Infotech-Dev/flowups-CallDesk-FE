@@ -3,7 +3,7 @@ import { CalendarCheck2, CheckCircle2, Clock3, Download, LogIn, RotateCcw, Searc
 import { toast } from "react-toastify";
 import ModulePagination from "../../shared/ModulePagination";
 import { getCurrentSession } from "../../../auth/utils/authStorage";
-import { fetchReportUsers } from "../performance-report/performance.service";
+import { fetchReportUsers } from "../performance-report/data/performance.service";
 import { downloadUserAttendanceReport, fetchUserAttendanceReport } from "./userAttendanceReport.service";
 import { formatReportDate, formatReportDuration, formatReportTime, toReportDateInput } from "../report.utils";
 import "../customer-wise-report/company-customer-report.css";
