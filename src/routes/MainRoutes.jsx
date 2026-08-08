@@ -232,7 +232,7 @@ function MainRoutes() {
             <Route path="/customer/report/:customerId" element={<CustomerReport />} />
             <Route path="/reports/customer-wise" element={<CompanyCustomerTicketReport />} />
             {/* <Route path="/reports/user-wise-attendance"element={<UserWiseAttendanceTicketReport />}/> */}
-            <Route path="/reports/attendance" element={<UserAttendanceReport />} />
+            {/* <Route path="/reports/attendance" element={<UserWiseAttendanceReport />} /> */}
             <Route path="/dashboard/product-expiry" element={<ProductExpiryReport />} />
             {/* ROUTES FROM MENU MASTER */}
             {dynamicRoutes.map((route) => (

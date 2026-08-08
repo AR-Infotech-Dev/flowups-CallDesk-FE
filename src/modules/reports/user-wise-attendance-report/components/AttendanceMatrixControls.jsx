@@ -1,6 +1,11 @@
 import { ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 
-function AttendanceMatrixControls({ filters, companies, isSuperAdmin, loading, monthLabel, onChange, onMonthChange, onGenerate, onExport, exportDisabled = false }) {
+import { useAuth } from "@auth/components/AuthProvider";
+
+function AttendanceMatrixControls({ filters, companies, loading, monthLabel, onChange, onMonthChange, onGenerate, onExport, exportDisabled = false }) {
+  const { authSession } = useAuth();
+  const roleSlug = authSession?.user?.role_slug;
+  const isSuperAdmin = roleSlug === "admin" || roleSlug === "super_admin";
   return (
     <div className="uwa-controls">
       <div className="uwa-month-nav">

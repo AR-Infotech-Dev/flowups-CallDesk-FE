@@ -9,16 +9,17 @@ import AttendanceSummaryCards from "./components/AttendanceSummaryCards";
 import { downloadUserWiseAttendanceReport, fetchUserWiseAttendanceReport } from "./userWiseAttendanceReport.service";
 import { buildAttendanceRows, buildDateColumns, buildMatrixSummary, formatMonthLabel, getMonthRange, shiftMonthRange } from "./userWiseAttendanceReport.utils";
 import "./user-wise-attendance-report.css";
+import { fetchReportCompanies } from "../performance-report/data/performance.service";
 
 const getDefaultFilters = () => ({ ...getMonthRange(), searchText: "", company_id: "" });
 
 function UserWiseAttendanceReport() {
   const [filters, setFilters] = useState(getDefaultFilters);
   const [appliedFilters, setAppliedFilters] = useState(getDefaultFilters);
+  const [companies, setCompanies] = useState([]);
   const [report, setReport] = useState({ attendance: [], pagination: {}, summary: {}, company: {} });
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
-
   const dates = useMemo(() => buildDateColumns(filters.from_date, filters.to_date), [filters.from_date, filters.to_date]);
   const rows = useMemo(() => buildAttendanceRows(report.attendance, dates), [report.attendance, dates]);
   const summary = useMemo(() => buildMatrixSummary(rows), [rows]);
@@ -58,6 +59,11 @@ function UserWiseAttendanceReport() {
   };
 
   useEffect(() => {
+    fetchReportCompanies().then(
+      (items) => {        
+        setCompanies(items);
+      });
+
     const initialFilters = getDefaultFilters();
     setAppliedFilters(initialFilters);
     loadReport(initialFilters, 1);
@@ -67,17 +73,14 @@ function UserWiseAttendanceReport() {
     <div className="uwa-matrix-panel">
       <AttendanceMatrix dates={dates} rows={rows} loading={loading} />
       <AttendanceLegend />
-      <div className="uwa-matrix-footer">
-        <ModulePagination pagination={report.pagination} onPageChange={(nextPage) => loadReport(appliedFilters, nextPage)} />
-      </div>
     </div>
   );
 
   return (
     <ModulePageLayout
-      title="Employee Attendance Matrix"
+      title="Employee Attendance"
       description="Track employee attendance day by day for the selected month."
-      controls={<AttendanceMatrixControls filters={filters} companies={[]} isSuperAdmin={false} loading={loading} monthLabel={formatMonthLabel(filters.from_date)} onChange={updateFilter} onMonthChange={changeMonth} onGenerate={generateReport} onExport={exportReport} exportDisabled={loading || exporting || !rows.length} />}
+      controls={<AttendanceMatrixControls filters={filters} companies={companies} isSuperAdmin={false} loading={loading} monthLabel={formatMonthLabel(filters.from_date)} onChange={updateFilter} onMonthChange={changeMonth} onGenerate={generateReport} onExport={exportReport} exportDisabled={loading || exporting || !rows.length} />}
       cards={<AttendanceSummaryCards summary={summary} />}
       table={matrix}
     />
