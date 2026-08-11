@@ -17,6 +17,9 @@ const Input = ({ field, value, onChange, placeholder, className = '', disabled, 
         onChange={onChange}
         placeholder={field.placeholder}
         required={field.required}
+        min={field.type == "number" ? field.min : null}
+        max={field.type == "number" ? field.max : null}
+        step={field.type == "number" ? field.step : undefined}
         className={`border ${!error ? "border-gray-50 text-gray-600" : 'border-red-400 text-red-500'} bg-gray-100 px-3 py-1.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-70 read-only:cursor-default ${className}`}
         disabled={isDisabled}
         readOnly={isReadOnly}

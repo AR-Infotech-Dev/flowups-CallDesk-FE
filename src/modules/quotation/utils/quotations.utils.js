@@ -1,0 +1,10 @@
+import { quotationsModuleSchema } from "../data/module.schema";
+export const toDateInput=(date=new Date())=>date.toISOString().slice(0,10);
+export const addDays=(key,days)=>{const date=new Date(`${key}T00:00:00`);date.setDate(date.getDate()+days);return toDateInput(date)};
+export const emptyQuotationItem=()=>({product_id:"",product_name:"",quantity:1,rate:0,discount_rate:0,gst_rate:0});
+export const createInitialQuotation=()=>{const quotation_date=toDateInput();return {...quotationsModuleSchema.form.initialValues,quotation_date,valid_until:addDays(quotation_date,14),terms:"Prices are valid until the date mentioned above.",items:[emptyQuotationItem()]}};
+export const getQuotationIdentifier=(row)=>row?.quotation_id ?? null;
+export const normalizeQuotationData=(row={})=>({...createInitialQuotation(),...row,quotation_status:row.quotation_status||row.workflow_status||"draft",items:Array.isArray(row.items)&&row.items.length?row.items:[emptyQuotationItem()]});
+export const calculateLine=(item)=>{const gross=(Number(item.quantity)||0)*(Number(item.rate)||0);const discount=gross*(Number(item.discount_rate)||0)/100;const taxable=gross-discount;const tax=taxable*(Number(item.gst_rate)||0)/100;return {gross,discount,taxable,tax,total:taxable+tax}};
+export const calculateTotals=(items=[])=>items.reduce((sum,item)=>{const line=calculateLine(item);sum.subtotal+=line.gross;sum.discount_total+=line.discount;sum.tax_total+=line.tax;sum.grand_total+=line.total;return sum},{subtotal:0,discount_total:0,tax_total:0,grand_total:0});
+export const formatMoney=(value)=>`\u20B9 ${Number(value||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
