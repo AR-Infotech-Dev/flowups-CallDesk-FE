@@ -32,6 +32,8 @@ const UserMarkers = lazy(() => import("@modules/dashboard/UserMarkers"));
 const UserProfilePage = lazy(() => import("@modules/profile/UserProfilePage"));
 const FeedbackModulePage = lazy(() => import("@modules/feedbacks/FeedbacksModulePage"));
 const AmcticketsModulePage = lazy(() => import("@modules/amc-tickets/AmcticketsModulePage"));
+const QuotationModulePage = lazy(() => import("@modules/quotation/QuotationsModulePage"));
+const LeadsModulePage = lazy(() => import("@modules/leads/LeadsModulePage"));
 
 
 const withPermission = (menuId, element) => (
@@ -66,6 +68,9 @@ const menuRouteComponents = {
   "/subscriptions": SubscriptionModulePage,
   "/reviews": FeedbackModulePage,
   "/amctickets": AmcticketsModulePage
+  ,"/quotations": QuotationModulePage
+  ,"/leads": LeadsModulePage
+  ,"/lead": LeadsModulePage
 };
 
 function DefaultMenuRedirect() {

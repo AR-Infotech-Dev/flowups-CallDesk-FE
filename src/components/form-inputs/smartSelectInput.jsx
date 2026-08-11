@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { FixedSizeList as List } from 'react-window';
 import { makeRequest } from "@api/httpClient";
 import { API_BASE_URL } from '@api/config';
@@ -36,6 +37,8 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     showRecent = false,
     preload = false,
     cache = true,
+    cacheCreatedOption = true,
+    selectedOption = null,
     multi = false,
     getValue,
     getLabel,
@@ -43,6 +46,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     countKey = "",
     countLabel = "",
     customURL = "",
+    dropdownPortal = false,
     statusCheck = false,
     customParameters = {},
   } = config;
@@ -55,9 +59,12 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const [dropdownPosition, setDropdownPosition] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState("0");
   const listRef = useRef(null);
+  const transientOptionRef = useRef(null);
 
   // Normalize fetched items
   const normalizeOptions = (items = []) => items.map(item => {
@@ -169,7 +176,19 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     };
 
     if (isCleared) {
+      transientOptionRef.current = null;
       setInternalValue(multi ? [] : null);
+      return () => { alive = false; };
+    }
+
+    const transientOption = transientOptionRef.current;
+    if (transientOption && ids.includes(String(transientOption.value))) {
+      applyMatch([transientOption]);
+      return () => { alive = false; };
+    }
+
+    if (selectedOption?.value !== undefined && ids.includes(String(selectedOption.value))) {
+      applyMatch([selectedOption]);
       return () => { alive = false; };
     }
 
@@ -189,11 +208,11 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     }
 
     return () => { alive = false; };
-  }, [value, key, multi]);
+  }, [value, key, multi, selectedOption]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!containerRef.current?.contains(event.target)) {
+      if (!containerRef.current?.contains(event.target) && !dropdownRef.current?.contains(event.target)) {
         setShowDropdown(false);
       }
     };
@@ -202,8 +221,33 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showDropdown]);
+
+  useEffect(() => {
+    if (!showDropdown || !dropdownPortal) return undefined;
+
+    const updateDropdownPosition = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setDropdownPosition({
+        left: rect.left,
+        top: rect.bottom + 4,
+        width: rect.width,
+      });
+    };
+
+    updateDropdownPosition();
+    window.addEventListener('resize', updateDropdownPosition);
+    window.addEventListener('scroll', updateDropdownPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateDropdownPosition);
+      window.removeEventListener('scroll', updateDropdownPosition, true);
+    };
+  }, [showDropdown, dropdownPortal]);
   const handleSelect = (item) => {
     if (isLocked) return;
+    if (transientOptionRef.current && String(transientOptionRef.current.value) !== String(item.value)) {
+      transientOptionRef.current = null;
+    }
 
     if (multi) {
       let selected = Array.isArray(internalValue) ? [...internalValue] : [];
@@ -228,12 +272,16 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
 
     if (!option) return;
 
-    setOptions((current) => {
-      const withoutDuplicate = current.filter((existing) => String(existing.value) !== String(option.value));
-      const nextOptions = [option, ...withoutDuplicate];
-      cacheStore.set(key, nextOptions);
-      return nextOptions;
-    });
+    if (cacheCreatedOption) {
+      setOptions((current) => {
+        const withoutDuplicate = current.filter((existing) => String(existing.value) !== String(option.value));
+        const nextOptions = [option, ...withoutDuplicate];
+        cacheStore.set(key, nextOptions);
+        return nextOptions;
+      });
+    } else {
+      transientOptionRef.current = option;
+    }
 
     handleSelect(option);
   };
@@ -251,6 +299,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   const handleClear = () => {
     if (isLocked) return;
 
+    transientOptionRef.current = null;
     setInternalValue(multi ? [] : null);
     setInputValue(null);
     setShowDropdown(false);
@@ -393,8 +442,12 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
           </div>
         )}
 
-        {showDropdown && !isLocked && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 border-gray-300 border bg-white shadow-lg rounded-md text-sm" >
+        {showDropdown && !isLocked && (!dropdownPortal || dropdownPosition) && createPortal(
+          <div
+            ref={dropdownRef}
+            className={`${dropdownPortal ? "fixed z-[1000]" : "absolute left-0 right-0 top-full z-50 mt-1"} max-h-60 rounded-md border border-gray-300 bg-white text-sm shadow-lg`}
+            style={dropdownPortal ? dropdownPosition : undefined}
+          >
             <div className="flex pr-2 pt-1 bg-blue-50 p-2 h-10 rounded-md align-center justify-between">
               {loading ? (
                 <div className="p-3 text-sm text-gray-500">Loading...</div>
@@ -411,11 +464,11 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
                   + Add New {label}
                 </button>
               )} */}
-              {/* {allowAddNew && typeof addNewFunction === "function" && (
+              {allowAddNew && typeof addNewFunction === "function" && (
                 <button type="button" onClick={handleAddNew} className="hover:underline text-blue-600">
-                  + Add New {label || field.label || "Item"}
+                  + Add New  {label || field.label || "Item"}
                 </button>
-              )} */}
+              )}
             </div>
             {filteredOptions.length ? (
               <List ref={listRef} height={200} itemCount={filteredOptions.length} onScroll={handleScroll} itemSize={44} width="100%">{Row}</List>
@@ -429,7 +482,8 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
                 )}
               </div>
             )}
-          </div>
+          </div>,
+          dropdownPortal ? document.body : containerRef.current
         )}
       </div>
       {error && (

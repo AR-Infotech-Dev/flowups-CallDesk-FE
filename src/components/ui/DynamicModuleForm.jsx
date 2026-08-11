@@ -102,9 +102,9 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
 
   return (
     <div className="space-y-5">
-      {sections.map((section, sectionIndex) => {
-        const Icon = section.icon; 
-        const visibleFields = section.fields.filter((field) => {
+      {(Array.isArray(sections) ? sections : []).filter(Boolean).map((section, sectionIndex) => {
+        const Icon = section.icon || null;
+        const visibleFields = (Array.isArray(section.fields) ? section.fields : []).filter(Boolean).filter((field) => {
           const isVisible = field.visibleWhen
             ? field.visibleWhen(values, oldValues, mode)
             : true;
@@ -118,21 +118,13 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
         return (
           <Fragment key={section.key || section.title || `section-${sectionIndex}`}>
             {section.title &&
-              <div className={`flex text-md font-semibold items-center mb-1 ${sectionIndex != 0 && "mt-4"}`}  >
-                {Icon && <Icon className="m1 mr-2" size={15} />}
+              <div className={`flex text-md font-semibold items-center mb-1 ${sectionIndex !== 0 ? "mt-4" : ""}`}>
+                {Icon && <Icon className="ml-1 mr-2" size={15} />}
                 <h4 className="">{section.title || ''}</h4>
               </div>
             }
-            <div key={`section-${sectionIndex}`} className={`mb-2 ${SECTION_COLUMN_CLASS[section.columns] || SECTION_COLUMN_CLASS[2]}`}>
+            <div className={`mb-2 ${SECTION_COLUMN_CLASS[section.columns] || SECTION_COLUMN_CLASS[2]}`}>
               {visibleFields.map((field) => {
-                const isVisible = field.visibleWhen
-                  ? field.visibleWhen(values, oldValues, mode)
-                  : true;
-
-                if (!isVisible) return null;
-                const canViewField = field.alwaysVisible || hasFieldVisiblePermission({ menuId, field, user });
-                if (!canViewField) return null;
-
                 const canEditField = field.alwaysEditable || hasFieldEditablePermission({ menuId, field, user });
                 const isDisabled = getConditionalFlag(field, "disabled") || getConditionalFlag(field, "disabledWhen");
                 const isReadOnly =
@@ -148,7 +140,7 @@ function DynamicModuleForm({ sections = [], values = {}, onChange, onObjectSelec
                 };
                 const sectionColumns = Number(section.columns) || 2;
                 const defaultSpan = Math.max(1, Math.floor(12 / sectionColumns));
-                const fieldSpan = Number(field.gridSpan || field.columns || defaultSpan);
+                const fieldSpan = Math.min(12, Math.max(1, Number(field.gridSpan || field.columns || defaultSpan)));
 
                 return (
                   <div key={field.name} className={`w-full ${FIELD_SPAN_CLASS[fieldSpan] || FIELD_SPAN_CLASS[defaultSpan]}`}>

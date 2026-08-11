@@ -12,6 +12,8 @@ import amcticketsReducer from "@modules/amc-tickets/data/anctickets.slice";
 import subscriptionsReducer from "@modules/subscription-plans/data/subscriptions.slice";
 import feedbacksReducer from "@modules/feedbacks/data/feedbacks.slice.js";
 import performanceReportReducer from "@modules/reports/performance-report/data/performanceReport.slice.js";
+import quotationsReducer from "@modules/quotation/data/quotations.slice.js";
+import leadsReducer from "@modules/leads/data/leads.slice.js";
 export const store = configureStore({
   reducer: {
     moduleFilters: moduleFiltersReducer,
@@ -27,6 +29,8 @@ export const store = configureStore({
     subscriptions: subscriptionsReducer,
     feedbacks: feedbacksReducer,
     performanceReport: performanceReportReducer,
+    quotations: quotationsReducer,
+    leads: leadsReducer,
   },
 });
 

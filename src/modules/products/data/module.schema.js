@@ -27,13 +27,16 @@ export const productsModuleSchema = {
   tableCellConfig: [
     { column_name: "product_name", type: "person" },
     { column_name: "product_type", type: "tag" },
+    { column_name: "rate", type: "currency" },
     { column_name: "product_description", type: "clip" },
   ],
-  defaultColumns: ["product_name", "product_type", "product_description"],
+  defaultColumns: ["product_name", "product_type", "rate", "gst_rate", "product_description"],
   skipFields: ["company_id", "created_by", "created_date", "modified_by", "modified_date"],
   columnMappings: [
     { product_name: "Product/Service Name" },
     { product_type: "Product/Service Type" },
+    { rate: "Rate" },
+    { gst_rate: "GST Rate (%)" },
     { product_description: "Description" },
   ],
   savedFilters: [],
@@ -43,6 +46,8 @@ export const productsModuleSchema = {
       product_name: "",
       product_type: "",
       product_description: "",
+      rate: 0,
+      gst_rate: 0,
       company_id: null,
     },
     sections: [
@@ -51,6 +56,13 @@ export const productsModuleSchema = {
         fields: [
           { name: "product_name", label: "Product/Service Name", type: "text", required: true, placeholder: "Enter product name", gridSpan: 6 },
           { name: "product_type", label: "Product/Service Type", type: "text", required: true, placeholder: "Enter product type", gridSpan: 6 },
+        ],
+      },
+      {
+        columns: 2,
+        fields: [
+          { name: "rate", label: "Rate", type: "number", required: true, min: 0, step: "0.01", placeholder: "Enter product rate", gridSpan: 6 },
+          { name: "gst_rate", label: "GST Rate (%)", type: "number", required: true, min: 0, max: 100, step: "0.01", placeholder: "Enter GST rate", gridSpan: 6 },
         ],
       },
       {
@@ -64,6 +76,8 @@ export const productsModuleSchema = {
   validationSchema: z.object({
     product_name: z.string().trim().min(1, "Product/Service name is required"),
     product_type: z.any().optional(),
+    rate: z.number({ invalid_type_error: "Rate must be a valid number" }).min(0, "Rate cannot be negative"),
+    gst_rate: z.number({ invalid_type_error: "GST rate must be a valid number" }).min(0, "GST rate cannot be negative").max(100, "GST rate cannot exceed 100"),
     product_description: z.union([z.literal(null), z.string()]).optional(),
     company_id: z.any().optional(),
   }),
