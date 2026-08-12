@@ -5,6 +5,9 @@ import Spinner from "@components/ui/Spinner";
 import DynamicModuleForm from "@components/ui/DynamicModuleForm";
 import { categoryModuleSchema } from "../data/module.schema";
 import { useCategoryForm } from "../hooks/useCategoryForm";
+import ChildrenArranger from "./ChildrenArranger";
+
+import { changeCategoryPosition } from "../data/categories.service";
 
 function CategoryForm({ isOpen, onClose, selectedCategory, onAfterSave, menu_id }) {
   const {
@@ -16,11 +19,38 @@ function CategoryForm({ isOpen, onClose, selectedCategory, onAfterSave, menu_id 
     handleChange,
     handleSave,
   } = useCategoryForm({ isOpen, onClose, selectedCategory, onAfterSave });
+  const emitValueChange = async (nextValue) => {
+
+    
+    handleChange({
+        target: {
+            name: "children",
+            value: nextValue,
+        },
+    }); 
+
+    
+    const menu_ids = nextValue.map(
+        (child) => child.category_id
+    );
+
+    console.log("NEW ORDER IDS:", menu_ids);
+
+    try {
+        await changeCategoryPosition({
+            parent_id: formData.category_id,
+            menu_ids,
+        });
+
+        console.log("ORDER SAVED");
+    } catch (error) {
+        console.error("ORDER SAVE FAILED:", error);
+    }
+};
 
   if (!isOpen) {
     return null;
   }
-
   return (
     <FlyoutPanel
       isOpen={isOpen}
@@ -62,6 +92,13 @@ function CategoryForm({ isOpen, onClose, selectedCategory, onAfterSave, menu_id 
                 errors={errors}
                 menuId={menu_id}
               />
+
+              {formData.is_parent === "yes" && (
+                <ChildrenArranger
+                  value={formData.children || []}
+                  onChange={emitValueChange}
+                />
+              )}
             </div>
           )}
         </div>

@@ -106,6 +106,9 @@ export const categoryModuleSchema = {
       description: null,
       status: "active",
       is_sys_category: "no",
+      categories_index: "",
+      
+
     },
     sections: [
       {
@@ -201,18 +204,19 @@ export const categoryModuleSchema = {
             name: "status",
             label: "Status",
             type: "radio",
-            gridSpan: 12,
+            gridSpan: 6,
             options: [
               { value: "active", label: "Active" },
               { value: "inactive", label: "Inactive" },
             ],
           },
+         
         ],
       },
     ],
   },
   validationSchema: z.object({
-    categoryName: z.preprocess( (value) => value ?? "", z.string().trim().min(1, "Category name is required") ),
+    categoryName: z.preprocess((value) => value ?? "", z.string().trim().min(1, "Category name is required")),
     slug: z.string().trim().min(1, "Slug is required"),
     is_parent: z.enum(["yes", "no"]),
     parent_id: z.any().optional(),

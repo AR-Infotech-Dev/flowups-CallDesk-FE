@@ -44,3 +44,23 @@ export const saveCategory = async ({ mode, categoryId, payload }) => {
     body: JSON.stringify(payload),
   });
 };
+export const updateChildrenOrder = async (payload) => {
+    return makeRequest("/categories/reorder", {
+        method: "POST",
+        body: payload,
+    });
+};
+
+export const changeCategoryPosition = async ({
+    parent_id,
+    menu_ids,
+}) => {
+    return makeRequest("/categories/change-position", {
+        method: "POST",
+        body: {
+            action: "changePositions",
+            parent_id,
+            menu_ids,
+        },
+    });
+};

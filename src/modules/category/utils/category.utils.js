@@ -25,6 +25,7 @@ export function normalizeCategoryData(category = {}) {
     description: category?.description || "",
     status: category?.status || "active",
     is_sys_category: category?.is_sys_category || "no",
+    categories_index: category?.categories_index || "",
   };
 }
 

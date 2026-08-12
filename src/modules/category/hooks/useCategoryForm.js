@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { categoryModuleSchema } from "../data/module.schema";
-import { getCategoryDetails, saveCategory } from "../data/categories.service";
+import { getCategoryDetails, saveCategory, updateChildrenOrder } from "../data/categories.service";
 import {
   getCategoryIdentifier,
   normalizeCategoryData,
@@ -69,7 +69,7 @@ export const useCategoryForm = ({ isOpen, onClose, selectedCategory, onAfterSave
       }
 
       if (name === "is_parent" && value === "yes") {
-        nextState.parent_id = "";
+        nextState.parent_id = null;
       }
 
       return nextState;
@@ -77,9 +77,13 @@ export const useCategoryForm = ({ isOpen, onClose, selectedCategory, onAfterSave
   };
 
   const handleSave = async () => {
-    const payload = normalizeCategorySavePayload(formData);
-    const result = categoryModuleSchema.validationSchema.safeParse(payload);
+    const payload = {
+      ...normalizeCategorySavePayload(formData),
 
+      parent_id: formData.is_parent === "yes" ? null : Number(formData.parent_id),
+      children: (formData.children || []).map((child, index) => ({ category_id: child.category_id, categories_index: index + 1, })), };
+    console.log("SAVE PAYLOAD:", payload);
+    const result = categoryModuleSchema.validationSchema.safeParse(payload);
     if (!result.success) {
       const nextErrors = {};
       result.error.issues.forEach((issue) => {
