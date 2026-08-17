@@ -67,7 +67,67 @@ const INSTRUCTION_ROWS = [
   ["Date Format", "Use YYYY-MM-DD, for example 2027-04-01."],
   ["Before Import", "Save the workbook as .xlsx or .xls, upload it, review Preview Import, and then click Apply Changes."],
   ["Important", "Do not add commas inside an individual contact name, product name or serial number because commas separate multiple values."],
+  ["", ""],
+  ["Column Rules", "Use the formats and allowed values below. Enum columns also show an Excel dropdown in the Customer Data sheet."],
+  ["Is AMC", "Enum: yes, no"],
+  ["AMC Term Period", "Enum: 4_month, 6_month, yearly. Required only when Is AMC is yes."],
+  ["AMC Start Date / AMC End Date", "Date: YYYY-MM-DD only, for example 2027-04-01."],
+  ["Expected Call Count", "Whole number, for example 12."],
+  ["Status", "Enum: active, inactive"],
+  ["Contact Primary Flags", "Enum per contact: y, n. For multiple contacts use comma-separated aligned values, for example y, n."],
+  ["Product Expiry Dates", "Comma-separated dates in YYYY-MM-DD format, aligned with Product IDs/Product Names."],
+  ["WhatsApp / Contact Mobile Numbers", "Digits only. Contact mobile numbers must be 10 digits."],
+  ["Contact Emails", "Valid email addresses. Multiple values must be comma-separated and aligned with Contact Names."],
 ];
+
+const CUSTOMER_DATA_VALIDATIONS = [
+  { sqref: "M2:M10000", type: "list", formula: '"yes,no"', title: "Allowed values", message: "Select yes or no." },
+  { sqref: "N2:N10000", type: "list", formula: '"4_month,6_month,yearly"', title: "Allowed values", message: "Select 4_month, 6_month or yearly." },
+  { sqref: "S2:S10000", type: "list", formula: '"active,inactive"', title: "Allowed values", message: "Select active or inactive." },
+  { sqref: "O2:P10000", type: "custom", formula: "TRUE", title: "Accepted date format", message: "Enter date as YYYY-MM-DD, for example 2027-04-01." },
+  { sqref: "Q2:Q10000", type: "whole", formula: "0", formula2: "999999", operator: "between", title: "Whole number", message: "Enter a whole number (0 or greater)." },
+  { sqref: "Z2:Z10000", type: "custom", formula: "TRUE", title: "Allowed values", message: "Use y or n. For multiple contacts use aligned comma-separated values, for example y, n." },
+  { sqref: "AE2:AE10000", type: "custom", formula: "TRUE", title: "Accepted date format", message: "Use YYYY-MM-DD. For multiple products use aligned comma-separated dates." },
+];
+
+const HEADER_HINT_VALIDATIONS = [
+  { sqref: "M1", type: "custom", formula: "TRUE", title: "Is AMC", message: "Allowed values: yes, no." },
+  { sqref: "N1", type: "custom", formula: "TRUE", title: "AMC Term Period", message: "Allowed values: 4_month, 6_month, yearly." },
+  { sqref: "O1:P1", type: "custom", formula: "TRUE", title: "AMC Date", message: "Accepted format: YYYY-MM-DD, for example 2027-04-01." },
+  { sqref: "Q1", type: "custom", formula: "TRUE", title: "Expected Call Count", message: "Enter a whole number 0 or greater." },
+  { sqref: "S1", type: "custom", formula: "TRUE", title: "Status", message: "Allowed values: active, inactive." },
+  { sqref: "Z1", type: "custom", formula: "TRUE", title: "Contact Primary Flags", message: "Use y or n. For multiple contacts keep comma-separated values aligned." },
+  { sqref: "AE1", type: "custom", formula: "TRUE", title: "Product Expiry Dates", message: "Use comma-separated YYYY-MM-DD dates aligned with Product IDs." },
+];
+
+const escapeXmlAttribute = (value) => String(value ?? "")
+  .replace(/&/g, "&amp;")
+  .replace(/"/g, "&quot;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/\r?\n/g, "&#10;");
+
+const buildProductMasterHint = (workbook) => {
+  const products = rowsFromSheet(workbook?.Sheets?.["Products Master"])
+    .map((row) => ({ id: row?.["Product ID"], name: String(row?.["Product Name"] ?? "").trim() }))
+    .filter((product) => product.id !== null && product.id !== undefined && product.id !== "" && product.name);
+  if (!products.length) return "No products available.\nSee Products Master sheet.";
+
+  const suffix = "\n... More in Products Master sheet";
+  let message = "";
+  let truncated = false;
+  for (const product of products) {
+    const item = `${product.id} - ${product.name}`;
+    const candidate = message ? `${message}\n${item}` : item;
+
+    if (candidate.length + suffix.length > 250) {
+      truncated = true;
+      break;
+    }
+    message = candidate;
+  }
+  return truncated ? `${message}${suffix}` : message;
+};
 
 const normalizeHeader = (value) => String(value ?? "").trim();
 const normalizeKey = (value) => String(value ?? "").trim();
@@ -127,12 +187,20 @@ function createSingleSheet(rows) {
       alignment: { horizontal: "center", vertical: "center", wrapText: true },
     };
   });
+  ["AMC Start Date", "AMC End Date"].forEach((header) => {
+    const columnIndex = SINGLE_SHEET_HEADERS.indexOf(header);
+    if (columnIndex < 0) return;
+    for (let rowIndex = 1; rowIndex <= rows.length; rowIndex += 1) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })];
+      if (cell) cell.z = "yyyy-mm-dd";
+    }
+  });
   return sheet;
 }
 
 function createInstructionsSheet() {
   const sheet = XLSX.utils.aoa_to_sheet(INSTRUCTION_ROWS);
-  sheet["!cols"] = [{ wch: 24 }, { wch: 110 }];
+  sheet["!cols"] = [{ wch: 34 }, { wch: 110 }];
   sheet["!rows"] = [{ hpt: 28 }];
   sheet["!merges"] = [XLSX.utils.decode_range("A1:B1")];
 
@@ -200,7 +268,29 @@ function writeUserWorkbook(workbook) {
   if (customerSheet) {
     const xml = strFromU8(customerSheet);
     const frozenView = '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>';
-    const patchedXml = xml.replace(/<sheetViews>[\s\S]*?<\/sheetViews>/, frozenView);
+    const productMasterHint = buildProductMasterHint(workbook);
+    const productHeaderHints = [
+      { sqref: "AB1:AB10000", type: "custom", formula: "TRUE", title: "Available Products", message: productMasterHint },
+      { sqref: "AC1:AC10000", type: "custom", formula: "TRUE", title: "Available Products", message: productMasterHint },
+    ];
+    const allValidations = [...HEADER_HINT_VALIDATIONS, ...productHeaderHints, ...CUSTOMER_DATA_VALIDATIONS];
+    const validationXml = `<dataValidations count="${allValidations.length}">${allValidations.map((rule) => {
+      const attributes = [
+        `type="${rule.type}"`, `allowBlank="1"`, `showInputMessage="1"`,
+        `showErrorMessage="${["list", "whole"].includes(rule.type) ? "1" : "0"}"`,
+        `errorStyle="stop"`, `sqref="${rule.sqref}"`,
+        rule.operator ? `operator="${rule.operator}"` : "",
+        `promptTitle="${escapeXmlAttribute(rule.title)}"`, `prompt="${escapeXmlAttribute(rule.message)}"`,
+        `errorTitle="Invalid value"`, `error="Use the value or format shown for this column."`,
+      ].filter(Boolean).join(" ");
+      return `<dataValidation ${attributes}><formula1>${rule.formula}</formula1>${rule.formula2 ? `<formula2>${rule.formula2}</formula2>` : ""}</dataValidation>`;
+    }).join("")}</dataValidations>`;
+    let patchedXml = xml.replace(/<sheetViews>[\s\S]*?<\/sheetViews>/, frozenView);
+    patchedXml = patchedXml.replace(/<dataValidations[\s\S]*?<\/dataValidations>/, "");
+    // OpenXML requires dataValidations before ignoredErrors. SheetJS normally
+    // emits ignoredErrors near the end of the worksheet, so include it as the
+    // first insertion anchor to prevent Excel from repairing sheet3.xml.
+    patchedXml = patchedXml.replace(/(<ignoredErrors\b|<hyperlinks\b|<printOptions\b|<pageMargins\b|<pageSetup\b|<legacyDrawing\b|<\/worksheet>)/, `${validationXml}$1`);
     files[customerSheetPath] = strToU8(patchedXml);
   }
 
