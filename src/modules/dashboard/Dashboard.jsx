@@ -44,6 +44,10 @@ export function Dashboard() {
     navigate("/dashboard/product-expiry");
   };
 
+  const openQuotationFollowup = (followup) => {
+    navigate("/quotations", { state: { previewQuotationId: followup.quotation_id } });
+  };
+
   const handleRenewAmc = (amc) => {
     navigate("/customers", {
       state: {
@@ -77,6 +81,7 @@ export function Dashboard() {
         onNavigateProductExpiry={navigateProductExpiry}
         onRenewAmc={handleRenewAmc}
         onUpdateProductExpiry={openProductExpiryModal}
+        onOpenQuotationFollowup={openQuotationFollowup}
       />
 
       <ProductExpiryUpdateModal

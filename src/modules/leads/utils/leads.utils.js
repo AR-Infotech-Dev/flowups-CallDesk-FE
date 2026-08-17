@@ -15,5 +15,6 @@ export const normalizeLeadPayload = (data = {}) => ({
   assigned_to: data.assigned_to || null,
   next_followup_date: data.next_followup_date || null,
   email: data.email || null,
+  gst_number: data.gst_number ? String(data.gst_number).trim().toUpperCase() : null,
   lost_reason: data.lead_status === "lost" ? data.lost_reason : null,
 });

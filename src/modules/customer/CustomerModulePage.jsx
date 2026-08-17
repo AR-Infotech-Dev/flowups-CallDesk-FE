@@ -124,13 +124,13 @@ function CustomerModulePage({ menu_id }) {
           >
             {(role_slug == "admin" || role_slug == "super_admin") && permissions.canAdd && (
               <ActionButton onClick={() => setIsImportFlyoutOpen(true)}>
-                <Download size={15} />
+                <Upload size={15} />
                 Import Data
               </ActionButton>
             )}
             {(role_slug == "admin" || role_slug == "super_admin") && (
               <ActionButton onClick={handleExportsExcel}>
-                <Upload size={15} />
+                <Download size={15} />
                 Export Excel
               </ActionButton>
             )}

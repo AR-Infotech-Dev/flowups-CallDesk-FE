@@ -42,16 +42,20 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     multi = false,
     getValue,
     getLabel,
+    valueKey = "",
+    labelKey = "",
+    slug = "",
     apiUrl = "",
     countKey = "",
     countLabel = "",
     customURL = "",
     dropdownPortal = false,
     statusCheck = false,
+    isCompanyWise = false,
     customParameters = {},
   } = config;
   // const { openCategoryCreate } = useCategoryCreateStore();
-  const key = `${type}-${source}`;
+  const key = `${type}-${slug || source}-${apiUrl || customURL}`;
   const [options, setOptions] = useState([]);
   const [internalValue, setInternalValue] = useState(multi ? [] : null);
   const [inputValue, setInputValue] = useState('');
@@ -68,14 +72,18 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
 
   // Normalize fetched items
   const normalizeOptions = (items = []) => items.map(item => {
-    const baseLabel = getLabel ? getLabel(item) : item.name || 'Unnamed';
+    const baseLabel = getLabel
+      ? getLabel(item)
+      : (labelKey ? item[labelKey] : item.name) || 'Unnamed';
     const count = countKey ? Number(item[countKey] || 0) : null;
     const label = countKey
       ? `${baseLabel} (${count}${countLabel ? ` ${countLabel}` : ""})`
       : baseLabel;
 
     return {
-      value: getValue ? getValue(item) : item.id,
+      value: getValue
+        ? getValue(item)
+        : (valueKey ? item[valueKey] : item.id),
       label,
       original: item,
     };
@@ -87,8 +95,15 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     const headers = {};
     let res = {}, data = [], newOptions = [];
     if (type === 'category') {
-      let urlType = customURL || `${API_BASE_URL}/searchSlugList`;
-      const posData = customURL ? customParameters : { status: 'active', slug: source };
+      let urlType = customURL || apiUrl || `${API_BASE_URL}/system/searchSlugList`;
+      const posData = customURL
+        ? customParameters
+        : {
+            status: customParameters.status || 'active',
+            slug: slug || source,
+            isCompanyWise,
+            ...customParameters,
+          };
       res = await makeRequest(urlType, {
         method: 'POST', headers,
         body: posData,
@@ -96,6 +111,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
       data = customURL ? res?.data || [] : res.data[0]?.sublist || [];
     } else {
       // res = await fetchJson(`${API_BASE_URL}/searchList`, {
+      
       res = await makeRequest(apiUrl || `${API_BASE_URL}/system/searchList`, {
         method: 'POST', headers,
         body: JSON.stringify({
@@ -105,6 +121,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
           wherec: type === 'customer' ? 'name' : check,
           status: statusCheck,
           list,
+          isCompanyWise,
           curpage: page,
           ...customParameters,
         }),
@@ -170,9 +187,6 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
       if (!alive) return;
       const matched = pool.filter(opt => ids.includes(String(opt.value)));
       setInternalValue(multi ? matched : (matched[0] ?? null));
-      if (matched.length) {
-        onObjectSelect?.(multi ? matched : matched[0]);
-      }
     };
 
     if (isCleared) {
@@ -403,7 +417,7 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
               ref={inputRef}
               name={id}
               onBlur={() => {
-                if (!multi && inputValue === '') {
+                if (!multi && inputValue === '' && !internalValue) {
                   setInternalValue(null);
                   onSelect?.('');
                   onObjectSelect?.({});

@@ -22,6 +22,44 @@ export const getQuotationDetails = (id) => makeRequest(`${quotationsModuleSchema
   method: "GET",
 });
 
+export const getQuotationPreview = (id) => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/preview`, {
+  method: "GET",
+});
+
+export const getQuotationHistory = (id) => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/history`, {
+  method: "GET",
+});
+
+export const sendQuotation = (id, recipientEmail) => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/send`, {
+  method: "POST",
+  body: { confirmed: true, recipient_email: recipientEmail },
+  timeout: 60000,
+});
+
+export const changeQuotationStatus = (id, status, remarks = "") => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/status`, {
+  method: "POST",
+  body: { status, remarks },
+});
+
+export const reviseQuotation = (id, reason) => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/revise`, {
+  method: "POST",
+  body: { reason },
+});
+
+export const getQuotationFollowups = (id) => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/followups`, {
+  method: "GET",
+});
+
+export const scheduleQuotationFollowup = (id, data) => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/followups`, {
+  method: "POST",
+  body: data,
+});
+
+export const completeQuotationFollowup = (id, followupId, data) => makeRequest(`${quotationsModuleSchema.api.edit}/${id}/followups/${followupId}/complete`, {
+  method: "POST",
+  body: data,
+});
+
 export const saveQuotation = ({ mode, quotationID, formData }) => makeRequest(
   mode === "create" ? quotationsModuleSchema.api.create : `${quotationsModuleSchema.api.edit}/${quotationID}`,
   {

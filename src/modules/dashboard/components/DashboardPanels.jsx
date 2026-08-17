@@ -4,6 +4,7 @@ import { BarChart } from "./BarChart";
 import { DonutChart } from "./DonutChart";
 import { ProductExpiryAlerts } from "./ProductExpiryAlerts";
 import { TrendChart } from "./TrendChart";
+import { QuotationFollowups } from "./QuotationFollowups";
 
 export function DashboardPanels({
   dashboard,
@@ -12,9 +13,21 @@ export function DashboardPanels({
   onNavigateProductExpiry,
   onRenewAmc,
   onUpdateProductExpiry,
+  onOpenQuotationFollowup,
 }) {
   return (
     <section className="dashboard-grid">
+      <article className="dashboard-panel dashboard-panel-wide quotation-followup-widget">
+        <div className="dashboard-panel-head">
+          <div>
+            <span className="dashboard-section-label">Quotations</span>
+            <h2>{adminView ? "Company Pending Follow-ups" : "My Pending Follow-ups"}</h2>
+          </div>
+          <strong>{dashboard.quotationFollowups.length}</strong>
+        </div>
+        <QuotationFollowups items={dashboard.quotationFollowups} adminView={adminView} onOpen={onOpenQuotationFollowup} />
+      </article>
+
       <article className="dashboard-panel" onClick={onNavigateTickets}>
         <div className="dashboard-panel-head">
           <div>

@@ -77,6 +77,7 @@ export const useDashboardData = ({ roleSlug = "user" } = {}) => {
       amcHealth: dashboardData.charts?.amcHealth || [],
       amcAlerts: dashboardData.amcAlerts || [],
       productExpiryAlerts: dashboardData.productExpiryAlerts || [],
+      quotationFollowups: dashboardData.quotationFollowups || [],
       title: adminView ? "Operations Dashboard" : "My Dashboard",
       subtitle: adminView ? "Live CRM workload, team performance, and SLA health." : "Your assigned work, follow-ups, and ticket progress.",
     }),

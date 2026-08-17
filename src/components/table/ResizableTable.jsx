@@ -112,6 +112,7 @@ function ResizableTable({
   rowActions = [],
   renderActions,
   showActions,
+  actionColumnWidth = ACTIONS_COLUMN.minWidth,
   loading,
   sortConfig,
   onSortChange,
@@ -191,14 +192,15 @@ function ResizableTable({
         ...visibleColumns,
         {
           ...ACTIONS_COLUMN,
+          width: actionColumnWidth,
           currentWidth: Math.max(
             getColumnWidth(ACTIONS_COLUMN.minWidth, 90),
-            getColumnWidth(columnWidths[ACTIONS_COLUMN.key], ACTIONS_COLUMN.width, ACTIONS_COLUMN.minWidth)
+            getColumnWidth(columnWidths[ACTIONS_COLUMN.key], actionColumnWidth, ACTIONS_COLUMN.minWidth)
           ),
         },
       ];
     },
-    [allowSelection, columnWidths, columns, menuId, shouldShowActions, user, visibleColumnKeys]
+    [actionColumnWidth, allowSelection, columnWidths, columns, menuId, shouldShowActions, user, visibleColumnKeys]
   );
 
   useEffect(() => {
