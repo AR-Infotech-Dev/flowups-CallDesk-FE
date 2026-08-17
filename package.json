@@ -43,6 +43,7 @@
     "clsx": "^2.1.1",
     "dnd-kit": "^0.0.2",
     "dotenv": "^17.4.1",
+    "fflate": "^0.8.3",
     "handlebars": "^4.7.9",
     "js-cookie": "^3.0.5",
     "leaflet": "^1.9.4",
@@ -62,6 +63,8 @@
     "react-toastify": "^11.0.5",
     "react-window": "^1.8.10",
     "socket.io-client": "^4.8.3",
+    "sweetalert2": "^11.26.25",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
