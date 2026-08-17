@@ -63,6 +63,7 @@ export const leadsModuleSchema = {
       customer_id: "",
       name: "",
       company_name: "",
+      gst_number: "",
       contact_person: "",
       mobile_no: "",
       email: "",
@@ -75,37 +76,15 @@ export const leadsModuleSchema = {
       status: "active",
     },
     sections: [
+
       {
         title: "Lead Details",
         columns: 2,
         fields: [
-          {
-            ...visibleField,
-            name: "lead_id",
-            label: "Existing Customer (Optional)",
-            type: "smartSelectInput",
-            gridSpan: 12,
-            config: {
-              type: "customer",
-              source: "customer",
-              list: "customer_id,name,company_name,contact_person,mobile_no,email",
-              check: "name",
-              placeholder: "Search existing customer",
-              preload: true,
-              cache: true,
-              multi: false,
-              getValue: (item) => item.customer_id,
-              getLabel: (item) => `${item.name}${item.mobile_no ? ` - ${item.mobile_no}` : ""}`,
-            },
-          },
-        ]
-      },
-      {
-        columns: 2,
-        fields: [
-          { ...visibleField, name: "name", label: "Lead Name", type: "text", required: true, gridSpan: 6 },
+          { ...visibleField, name: "name", label: "Lead Name", type: "text", required: true, gridSpan: 3 },
           { ...visibleField, name: "mobile_no", label: "Mobile Number", type: "text", required: true, gridSpan: 3 },
           { ...visibleField, name: "company_name", label: "Company Name", type: "text", gridSpan: 3 },
+          { ...visibleField, name: "gst_number", label: "GST Number", type: "text", gridSpan: 3, placeholder: "Enter GST number" },
         ],
       },
       {
@@ -136,7 +115,7 @@ export const leadsModuleSchema = {
             gridSpan: 12,
             visibleWhen: (values) => values.lead_status === "lost",
           },
-          
+
         ],
       },
       {
@@ -160,6 +139,9 @@ export const leadsModuleSchema = {
     name: z.string().trim().min(1, "Lead name is required"),
     mobile_no: z.string().trim().min(7, "Valid mobile number is required"),
     company_name: z.string().nullish(),
+    gst_number: z.union([
+      z.literal(""),
+    ]).nullish(),
     contact_person: z.string().nullish(),
     email: z.union([z.literal(""), z.string().email("Enter a valid email")]).nullish(),
     requirement: z.string().nullish(),

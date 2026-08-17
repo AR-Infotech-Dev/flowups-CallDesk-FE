@@ -11,8 +11,9 @@ import {
     selectCustomersRows,
 } from "../data/customer.slice";
 import * as customersActions from "../data/customer.slice";
-import { downloadExcel } from "../data/customers.service";
+import { downloadExcel, getCustomerProductOptions } from "../data/customers.service";
 import { downloadBlobResponse } from "@/utils/download.utils";
+import { convertLegacyWorkbookBlobToSingleSheet } from "../utils/customerWorkbook.utils";
 export const useCustomersModule = ({ filterState, exportColumnKeys = [] }) => {
     const dispatch = useAppDispatch();  
 
@@ -71,10 +72,27 @@ export const useCustomersModule = ({ filterState, exportColumnKeys = [] }) => {
     };
     const handleExportsExcel = async () => {
 
-        const res = await downloadExcel({ filterState, selectedColumns: exportColumnKeys })
+        const [res, productsResponse] = await Promise.all([
+            downloadExcel({ filterState, selectedColumns: exportColumnKeys }),
+            getCustomerProductOptions(),
+        ]);
 
-        if (!res?.success || !downloadBlobResponse(res, "Customer-Export.xlsx")) {
+        if (!res?.success) {
             toast.error(res?.message || "Unable to export customer report.");
+            return;
+        }
+
+        try {
+            const data = await convertLegacyWorkbookBlobToSingleSheet(
+                res.data,
+                productsResponse?.success ? productsResponse.data || [] : [],
+            );
+            if (!downloadBlobResponse({ ...res, data, headers: {} }, "Customer-Export.xlsx")) {
+                throw new Error("Unable to export customer report.");
+            }
+            toast.success("Customer export downloaded in one-sheet format.");
+        } catch (error) {
+            toast.error(error.message || "Unable to prepare one-sheet customer export.");
         }
     };
 

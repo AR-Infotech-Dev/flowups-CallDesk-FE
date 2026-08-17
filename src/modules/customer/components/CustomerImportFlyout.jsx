@@ -5,12 +5,14 @@ import ActionButton from "../../../components/ui/ActionButton";
 import FlyoutPanel from "../../../components/ui/FlyoutPanel";
 import Spinner from "../../../components/ui/Spinner";
 import { downloadBlobResponse } from "../../../utils/download.utils";
-import { downloadCustomerImportTemplate, importCustomerWorkbook } from "../data/customers.service";
+import { downloadCustomerImportTemplate, getCustomerProductOptions, importCustomerWorkbook } from "../data/customers.service";
+import { convertLegacyWorkbookBlobToSingleSheet, prepareCustomerWorkbookForImport } from "../utils/customerWorkbook.utils";
 
-const workbookSheets = ["Customers", "Contacts", "Products"];
+const workbookSheets = ["Customer Data"];
 
 function CustomerImportFlyout({ isOpen, onClose, onImported }) {
   const fileInputRef = useRef(null);
+  const preparedFileCacheRef = useRef({ source: null, prepared: null });
   const [file, setFile] = useState(null);
   const [importing, setImporting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -28,15 +30,33 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
     setImportStage("");
     setResult(null);
     setPreviewReady(false);
+    preparedFileCacheRef.current = { source: null, prepared: null };
     onClose?.();
   };
 
   const handleTemplateDownload = async () => {
     setTemplateDownloading(true);
-    const response = await downloadCustomerImportTemplate();
-    setTemplateDownloading(false);
-    if (!response?.success || !downloadBlobResponse(response, "customer-import-template.xlsx")) {
+    const [response, productsResponse] = await Promise.all([
+      downloadCustomerImportTemplate(),
+      getCustomerProductOptions(),
+    ]);
+    if (!response?.success) {
+      setTemplateDownloading(false);
       toast.error(response?.message || "Unable to download import template.");
+      return;
+    }
+    try {
+      const data = await convertLegacyWorkbookBlobToSingleSheet(
+        response.data,
+        productsResponse?.success ? productsResponse.data || [] : [],
+      );
+      if (!downloadBlobResponse({ ...response, data, headers: {} }, "customer-import-template.xlsx")) {
+        throw new Error("Unable to download import template.");
+      }
+    } catch (error) {
+      toast.error(error.message || "Unable to prepare the one-sheet import template.");
+    } finally {
+      setTemplateDownloading(false);
     }
   };
 
@@ -48,9 +68,24 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
 
     setImporting(true);
     setUploadProgress(0);
+    setImportStage("Validating workbook...");
+    let preparedFile = preparedFileCacheRef.current.source === file
+      ? preparedFileCacheRef.current.prepared
+      : null;
+    if (!preparedFile) {
+      try {
+        preparedFile = await prepareCustomerWorkbookForImport(file);
+        preparedFileCacheRef.current = { source: file, prepared: preparedFile };
+      } catch (error) {
+        setImporting(false);
+        setImportStage("");
+        toast.error(error.message || "Invalid customer workbook.");
+        return;
+      }
+    }
     setImportStage("Uploading file...");
     const res = await importCustomerWorkbook({
-      file,
+      file: preparedFile,
       mode,
       onUploadProgress: (progressEvent) => {
         if (!progressEvent.total) return;
@@ -120,7 +155,7 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
           <div className="customer-import-upload-head">
             <div>
               <h3>Upload Filled Excel</h3>
-              <p>Accepted file types: .xlsx, .xls, .csv</p>
+              <p>Accepted file types: .xlsx, .xls</p>
             </div>
           </div>
 
@@ -134,13 +169,14 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
             ref={fileInputRef}
             className="sr-only"
             type="file"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.xls"
             onChange={(event) => {
               setFile(event.target.files?.[0] || null);
               setUploadProgress(0);
               setImportStage("");
               setResult(null);
               setPreviewReady(false);
+              preparedFileCacheRef.current = { source: null, prepared: null };
             }}
           />
         </section>
@@ -158,7 +194,7 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
         )}
 
         <section className="customer-import-columns">
-          <h3>Workbook Sheets</h3>
+          <h3>Editable Data Sheet</h3>
           <div>
             {workbookSheets.map((sheet) => (
               <span key={sheet} className="required">
@@ -166,6 +202,9 @@ function CustomerImportFlyout({ isOpen, onClose, onImported }) {
               </span>
             ))}
           </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Keep one row per customer. Enter multiple contacts and products in their respective comma-separated columns, then upload the same file.
+          </p>
         </section>
 
         {result && (

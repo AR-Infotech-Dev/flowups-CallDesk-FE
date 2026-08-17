@@ -317,6 +317,10 @@ function renderValueCell(column, row, index, selectionProps) {
       return renderBadgeCell("badge", value, row, colorField);
     case "status":
       return renderBadgeCell("status", value, row, colorField);
+    case "revision":
+      return String(value || "").toLowerCase() === "yes"
+        ? <span className="tag lilac">Revised</span>
+        : "-";
     case "dotText":
       return renderDotTextCell(value, row, colorField, index);
     case "date":

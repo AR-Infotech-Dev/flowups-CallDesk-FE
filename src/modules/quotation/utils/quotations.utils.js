@@ -1,7 +1,7 @@
 import { quotationsModuleSchema } from "../data/module.schema";
 export const toDateInput=(date=new Date())=>date.toISOString().slice(0,10);
 export const addDays=(key,days)=>{const date=new Date(`${key}T00:00:00`);date.setDate(date.getDate()+days);return toDateInput(date)};
-export const emptyQuotationItem=()=>({product_id:"",product_name:"",quantity:1,rate:0,discount_rate:0,gst_rate:0});
+export const emptyQuotationItem=()=>({product_id:"",product_name:"",product_description:"",quantity:1,rate:0,discount_rate:0,gst_rate:0});
 export const createInitialQuotation=()=>{const quotation_date=toDateInput();return {...quotationsModuleSchema.form.initialValues,quotation_date,valid_until:addDays(quotation_date,14),terms:"Prices are valid until the date mentioned above.",items:[emptyQuotationItem()]}};
 export const getQuotationIdentifier=(row)=>row?.quotation_id ?? null;
 export const normalizeQuotationData=(row={})=>({...createInitialQuotation(),...row,quotation_status:row.quotation_status||row.workflow_status||"draft",items:Array.isArray(row.items)&&row.items.length?row.items:[emptyQuotationItem()]});

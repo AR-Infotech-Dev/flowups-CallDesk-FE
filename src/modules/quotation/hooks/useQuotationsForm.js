@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import {
   getQuotationDetails,
   saveQuotation,
+  sendQuotation,
 } from "../data/quotations.service";
 import { quotationsModuleSchema } from "../data/module.schema";
 import {
@@ -56,6 +57,7 @@ export const useQuotationForm = ({ isOpen, onClose, onAfterSave, selectedQuotati
         const quotationData = detailsResponse?.success
           ? normalizeQuotationData(detailsResponse.data)
           : createInitialQuotation();
+          
         setFormData(quotationData);
         const isLead = Boolean(quotationData.lead_id && !quotationData.customer_id);
         setFormData({
@@ -66,10 +68,12 @@ export const useQuotationForm = ({ isOpen, onClose, onAfterSave, selectedQuotati
           entity_type: "lead",
           lead_id: quotationData.lead_id,
           name: quotationData.lead_name || quotationData.name || "",
+          email: quotationData.lead_email || "",
         } : quotationData.customer_id ? {
           entity_type: "customer",
           customer_id: quotationData.customer_id,
           name: quotationData.customer_name || quotationData.name || "",
+          email: quotationData.customer_email || "",
         } : {});
       })
       .catch((error) => {
@@ -139,15 +143,18 @@ export const useQuotationForm = ({ isOpen, onClose, onAfterSave, selectedQuotati
             ...item,
             product_id: "",
             product_name: "",
+            product_description: "",
             rate: 0,
             gst_rate: 0,
           };
         }
 
+        const selectedProductId = option?.value ?? product.product_id ?? "";
         return {
           ...item,
-          product_id: option?.value ?? product.product_id ?? "",
+          product_id: selectedProductId,
           product_name: product.product_name || product.label || option?.label || "",
+          product_description: product.product_description || "",
           rate: product.rate ?? item.rate ?? 0,
           gst_rate: product.gst_rate ?? item.gst_rate ?? 0,
         };
@@ -192,7 +199,14 @@ export const useQuotationForm = ({ isOpen, onClose, onAfterSave, selectedQuotati
   };
 
   const handleSave = async (status) => {
-    const payload = { ...formData, quotation_status: status || formData.quotation_status };
+    const shouldSend = status === "sent";
+    const payload = { ...formData, quotation_status: shouldSend ? "draft" : status || formData.quotation_status };
+    const recipientEmail = String(selectedParty?.email || "").trim();
+    if (shouldSend && !recipientEmail) {
+      toast.error("Selected customer or lead does not have an email address");
+      return;
+    }
+    if (shouldSend && !window.confirm(`Send quotation PDF to ${recipientEmail}?`)) return;
     const validationResult = quotationsModuleSchema.validationSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -202,14 +216,27 @@ export const useQuotationForm = ({ isOpen, onClose, onAfterSave, selectedQuotati
 
     setLoading(true);
     const response = await saveQuotation({ mode, quotationID, formData: payload });
-    setLoading(false);
-
     if (!response.success) {
+      setLoading(false);
       toast.error(response.message || "Unable to save quotation");
       return;
     }
 
-    toast.success(`Quotation ${mode === "create" ? "created" : "updated"} successfully`);
+    if (shouldSend) {
+      const savedQuotationId = response.quotation_id || response.data?.quotation_id || quotationID;
+      const sendResponse = await sendQuotation(savedQuotationId, recipientEmail);
+      if (!sendResponse.success) {
+        setLoading(false);
+        toast.error(sendResponse.message || "Quotation saved, but email could not be sent");
+        onAfterSave?.();
+        return;
+      }
+      toast.success(sendResponse.message || `Quotation sent to ${recipientEmail}`);
+    } else {
+      toast.success(`Quotation ${mode === "create" ? "created" : "updated"} successfully`);
+    }
+    setLoading(false);
+
     handleClose();
     onAfterSave?.();
   };
