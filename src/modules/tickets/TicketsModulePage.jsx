@@ -132,7 +132,7 @@ function TicketsModulePage({ menu_id }) {
             >
               <div className="flex items-center gap-2" />
               <div className="ticket-view-controls flex items-center justify-end gap-2">
-                <select
+                {/* <select
                   className="ticket-quick-filter h-7 min-w-[140px] rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700 hover:border-slate-300 focus:ring-2 focus:ring-blue-100"
                   value={quickFilter}
                   onChange={handleQuickFilterChange}
@@ -143,7 +143,7 @@ function TicketsModulePage({ menu_id }) {
                       {filter.label}
                     </option>
                   ))}
-                </select>
+                </select> */}
 
                 <div className="view-switch" data-view={viewMode} aria-label="Ticket view mode">
                   <button

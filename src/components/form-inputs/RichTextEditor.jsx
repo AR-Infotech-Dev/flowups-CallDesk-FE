@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState } from "react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import DefaultLabel from "./DefaultLabel";
 import ValidationError from "./ValidationError";
 

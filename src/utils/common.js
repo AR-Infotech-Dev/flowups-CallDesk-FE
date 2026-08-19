@@ -12,6 +12,15 @@ const COLORS = [
 ];
 
 export const getRandomAvatarColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
+export const getAvatarColor = (value = "") => {
+  const text = String(value);
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+  }
+  return COLORS[Math.abs(hash) % COLORS.length];
+};
+export const getInitials = (name = "") => name.split(" ").map((n) => n[0]).join("").toUpperCase();
 
 export const formatDate = (dateString, type = "full") => {
   if (!dateString) return "";

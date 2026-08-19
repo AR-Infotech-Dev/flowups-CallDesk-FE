@@ -18,8 +18,8 @@ export const normalizeCustomerProducts = (source = []) => {
         return ({
           product_id: row?.product_id || "",
           product_name: row?.product_name || "",
-          serial_number: (row?.serial_number || row?.product_serial_number || "").trim(),
-          add_ons: Array.isArray(row?.add_ons) ? row.add_ons.filter(Boolean) : [],
+          serial_number: String(row?.serial_number || row?.product_serial_number || "").trim(),
+          add_ons: normalizeTicketAddOns(row?.add_ons || row?.addons || row?.addOns || []),
         })
       })
       .filter((row) => row.product_id || row.product_name || row.serial_number || row.add_ons.length)
