@@ -31,11 +31,11 @@ const FORM_SECTIONS_AFTER_CONTACT = CONTACT_SECTION_INDEX >= 0
   ? ticketsModuleSchema.form.sections.slice(CONTACT_SECTION_INDEX + 1)
   : [];
 
-function QuickAddContactPanel({ formData = {}, errors = {}, onChange }) {
+function QuickAddContactPanel({ formData = {}, errors = {}, onChange, showContactPanel, onCancel }) {
   const mobile = normalizeMobileNumber(formData.contact_no);
   const hasCustomer = Boolean(formData.client_id);
   const matchedContact = findCustomerContactByMobile(formData.customer_contacts || formData.contact_persons, mobile);
-  const shouldShow = hasCustomer && mobile.length === 10 && !matchedContact && !formData.ticket_id;
+  const shouldShow = showContactPanel || hasCustomer && mobile.length === 10 && !matchedContact && !formData.ticket_id;
 
   if (!shouldShow) return null;
 
@@ -51,22 +51,17 @@ function QuickAddContactPanel({ formData = {}, errors = {}, onChange }) {
           </span>
           <div>
             <p className="text-sm font-semibold text-slate-800">New contact for this customer</p>
-            <p className="text-xs text-slate-500">No contact found for {mobile}. It will be saved after ticket create.</p>
+            <p className="text-xs text-slate-500">
+              {mobile ? `No contact found for ${mobile}. ` : ""}It will be saved with this ticket.
+            </p>
           </div>
         </div>
-        <label className="flex items-center gap-2 whitespace-nowrap text-xs font-medium text-slate-600">
-          <input
-            type="checkbox"
-            name="save_contact"
-            checked={Boolean(formData.save_contact)}
-            onChange={onChange}
-          />
-          Add
-        </label>
+        <button type="button" onClick={onCancel} className="text-slate-400 hover:text-slate-700" title="Cancel new contact">
+          <X size={16} />
+        </button>
       </div>
 
-      {formData.save_contact && (
-        <div className="grid grid-cols-12 gap-3">
+      <div className="grid grid-cols-12 gap-3">
           <label className="col-span-12 flex flex-col gap-1 md:col-span-6">
             <span className="text-xs font-medium text-slate-600">Contact Name *</span>
             <input
@@ -78,23 +73,34 @@ function QuickAddContactPanel({ formData = {}, errors = {}, onChange }) {
             />
           </label>
           <label className="col-span-12 flex flex-col gap-1 md:col-span-6">
-            <span className="text-xs font-medium text-slate-600">Mobile</span>
+            <span className="text-xs font-medium text-slate-600">Mobile *</span>
             <input
               name="mobile_no"
-              value={mobile}
-              readOnly
-              className="rounded border border-blue-100 bg-slate-50 px-3 py-1.5 text-sm text-slate-500"
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              value={details.mobile_no || mobile}
+              onChange={onChange}
+              autoFocus={showContactPanel}
+              className="rounded border border-blue-100 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
+              placeholder="Enter 10-digit mobile number"
             />
           </label>
           <label className="col-span-12 flex flex-col gap-1 md:col-span-6">
             <span className="text-xs font-medium text-slate-600">Designation</span>
-            <input
+            <select
               name="designation"
               value={details.designation || ""}
               onChange={onChange}
               className="rounded border border-blue-100 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
               placeholder="Optional"
-            />
+            >
+              <option value="">Select designation</option>
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+              <option value="accountant">Accountant</option>
+              <option value="other">Other</option>
+            </select>
           </label>
           <label className="col-span-12 flex flex-col gap-1 md:col-span-6">
             <span className="text-xs font-medium text-slate-600">Email</span>
@@ -106,19 +112,29 @@ function QuickAddContactPanel({ formData = {}, errors = {}, onChange }) {
               placeholder="Optional"
             />
           </label>
-          <label className="col-span-12 flex flex-col gap-1">
-            <span className="text-xs font-medium text-slate-600">Department</span>
-            <input
-              name="department"
-              value={details.department || ""}
-              onChange={onChange}
-              className="rounded border border-blue-100 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
-              placeholder="Optional"
-            />
-          </label>
           {fieldError && <p className="col-span-12 text-xs font-medium text-red-500">{fieldError}</p>}
         </div>
-      )}
+    </div>
+  );
+}
+
+function InitialCommentDraft({ value = "", onChange }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <div className="mb-2">
+        {/* <h3 className="text-sm font-semibold text-slate-700">Initial Comment</h3> */}
+        {/* <p className="text-xs text-slate-500">Optional. This comment will be saved when the ticket is created.</p> */}
+      </div>
+      <textarea
+        name="initial_comment"
+        value={value}
+        onChange={onChange}
+        rows={7}
+        maxLength={5000}
+        placeholder="Write the first comment for this ticket..."
+        className="w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+      />
+      <div className="mt-1 text-right text-[11px] text-slate-400">{String(value).length}/5000</div>
     </div>
   );
 }
@@ -138,6 +154,9 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
     setTab,
     mode,
     ticketId,
+    showContactPanel,
+    openContactPanel,
+    closeContactPanel,
     handleClose,
     handleChange,
     handleQuickContactChange,
@@ -161,11 +180,9 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
         }
         return true;
       })
-      : TAB_ITEMS.filter(([key]) => key === "client");
+      : TAB_ITEMS.filter(([key]) => key === "client" || key === "comments");
 
   if (!isOpen) return null;
-  console.log(formData);
-
   return (
     <>
       <FlyoutPanel
@@ -225,10 +242,26 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
                     oldValues={oldformData}
                     menuId={menu_id}
                   />
+                  {!showContactPanel && (
+                    <div className="mb-1 flex w-full justify-end">
+                      <button
+                        type="button"
+                        disabled={!formData.client_id}
+                        className="flex items-center gap-1.5 rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={openContactPanel}
+                      >
+                        <UserPlus size={13} />
+                        Add new contact
+                      </button>
+                    </div>
+                  )}
+
                   <QuickAddContactPanel
                     formData={formData}
                     errors={errors}
                     onChange={handleQuickContactChange}
+                    showContactPanel={showContactPanel}
+                    onCancel={closeContactPanel}
                   />
                   {FORM_SECTIONS_AFTER_CONTACT.length > 0 && (
                     <DynamicModuleForm
@@ -271,8 +304,11 @@ function TicketForm({ isOpen, onClose, selectedTicket, onAfterSave, menu_id }) {
                         </div>
                       </div>
                     )}
-                    {tab === "history" && mode === "edit" && <TicketHistory ticket_id={ticketId} />}
+                    {tab === "comments" && mode === "create" && (
+                      <InitialCommentDraft value={formData.initial_comment || ""} onChange={handleChange} />
+                    )}
                     {tab === "comments" && mode === "edit" && <Comments module="tickets" client={selectedCustomer} ticket_id={ticketId} />}
+                    {tab === "history" && mode === "edit" && <TicketHistory ticket_id={ticketId} />}
                     {tab === "work_logs" && mode === "edit" && <WorkLogs ticket={formData} ticket_id={ticketId} onAfterSave={afterWorkLogSave} />}
                     {tab === "visits" && mode === "edit" && formData.visit_required === "y" && <Visits ticket={formData} ticket_id={ticketId} />}
                   </div>

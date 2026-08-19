@@ -27,6 +27,7 @@ import {
 
 export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) => {
   const [loading, setLoading] = useState(false);
+  const [showContactPanel, setShowContactPanel] = useState(false);
   const [fetchingTicket, setFetchingTicket] = useState(false);
   const [formData, setFormData] = useState(ticketsModuleSchema.form.initialValues);
   const [oldformData, setOldFormData] = useState(ticketsModuleSchema.form.initialValues);
@@ -41,6 +42,7 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
   const ticketId = getTicketIdentifier(selectedTicket);
 
   const resetFormState = () => {
+    setShowContactPanel(false);
     setFormData(ticketsModuleSchema.form.initialValues);
     setOldFormData(ticketsModuleSchema.form.initialValues);
     setSelectedCustomer({});
@@ -130,7 +132,7 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
     }
   };
   useEffect(() => {
-    if (mode !== "edit" && tab !== "client") {
+    if (mode !== "edit" && !["client", "comments"].includes(tab)) {
       setTab("client");
     }
   }, [mode, tab]);
@@ -149,6 +151,7 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
   }, [selectedTicket, isOpen, ticketId]);
 
   const handleClose = () => {
+    setShowContactPanel(false);
     setFormData(ticketsModuleSchema.form.initialValues);
     setSelectedCustomer({});
     setErrors({});
@@ -166,6 +169,7 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
         ? (() => {
           const product = normalizeCustomerProducts(current.customer_products).find((item) => String(item.serial_number).trim() === String(value).trim());
           return {
+            product_id: product?.product_id || null,
             product_name: product?.product_name || null,
             product_serial_number: product?.serial_number || null,
             product_add_ons: [],
@@ -211,32 +215,56 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
   };
 
   const handleQuickContactChange = (event) => {
-    const { name, value, type, checked } = event.target;
+    const { name, value } = event.target;
 
     setFormData((current) => {
+      const normalizedMobile = name === "mobile_no"
+        ? normalizeMobileNumber(value).slice(0, 10)
+        : normalizeMobileNumber(current.contact_no);
       const nextContactDetails = {
         ...(current.contact_details || ticketsModuleSchema.form.initialValues.contact_details),
-        mobile_no: normalizeMobileNumber(current.contact_no),
+        mobile_no: normalizedMobile,
       };
-
-      if (name === "save_contact") {
-        return {
-          ...current,
-          save_contact: checked,
-          contact_details: nextContactDetails,
-        };
-      }
 
       return {
         ...current,
         save_contact: true,
         contact_person: name === "name" ? value : current.contact_person,
+        contact_no: name === "mobile_no" ? normalizedMobile : current.contact_no,
         contact_details: {
           ...nextContactDetails,
           [name]: value,
+          ...(name === "mobile_no" ? { mobile_no: normalizedMobile } : {}),
         },
       };
     });
+  };
+
+  const openContactPanel = () => {
+    if (!formData.client_id) {
+      toast.info("Select a customer first");
+      return;
+    }
+
+    setFormData((current) => ({
+      ...current,
+      contact_person: "",
+      contact_no: "",
+      save_contact: true,
+      contact_details: {
+        ...ticketsModuleSchema.form.initialValues.contact_details,
+      },
+    }));
+    setShowContactPanel(true);
+  };
+
+  const closeContactPanel = () => {
+    setShowContactPanel(false);
+    setFormData((current) => ({
+      ...current,
+      save_contact: false,
+      contact_details: ticketsModuleSchema.form.initialValues.contact_details,
+    }));
   };
 
   const handleObjectSelect = async (field, item = {}) => {
@@ -251,6 +279,8 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
     }
 
     if (field.name !== "client_id") return;
+
+    setShowContactPanel(false);
 
     const customer = item?.original || item || {};
     const customerId = customer?.customer_id;
@@ -447,6 +477,9 @@ export const useTicketForm = ({ isOpen, onClose, selectedTicket, onAfterSave }) 
   return {
     customerMenuId: customerModuleSchema.menu_id,
     loading,
+    showContactPanel,
+    openContactPanel,
+    closeContactPanel,
     fetchingTicket,
     formData,
     oldformData,

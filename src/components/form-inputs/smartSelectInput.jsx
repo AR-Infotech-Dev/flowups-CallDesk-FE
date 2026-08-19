@@ -53,6 +53,11 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     statusCheck = false,
     isCompanyWise = false,
     customParameters = {},
+    RowTemp = null,
+    rowHeight = 44,
+    remoteSearch = true,
+    searchDebounceMs = 300,
+    minSearchChars = 1,
   } = config;
   // const { openCategoryCreate } = useCategoryCreateStore();
   const key = `${type}-${slug || source}-${apiUrl || customURL}`;
@@ -66,9 +71,19 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   const dropdownRef = useRef(null);
   const [dropdownPosition, setDropdownPosition] = useState(null);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState("0");
+  const [page, setPage] = useState(0);
   const listRef = useRef(null);
   const transientOptionRef = useRef(null);
+  const requestIdRef = useRef(0);
+  const fetchingRef = useRef(false);
+  const usesRemoteSearch = type !== 'category' && remoteSearch;
+  const effectiveSearchColumns = check || (type === 'customer'
+    ? 'name,mobile_no,email,contact_person,customer_products'
+    : 'name');
+  const getOptionsCacheKey = (searchText = '') => {
+    const normalizedSearchText = String(searchText || '').trim().toLowerCase();
+    return normalizedSearchText ? `${key}::search::${normalizedSearchText}` : key;
+  };
 
   // Normalize fetched items
   const normalizeOptions = (items = []) => items.map(item => {
@@ -89,79 +104,134 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
     };
   });
 
-  // Fetch once, then always filter locally
-  const fetchOptions = async (page) => {
+  const fetchOptions = async (page = 0, searchText = '', { replace = false } = {}) => {
+    const requestId = ++requestIdRef.current;
+    fetchingRef.current = true;
     setLoading(true);
-    const headers = {};
-    let res = {}, data = [], newOptions = [];
-    if (type === 'category') {
-      let urlType = customURL || apiUrl || `${API_BASE_URL}/system/searchSlugList`;
-      const posData = customURL
-        ? customParameters
-        : {
+    try {
+      const headers = {};
+      const trimmedSearchText = String(searchText || '').trim();
+      let res = {};
+      let data = [];
+
+      if (type === 'category') {
+        const urlType = customURL || apiUrl || `${API_BASE_URL}/system/searchSlugList`;
+        const posData = customURL
+          ? customParameters
+          : {
             status: customParameters.status || 'active',
             slug: slug || source,
             isCompanyWise,
             ...customParameters,
           };
-      res = await makeRequest(urlType, {
-        method: 'POST', headers,
-        body: posData,
+        res = await makeRequest(urlType, {
+          method: 'POST', headers,
+          body: posData,
+        });
+        data = customURL ? res?.data || [] : res?.data?.[0]?.sublist || [];
+      } else {
+        res = await makeRequest(apiUrl || `${API_BASE_URL}/system/searchList`, {
+          method: 'POST', headers,
+          body: {
+            type: trimmedSearchText ? 'input' : '',
+            text: trimmedSearchText,
+            system: 'new',
+            tableName: type === 'customer' ? 'customer' : source,
+            wherec: effectiveSearchColumns,
+            status: statusCheck,
+            list,
+            isCompanyWise,
+            curpage: page,
+            ...customParameters,
+          },
+        });
+        data = Array.isArray(res?.data) ? res.data : [];
+      }
+
+      // Ignore a slower response from an older search request.
+      if (requestId !== requestIdRef.current) return [];
+
+      const normalized = normalizeOptions(data);
+      setOptions((previous) => {
+        if (replace) return normalized;
+        const existingIds = new Set(previous.map((item) => String(item.value)));
+        const uniqueNew = normalized.filter((item) => !existingIds.has(String(item.value)));
+        return [...previous, ...uniqueNew];
       });
-      data = customURL ? res?.data || [] : res.data[0]?.sublist || [];
-    } else {
-      // res = await fetchJson(`${API_BASE_URL}/searchList`, {
-      
-      res = await makeRequest(apiUrl || `${API_BASE_URL}/system/searchList`, {
-        method: 'POST', headers,
-        body: JSON.stringify({
-          text: '',
-          system: "new",
-          tableName: type === 'customer' ? 'customer' : source,
-          wherec: type === 'customer' ? 'name' : check,
-          status: statusCheck,
-          list,
-          isCompanyWise,
-          curpage: page,
-          ...customParameters,
-        }),
-      });
-      data = res.data || [];
+      setHasMore(Boolean(res?.loadstate));
+
+      if (cache) cacheStore.set(getOptionsCacheKey(trimmedSearchText), normalized);
+      if (showRecent && !trimmedSearchText) {
+        localStorage.setItem(`recent_${key}`, JSON.stringify(data.slice(0, 5)));
+      }
+      return normalized;
+    } catch (fetchError) {
+      if (requestId === requestIdRef.current) {
+        console.error('SmartSelectInput load error:', fetchError);
+        if (replace) setOptions([]);
+      }
+      return [];
+    } finally {
+      if (requestId === requestIdRef.current) {
+        fetchingRef.current = false;
+        setLoading(false);
+      }
     }
-    const normalized = normalizeOptions(data);
-    //setOptions(normalized);
-    newOptions = normalizeOptions(data);
-    setOptions((prev) => {
-      const existingIds = new Set(prev.map(item => item.value));
-      const uniqueNew = newOptions.filter(item => !existingIds.has(item.value));
-      return [...prev, ...uniqueNew];
-    });
-    setHasMore(res.loadstate);
-    // setPage(res?.paginginfo?.nextPage);
-    if (cache) cacheStore.set(key, normalized);
-    if (showRecent)
-      localStorage.setItem(`recent_${key}`, JSON.stringify(data.slice(0, 5)));
-    setLoading(false);
   };
 
   // Fetch once on mount
   useEffect(() => {
-    if (preload || cache) {
+    const cachedOptions = cache ? cacheStore.get(key) : null;
+    if (cachedOptions) {
+      setOptions(cachedOptions);
+      return;
+    }
+
+    if (preload || (cache && !usesRemoteSearch)) {
       const recent = localStorage.getItem(`recent_${key}`);
       if (recent) setOptions(normalizeOptions(JSON.parse(recent)));
       else fetchOptions();
     }
   }, []);
-  const handleScroll = ({ scrollOffset, scrollDirection, scrollUpdateWasRequested }) => {
+
+  useEffect(() => {
+    if (!usesRemoteSearch) return undefined;
+
+    const searchText = String(inputValue || '').trim();
+    if (searchText.length < Math.max(1, Number(minSearchChars) || 1)) {
+      requestIdRef.current += 1;
+      fetchingRef.current = false;
+      setLoading(false);
+      setOptions(cacheStore.get(key) || []);
+      return undefined;
+    }
+
+    const cachedOptions = cache ? cacheStore.get(getOptionsCacheKey(searchText)) : null;
+    if (cachedOptions) {
+      requestIdRef.current += 1;
+      fetchingRef.current = false;
+      setLoading(false);
+      setOptions(cachedOptions);
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      fetchOptions(0, searchText, { replace: true });
+    }, Math.max(0, Number(searchDebounceMs) || 0));
+
+    return () => window.clearTimeout(timeoutId);
+  }, [inputValue, usesRemoteSearch, searchDebounceMs, minSearchChars]);
+  const handleScroll = () => {
     const listEl = listRef.current;
     if (!listEl) return;
 
     const { scrollHeight, clientHeight, scrollTop } = listEl._outerRef;
 
     // If user scrolled near bottom
-    if (scrollHeight - scrollTop - clientHeight < 50 && hasMore && !loading) {
-      console.info("Fetch next page", page);
-      fetchOptions(page);
+    if (scrollHeight - scrollTop - clientHeight < 50 && hasMore && !fetchingRef.current) {
+      const nextPage = Number(page) + 1;
+      setPage(nextPage);
+      fetchOptions(nextPage, usesRemoteSearch ? inputValue : '');
     }
   };
   useEffect(() => {
@@ -324,11 +394,17 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   const handleRefresh = () => {
     if (isLocked) return;
 
-    cacheStore.delete(key);
+    const searchText = usesRemoteSearch ? String(inputValue || '').trim() : '';
+    const cachePrefix = `${key}::search::`;
+    Array.from(cacheStore.keys()).forEach((cacheKey) => {
+      if (cacheKey === key || cacheKey.startsWith(cachePrefix)) {
+        cacheStore.delete(cacheKey);
+      }
+    });
     localStorage.removeItem(`recent_${key}`);
     setPage(0);
     setOptions([]);
-    fetchOptions();
+    fetchOptions(0, searchText, { replace: true });
   };
   // const handleNew = (rowData) => {
 
@@ -363,8 +439,9 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
   // }
   // };
 
-  // **Local filtering**
-  const filteredOptions = inputValue
+  // Remote results may match fields that are not part of the visible label
+  // (for example a product serial number), so do not filter them again locally.
+  const filteredOptions = !usesRemoteSearch && inputValue
     ? options.filter(opt =>
       opt.label && opt.label.toLowerCase().includes(inputValue.toLowerCase())
     )
@@ -372,22 +449,29 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
 
   const Row = ({ index, style }) => {
     const item = filteredOptions[index];
+
     const isSelected = multi
       ? internalValue.some(v => v.value === item.value)
       : internalValue?.value === item.value;
-
     return (
-      <div
-        style={style}
-        onClick={() => handleSelect(item)}
-        className="cursor-pointer px-4 py-2 hover:bg-gray-100 flex items-start items-center justify-between text-sm"
-      >
-        <span className="whitespace-normal break-words">
-          {item.label}
-        </span>
-        {isSelected && <Check size={16} className="text-green-600 ml-2" />}
-        {item.original.status && item.original.status != "" && <StatusIndicator status={item.original.status} />}
-      </div>
+      RowTemp
+        ? (
+          <RowTemp
+            item={item}
+            isSelected={isSelected}
+            onClick={() => handleSelect(item)}
+            style={style}
+          />
+        )
+        : (
+          < div style={style} onClick={() => handleSelect(item)} className={`cursor-pointer px-4 py-2 hover:bg-gray-100 flex items-start justify-between text-sm ${isSelected && "bg-blue-50"}`} >
+            <span className="whitespace-normal wrap-break-word">
+              {item.label}
+            </span>
+            {isSelected && <Check size={16} className="text-green-600 ml-2" />}
+            {item.original.status && item.original.status != "" && <StatusIndicator status={item.original.status} />}
+          </div >
+        )
     );
   };
 
@@ -457,45 +541,41 @@ const SmartSelectInput = ({ id, field = {}, value, onSelect, onObjectSelect, con
         )}
 
         {showDropdown && !isLocked && (!dropdownPortal || dropdownPosition) && createPortal(
-          <div
-            ref={dropdownRef}
-            className={`${dropdownPortal ? "fixed z-[1000]" : "absolute left-0 right-0 top-full z-50 mt-1"} max-h-60 rounded-md border border-gray-300 bg-white text-sm shadow-lg`}
-            style={dropdownPortal ? dropdownPosition : undefined}
-          >
-            <div className="flex pr-2 pt-1 bg-blue-50 p-2 h-10 rounded-md align-center justify-between">
-              {loading ? (
-                <div className="p-3 text-sm text-gray-500">Loading...</div>
-              ) : (
-                <button onClick={handleRefresh} className="hover:underline text-blue-600">Refresh List</button>
-              )}
-              {/* {allowAddNew && (
-                <button
-                  onClick={() => {if(config.type==="category"){handleNew({is_parent:'no',short:true,form_label:placeholder,parent_id:filteredOptions[0].original?.parent_id})}else{
-                    handleNew({});
-                  } }}
-                  className="hover:underline text-blue-600"
-                >
-                  + Add New {label}
-                </button>
-              )} */}
+          <div ref={dropdownRef} className={`${dropdownPortal ? "fixed z-1000" : "absolute left-0 right-0 top-full z-50 mt-1"} max-h-60 rounded-sm border border-gray-300 bg-white text-sm shadow-lg`} style={dropdownPortal ? dropdownPosition : undefined} >
+            <div className="flex pr-2 pt-1 bg-blue-50 rounded-t-sm p-2 h-10 align-center justify-between">
+              {loading
+                ? (<div className="p-3 text-sm text-gray-500">Loading...</div>)
+                : (<button onClick={handleRefresh} className="hover:underline text-blue-600">Refresh List</button>)
+              }
               {allowAddNew && typeof addNewFunction === "function" && (
-                <button type="button" onClick={handleAddNew} className="hover:underline text-blue-600">
-                  + Add New  {label || field.label || "Item"}
-                </button>
+                <button type="button" onClick={handleAddNew} className="hover:underline text-blue-600"> + Add New  {label || field.label || "Item"} </button>
               )}
             </div>
-            {filteredOptions.length ? (
-              <List ref={listRef} height={200} itemCount={filteredOptions.length} onScroll={handleScroll} itemSize={44} width="100%">{Row}</List>
-            ) : (
-              <div className="px-4 py-5 text-sm text-gray-500">
-                No options found.
-                {allowAddNew && typeof addNewFunction === "function" && (
-                  <button type="button" onClick={handleAddNew} className="ml-2 font-medium text-blue-600 hover:underline">
-                    Add New {label || field.label || "Item"}
-                  </button>
-                )}
-              </div>
-            )}
+            {filteredOptions.length
+              ? (
+                <List
+                  ref={listRef}
+                  height={200}
+                  itemCount={filteredOptions.length}
+                  itemKey={(index) => String(filteredOptions[index]?.value ?? index)}
+                  onScroll={handleScroll}
+                  itemSize={rowHeight}
+                  width="100%"
+                >
+                  {Row}
+                </List>
+              )
+              : (
+                <div className="px-4 py-5 text-sm text-gray-500">
+                  No options found.
+                  {allowAddNew && typeof addNewFunction === "function" && (
+                    <button type="button" onClick={handleAddNew} className="ml-2 font-medium text-blue-600 hover:underline">
+                      Add New {label || field.label || "Item"}
+                    </button>
+                  )}
+                </div>
+              )
+            }
           </div>,
           dropdownPortal ? document.body : containerRef.current
         )}
