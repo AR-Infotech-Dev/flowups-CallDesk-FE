@@ -10,12 +10,12 @@ const optionalEmailSchema = z.preprocess(
 );
 
 const customerContactSchema = z.object({
-  contact_id: z.union([z.literal(null), z.coerce.number(), z.string()]).optional(),
-  customer_id: z.union([z.literal(null), z.coerce.number(), z.string()]).optional(),
-  name: z.string().trim().min(1, "Contact name is required"),
+  contact_id: z .union([z.literal(null), z.coerce.number(), z.string()]) .optional(),
+  customer_id: z .union([z.literal(null), z.coerce.number(), z.string()]) .optional(),
+  name: z.string().optional(),
   designation: z.string().optional(),
-  mobile_no: z.string().trim().min(1, "Mobile number is required").regex(/^[0-9]\d{9}$/, "Enter valid 10-digit mobile number"),
-  email: z.preprocess((value) => value ?? "", z.string().trim().min(1, "Email is required").email("Invalid email address")),
+  mobile_no: z.string().optional(),
+  email: z.string().optional(),
   department: z.string().optional(),
   is_primary: z.enum(["y", "n"]).optional(),
 });
@@ -246,16 +246,65 @@ export const customerModuleSchema = {
       .array(customerContactSchema)
       .min(1, "At least one contact person is required")
       .refine(
-        (contacts) => contacts.filter((contact) => contact.is_primary === "y").length <= 1,
+        (contacts) =>
+          contacts.filter((contact) => contact.is_primary === "y").length <= 1,
         "Only one primary contact is allowed"
-      )
-      .refine(
-        (contacts) => contacts.some((contact) => contact.is_primary === "y"),
-        "One primary contact is required"
       ),
   }).superRefine((data, ctx) => {
+    data.customer_contacts?.forEach((contact, index) => {
+
+
+      if (contact.is_primary !== "y") return;
+
+      if (!contact.name?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["customer_contacts", index, "name"],
+          message: "Contact name is required",
+        });
+      }
+
+      if (!contact.designation?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["customer_contacts", index, "designation"],
+          message: "Designation is required",
+        });
+      }
+
+      if (!contact.mobile_no?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["customer_contacts", index, "mobile_no"],
+          message: "Mobile number is required",
+        });
+      } else if (!/^[0-9]\d{9}$/.test(contact.mobile_no)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["customer_contacts", index, "mobile_no"],
+          message: "Enter valid 10-digit mobile number",
+        });
+      }
+
+      if (!contact.email?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["customer_contacts", index, "email"],
+          message: "Email is required",
+        });
+      } else if (!z.string().email().safeParse(contact.email).success) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["customer_contacts", index, "email"],
+          message: "Invalid email address",
+        });
+      }
+    });
+
+
     if (data.is_amc !== "yes") return;
     console.log('data : ', data);
+
 
     if (!data.responsible_person) {
       ctx.addIssue({
